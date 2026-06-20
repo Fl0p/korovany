@@ -61,3 +61,12 @@ Simulation runs on a fixed timestep decoupled from render FPS, in
 by calling `loop.advance(deltaSeconds)` each render frame. See
 [Game loop](./game-loop.md) for the system-registration API and how to add a
 system.
+
+## Character controller
+
+The capsule character and its third-person follow camera live in
+`src/game/controller/` and `src/game/camera/`. Like the input system, each
+splits a pure, NullEngine-tested math core (gravity, ground clamp, jump,
+coyote-time, camera boom) from a thin Babylon binding that runs as a loop
+`System`. A self-contained dev scene is reachable at `?dev=controller`. See
+[Character controller](./character-controller.md).

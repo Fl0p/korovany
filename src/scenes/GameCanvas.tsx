@@ -2,12 +2,17 @@ import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
 import { useAppDispatch } from '../store'
 import { setAssetPhase } from '../store/streamingSlice'
+import { createControllerPlayground } from './controllerPlayground'
 
 /**
  * Thin React wrapper around the Babylon engine. It owns nothing but the canvas
- * element and the mount/unmount lifecycle: on mount it hands the canvas to
- * {@link createGameEngine}, on unmount it disposes. All engine logic lives in
- * `src/engine/` — keep this component dumb.
+ * element and the mount/unmount lifecycle: on mount it boots a scene against the
+ * canvas, on unmount it disposes. All engine logic lives in `src/engine/` (and
+ * `src/scenes/`) — keep this component dumb.
+ *
+ * `?dev=controller` swaps in the third-person controller playground (E1.1) so
+ * the slice can be browser-verified without the full forest wiring. The default
+ * boots the engine smoke scene and forwards GLB load phases into the store.
  */
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -17,9 +22,13 @@ export function GameCanvas() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const game = createGameEngine(canvas, {
-      onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
-    })
+    const dev = new URLSearchParams(window.location.search).get('dev')
+    const game =
+      dev === 'controller'
+        ? createControllerPlayground(canvas)
+        : createGameEngine(canvas, {
+            onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
+          })
     return () => game.dispose()
   }, [dispatch])
 
