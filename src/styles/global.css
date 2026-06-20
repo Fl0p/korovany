@@ -725,3 +725,22 @@ body {
   margin: 0;
   color: #d9e3ea;
 }
+
+/* Floating damage numbers overlay */
+.damage-numbers {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.damage-number {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: #ff4444;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  user-select: none;
+  white-space: nowrap;
+}

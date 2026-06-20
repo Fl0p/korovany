@@ -71,3 +71,61 @@ Pass a custom `MeleeAttackParams` to `stepMeleeAttack` to override (useful for w
 ## Tests
 
 `src/game/combat/meleeAttack.test.ts` — 14 tests covering all phase transitions, edge-trigger guard, arc/range miss, multi-hit, and the `Damageable` dispatch integration.
+
+---
+
+## MPG.3 — Combat juice & hit feedback
+
+Four pure-Babylon effects that fire on combat events. No new Redux slices.
+
+### Screen shake (`src/game/camera/screenShake.ts`)
+
+`ScreenShakeManager` applies a random positional offset to the camera target for a configurable duration (default 150 ms, amplitude 0.12 scene units). Triggered on player taking damage **and** on landing a hit.
+
+```ts
+const shake = new ScreenShakeManager()  // uses DEFAULT_SHAKE_PARAMS
+shake.trigger()                          // arm or re-arm
+const [dx, dy] = shake.update(dt)        // call each frame; returns [0,0] when idle
+rig.camera.target.x += dx
+rig.camera.target.y += dy
+```
+
+### Hit flash (`src/game/combat/hitFlash.ts`)
+
+`HitFlashManager` temporarily overrides a `StandardMaterial`'s `diffuseColor` with a red tint for 80 ms on a hit, then restores the original colour. Meshes with non-Standard materials are silently skipped.
+
+```ts
+const flash = new HitFlashManager()
+flash.flash(enemyMesh)   // call when a hit lands
+flash.update(dt)          // call each frame to expire active flashes
+```
+
+### Floating damage numbers (`src/app/DamageNumber.tsx`)
+
+`<DamageNumbers entries={...} onExpire={...} />` renders DOM overlays at viewport-percentage coordinates. Each entry lives 600 ms then calls `onExpire(id)`. The Babylon scene fires `emitDamage(amount, screenX, screenY)` from `src/game/combat/damageEvents.ts`; `App` subscribes via `onDamage(...)`.
+
+### Death emphasis (`src/game/combat/deathEmphasis.ts`)
+
+`DeathEmphasisManager` drops `engine.timeScale` to 0.3 for 250 ms on a kill, then restores it to 1.0. Works only on concrete `Engine` instances (sets `timeScale` when present).
+
+```ts
+const emphasis = new DeathEmphasisManager(engine)
+emphasis.trigger()    // on kill
+emphasis.update(dt)   // call each frame (wall-clock dt, not scaled)
+```
+
+### Event bridge (`src/game/combat/damageEvents.ts`)
+
+Lightweight pub/sub crossing the Babylon ↔ React boundary without a circular dep:
+
+| Function | Direction | Consumer |
+|---|---|---|
+| `emitDamage(amount, x, y)` | Scene → HUD | `App` shows floating number |
+| `emitShake()` | Scene → HUD | future HUD shake hook |
+| `emitKill()` | Scene → HUD | future kill-feed |
+
+### Test coverage
+
+- `src/game/camera/screenShake.test.ts` — 5 tests (timer, decay, re-trigger)
+- `src/game/combat/hitFlash.test.ts` — 6 tests (tint, restore, dedup, no-mat guard)
+- `src/app/DamageNumber.test.tsx` — 5 tests (render, expiry timer, event bridge)
