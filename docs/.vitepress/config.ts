@@ -44,6 +44,7 @@ export default defineConfig({
           { text: 'Melee combat', link: '/guide/melee-combat' },
           { text: 'Enemy AI', link: '/guide/enemy-ai' },
           { text: 'Caravans', link: '/guide/caravans' },
+          { text: 'Seeded RNG', link: '/guide/seeded-rng' },
           { text: 'Testing', link: '/guide/testing' },
         ],
       },
