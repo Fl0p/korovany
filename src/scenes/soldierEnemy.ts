@@ -14,6 +14,7 @@ import {
   Vector3,
 } from '@babylonjs/core'
 import type { Damageable, Vec3 } from '../game/combat'
+import { CharacterAnimator } from '../game/animation/proceduralAnimator'
 import {
   applyDamageToSoldier,
   createSoldierFSM,
@@ -50,6 +51,7 @@ export interface SoldierEnemyOptions {
 
 export class SoldierEnemy implements System, Damageable {
   readonly mesh: AbstractMesh
+  readonly animator: CharacterAnimator
   private fsm: SoldierFSMState
   private readonly params: SoldierFSMParams
   private readonly getPlayerPos: () => Vector3
@@ -83,6 +85,8 @@ export class SoldierEnemy implements System, Damageable {
     mat.diffuseColor = new Color3(0.6, 0.25, 0.1)
     this.mesh.material = mat
 
+    this.animator = new CharacterAnimator(-0.9, 0)
+
     // Mount the FLO-311 GLB onto the capsule (best-effort: the bare capsule
     // stays as a fallback if the model can't be fetched, e.g. in headless tests).
     const glbUrl = options.glbUrl === undefined ? DEFAULT_SOLDIER_GLB : options.glbUrl
@@ -94,6 +98,8 @@ export class SoldierEnemy implements System, Damageable {
             model.root.position = new Vector3(0, -0.9, 0)
             for (const m of model.meshes) m.isPickable = false
             this.mesh.isVisible = false // hide the placeholder capsule
+            // Wire animator to the visual root after async load.
+            this.animator.node = model.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
           }),
         )
         .catch(() => {
@@ -108,17 +114,18 @@ export class SoldierEnemy implements System, Damageable {
     this.fsm = applyDamageToSoldier(this.fsm, amount)
     if (this.fsm.phase === 'dead') {
       this.onDefeated?.()
-      // Topple in place so the kill reads clearly; E2.4 (FLO-313) takes over
-      // the death sequence — we deliberately do not despawn the mesh.
-      this.mesh.rotation.z = Math.PI / 2
       const mat = this.mesh.material as StandardMaterial | null
       if (mat) mat.diffuseColor = new Color3(0.3, 0.3, 0.3)
+      // Procedural topple via animator (replaces the old static mesh.rotation.z flip).
     }
   }
 
   /** System — driven by FixedStepLoop. */
   update(dt: number, _world: unknown): void {
-    if (this.fsm.phase === 'dead') return
+    if (this.fsm.phase === 'dead') {
+      this.animator.update({ dt, speed: 0, attackPhase: 'idle', isDead: true })
+      return
+    }
 
     const playerPos = this.getPlayerPos()
     const soldierVec3: Vec3 = this.position
@@ -162,6 +169,16 @@ export class SoldierEnemy implements System, Damageable {
         this.mesh.rotation.y = Math.atan2(dx, dz)
       }
     }
+
+    // Derive animator inputs from FSM state: moving = chasing/following, attacking = attack phase.
+    const isMoving = this.fsm.phase === 'chase' || this.fsm.phase === 'follow'
+    const isAttacking = this.fsm.phase === 'attack' || this.fsm.phase === 'attack-target'
+    this.animator.update({
+      dt,
+      speed: isMoving ? 4 : 0,
+      attackPhase: isAttacking ? 'active' : 'idle',
+      isDead: false,
+    })
   }
 
   isDead(): boolean {

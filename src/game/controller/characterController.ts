@@ -17,6 +17,8 @@ import {
   createMovementState,
   stepMovement,
 } from './movement'
+import type { AttackPhase } from '../combat/meleeAttack'
+import { CharacterAnimator } from '../animation/proceduralAnimator'
 
 /**
  * Babylon binding for the capsule character controller. It owns a capsule mesh,
@@ -73,6 +75,8 @@ export class CharacterController implements System {
   readonly mesh: Mesh
   /** Movement basis. Assignable so a follow camera built from `mesh` can attach later. */
   camera: ArcRotateCamera | null
+  /** Procedural animator — attach `.node` after GLB load to animate the visual. */
+  readonly animator: CharacterAnimator
   private readonly scene: Scene
   private readonly getIntent: () => Intent
   private readonly getSpeedMultiplier: () => number
@@ -80,6 +84,8 @@ export class CharacterController implements System {
   private readonly groundProbe: number
   private readonly isGround: (mesh: AbstractMesh) => boolean
   private state: MovementState
+  private attackPhase: AttackPhase = 'idle'
+  private dead = false
 
   constructor(options: CharacterControllerOptions) {
     this.scene = options.scene
@@ -112,6 +118,8 @@ export class CharacterController implements System {
       options.isGround ??
       ((mesh) => mesh.isPickable && mesh !== this.mesh && !mesh.isDescendantOf(this.mesh))
     this.state = { ...createMovementState(spawn.x, spawn.y, spawn.z) }
+    // Base offsets match the visual root's spawn position relative to the capsule.
+    this.animator = new CharacterAnimator(-0.9, 0)
   }
 
   /** Capsule origin in world space (live reference — clone before mutating). */
@@ -132,6 +140,16 @@ export class CharacterController implements System {
   snapshot(): PlayerTransform {
     const p = this.mesh.position
     return { position: { x: p.x, y: p.y, z: p.z }, rotationY: this.mesh.rotation.y }
+  }
+
+  /** Update the melee attack phase so the animator can drive the lunge. */
+  setAttackPhase(phase: AttackPhase): void {
+    this.attackPhase = phase
+  }
+
+  /** Mark the player dead so the animator drives the topple. */
+  setDead(dead: boolean): void {
+    this.dead = dead
   }
 
   /**
@@ -177,6 +195,13 @@ export class CharacterController implements System {
     if (dir.x !== 0 || dir.z !== 0) {
       this.mesh.rotation.y = Math.atan2(dir.x, dir.z)
     }
+
+    this.animator.update({
+      dt,
+      speed: dir.x !== 0 || dir.z !== 0 ? 4 : 0,
+      attackPhase: this.attackPhase,
+      isDead: this.dead,
+    })
   }
 
   /**
