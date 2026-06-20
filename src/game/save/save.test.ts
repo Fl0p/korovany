@@ -22,6 +22,7 @@ const snapshot: PlayerSnapshot = {
   transform: { position: { x: 1.5, y: 2, z: -3.25 }, rotationY: Math.PI / 2 },
   health: { current: 73, max: 120 },
   zoneId: 'forest',
+  inventory: { counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' },
 }
 
 describe('createSaveData', () => {
@@ -32,6 +33,12 @@ describe('createSaveData', () => {
     expect(data.transform).toEqual(snapshot.transform)
     expect(data.health).toEqual({ current: 73, max: 120 })
     expect(data.zoneId).toBe('forest')
+    expect(data.inventory).toEqual({ counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' })
+  })
+
+  it('decouples the persisted inventory from the live slice reference', () => {
+    const data = createSaveData(snapshot, 1000)
+    expect(data.inventory.counts).not.toBe(snapshot.inventory.counts)
   })
 })
 
@@ -46,6 +53,7 @@ describe('save round-trip (fake-indexeddb)', () => {
       transform: snapshot.transform,
       health: { current: 73, max: 120 },
       zoneId: 'forest',
+      inventory: { counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' },
       savedAt: 1234,
     })
   })

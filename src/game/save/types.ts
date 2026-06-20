@@ -11,10 +11,17 @@
  * store is the "one small volume", while assets always stream from elsewhere.
  */
 
-/** Current on-disk schema version. Bump whenever {@link SaveData} changes shape. */
-export const SAVE_VERSION = 1
+/**
+ * Current on-disk schema version. Bump whenever {@link SaveData} changes shape.
+ *
+ * History:
+ * - v1 — transform, health, zoneId, savedAt.
+ * - v2 — added `inventory` (E3.4); v1 saves migrate forward with an empty one.
+ */
+export const SAVE_VERSION = 2
 
 import type { HealthState } from '../health'
+import type { InventoryState } from '../economy'
 
 /** Plain serialisable 3-vector (Babylon `Vector3` is not JSON-safe). */
 export interface Vec3 {
@@ -43,6 +50,8 @@ export interface SaveData {
   readonly health: HealthState
   /** Identifier of the zone the player was in. */
   readonly zoneId: string
+  /** Carried inventory at save time (E3.4), sourced from `inventorySlice`. */
+  readonly inventory: InventoryState
   /** Epoch milliseconds when the snapshot was taken; used to pick the latest slot. */
   readonly savedAt: number
 }
@@ -58,4 +67,6 @@ export interface PlayerSnapshot {
   readonly transform: PlayerTransform
   readonly health: HealthState
   readonly zoneId: string
+  /** Carried inventory at snapshot time, sourced from `inventorySlice`. */
+  readonly inventory: InventoryState
 }

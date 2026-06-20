@@ -1,4 +1,5 @@
 import type { HealthState } from '../health'
+import { createInventory, isInventoryState } from '../economy'
 import { SAVE_VERSION, type PlayerTransform, type SaveData, type Vec3 } from './types'
 
 /**
@@ -41,7 +42,13 @@ function isHealth(value: unknown): value is HealthState {
   )
 }
 
-/** Structural guard for a record at the current schema version. */
+/**
+ * Structural guard for a loadable save record. Validates the fields present in
+ * every version since v1 (the migration baseline). Fields added in later
+ * versions — `inventory` (v2) — are intentionally *not* required here so older
+ * saves still pass the guard and get upgraded by {@link migrate}; migrate is the
+ * single place that fills them in.
+ */
 export function isSaveData(value: unknown): value is SaveData {
   if (typeof value !== 'object' || value === null) return false
   const d = value as Record<string, unknown>
@@ -55,18 +62,20 @@ export function isSaveData(value: unknown): value is SaveData {
 }
 
 /**
- * Map an older record onto the current schema. Today v1 is the only version, so
- * this is a pass-through; when {@link SAVE_VERSION} is bumped, add a `case` per
- * prior version that fills in / renames-forward the new fields. Never mutate the
- * input — return a fresh record stamped with the current version.
+ * Map an older record onto the current schema. Each schema bump adds a step that
+ * fills in / renames-forward the new fields; never mutate the input — return a
+ * fresh record stamped with the current version.
+ *
+ * - v1 → v2: `inventory` was added (E3.4). Saves written before v2 carry none,
+ *   so they are given a fresh empty inventory. Schema is forever — the field is
+ *   never dropped again.
  */
 export function migrate(data: SaveData): SaveData {
   if (data.version === SAVE_VERSION) return data
-  // Future versions branch here, e.g.:
-  //   if (data.version === 1) data = { ...data, newField: default, version: 2 }
-  // Unknown/newer versions fall through and are stamped current; fields already
-  // validated by isSaveData, so this is safe.
-  return { ...data, version: SAVE_VERSION }
+  const inventory = isInventoryState((data as { inventory?: unknown }).inventory)
+    ? data.inventory
+    : createInventory()
+  return { ...data, inventory, version: SAVE_VERSION }
 }
 
 /**

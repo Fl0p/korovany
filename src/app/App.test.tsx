@@ -12,7 +12,9 @@ import { appReducer, type AppPhase } from '../store/appSlice'
 import { gameReducer } from '../store/gameSlice'
 import { healthReducer } from '../store/healthSlice'
 import { injuryReducer } from '../store/injurySlice'
+import { inventoryReducer } from '../store/inventorySlice'
 import { createInjuryState } from '../game/health/injuryModel'
+import { createInventory, type InventoryState } from '../game/economy'
 import { DEFAULT_PLAYER_STATE, playerReducer, type PlayerState } from '../store/playerSlice'
 import { streamingReducer } from '../store/streamingSlice'
 import { App } from './App'
@@ -29,6 +31,7 @@ function renderApp(
   streamingPhases: Record<string, AssetLoadPhase> = {},
   player: PlayerState = DEFAULT_PLAYER_STATE,
   health: HealthState = { current: 100, max: 100 },
+  inventory: InventoryState = createInventory(),
 ) {
   const store = configureStore({
     reducer: {
@@ -36,6 +39,7 @@ function renderApp(
       game: gameReducer,
       health: healthReducer,
       injury: injuryReducer,
+      inventory: inventoryReducer,
       player: playerReducer,
       streaming: streamingReducer,
     },
@@ -43,6 +47,7 @@ function renderApp(
       app: { phase: initialPhase },
       game: { score: 0 },
       health: { player: health },
+      inventory,
       player,
       streaming: { phases: streamingPhases },
       injury: createInjuryState(),
@@ -142,6 +147,30 @@ describe('<App />', () => {
     expect(screen.queryByText('100/100')).not.toBeInTheDocument()
   })
 
+  it('shows the inventory panel empty-state while playing with no loot', () => {
+    renderApp('playing')
+    expect(screen.getByText('Nothing looted yet.')).toBeInTheDocument()
+  })
+
+  it('renders carried loot stacks in the HUD inventory panel', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 100, max: 100 }, {
+      counts: { gold: 14, blade: 1 },
+      equippedItemId: 'blade',
+    })
+    expect(screen.getByText('Gold')).toBeInTheDocument()
+    expect(screen.getByText('×14')).toBeInTheDocument()
+    expect(screen.getByText('Looted Blade')).toBeInTheDocument()
+    expect(screen.queryByText('Nothing looted yet.')).not.toBeInTheDocument()
+  })
+
+  it('hides the inventory panel in the main menu', () => {
+    renderApp('menu', {}, DEFAULT_PLAYER_STATE, { current: 100, max: 100 }, {
+      counts: { gold: 5 },
+      equippedItemId: null,
+    })
+    expect(screen.queryByText('Gold')).not.toBeInTheDocument()
+  })
+
   it('does not bounce to menu on death while paused — combat is frozen (FLO-326)', () => {
     // 0 HP while paused must NOT trigger returnToMenu: the player cannot die on
     // the pause screen. Death is only processed while `playing`.
@@ -167,7 +196,10 @@ describe('<App /> save/load (fake-indexeddb)', () => {
     })
     try {
       const user = userEvent.setup()
-      renderApp('playing', {}, { zoneId: 'forest' }, { current: 60, max: 120 })
+      renderApp('playing', {}, { zoneId: 'forest' }, { current: 60, max: 120 }, {
+        counts: { gold: 14 },
+        equippedItemId: null,
+      })
 
       await user.keyboard('{Escape}') // playing → paused triggers autosave
 
@@ -178,6 +210,8 @@ describe('<App /> save/load (fake-indexeddb)', () => {
         expect(saved?.health).toEqual({ current: 60, max: 120 })
         expect(saved?.transform.position).toEqual({ x: 4, y: 1, z: -2 })
         expect(saved?.zoneId).toBe('forest')
+        // Carried inventory is captured in the autosave snapshot.
+        expect(saved?.inventory).toEqual({ counts: { gold: 14 }, equippedItemId: null })
       })
     } finally {
       unregister()
@@ -190,6 +224,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
         transform: { position: { x: 7, y: 1, z: 7 }, rotationY: 0 },
         health: { current: 50, max: 100 },
         zoneId: 'forest',
+        inventory: { counts: { grain: 3 }, equippedItemId: null },
       },
       123,
     )

@@ -67,6 +67,25 @@ so the canvas stays crisp on retina), the render loop, and `dispose()`.
 [`src/scenes/GameCanvas.tsx`](src/scenes/GameCanvas.tsx) is a thin React wrapper
 that mounts the engine against a ref'd canvas and disposes it on unmount.
 
+## Inventory & loot
+
+Raiding caravans (the "грабить корованы" loop) drops loot the player collects
+into a carried **inventory**, shown in a HUD panel below the health bar while
+playing (E3.4).
+
+- **Model:** a pure, serialisable `itemId → count` map plus one equipped slot
+  lives in [`src/game/economy/`](src/game/economy/); the Redux integration is
+  [`src/store/inventorySlice.ts`](src/store/inventorySlice.ts). Item display
+  names/flags come from the static catalog in
+  [`src/game/economy/items.ts`](src/game/economy/items.ts) — the save stores only
+  ids + counts, so adding a lootable good is a catalog entry with no schema bump.
+- **Pick up:** a defeated caravan (E3.3) dispatches `pickUpLoot({ itemId, count })`;
+  the HUD panel reflects the carried stacks, marks the equipped item, and shows an
+  explicit empty state before any loot is collected.
+- **Persistence:** the inventory is part of the save snapshot (see
+  [Saving progress](#saving-progress)) and is restored on **Continue** / cleared on
+  **New Game**.
+
 ## 3D assets
 
 Binary game assets (GLB models, textures, audio) are stored in **Git LFS** — run
@@ -89,9 +108,9 @@ and [`0002-glb-import-contract.md`](docs/decisions/0002-glb-import-contract.md).
 ## Saving progress
 
 Player progress survives a browser reload. A small **versioned** snapshot — the
-player's transform (position + yaw), health (`current` + `max`), and zone id — is
-persisted to the browser's **IndexedDB** (`korovany-save` database, one autosave
-slot).
+player's transform (position + yaw), health (`current` + `max`), zone id, and
+carried [inventory](#inventory--loot) — is persisted to the browser's
+**IndexedDB** (`korovany-save` database, one autosave slot).
 
 - **Autosave on pause:** entering the paused state writes the snapshot.
 - **Continue:** the main menu's Continue button loads the latest slot and spawns
@@ -102,8 +121,10 @@ slot).
   Nothing is uploaded; saves are local to the browser.
 
 The schema is **forever** — fields are never renamed; format changes bump
-`SAVE_VERSION` and add a migration. Full details, slot model, and the test
-approach (`fake-indexeddb`): [`docs/guide/save-system.md`](docs/guide/save-system.md).
+`SAVE_VERSION` and add a migration. `SAVE_VERSION` is currently **2** (v2 added
+`inventory`; v1 saves migrate forward with an empty one). Full details, slot
+model, and the test approach (`fake-indexeddb`):
+[`docs/guide/save-system.md`](docs/guide/save-system.md).
 
 ## Deployment
 
