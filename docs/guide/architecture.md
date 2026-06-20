@@ -52,3 +52,11 @@ the `Engine`/`Scene`, the render loop, the high-DPI resize handler, and
 the engine against a ref'd canvas and disposes it on unmount. Engine code can
 read/dispatch to the same store, so game systems and UI stay in sync through
 Redux.
+
+## Game loop
+
+Simulation runs on a fixed timestep decoupled from render FPS, in
+`src/game/loop/` (engine-agnostic — no Babylon/React). A Babylon scene drives it
+by calling `loop.advance(deltaSeconds)` each render frame. See
+[Game loop](./game-loop.md) for the system-registration API and how to add a
+system.
