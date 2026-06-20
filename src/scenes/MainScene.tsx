@@ -3,15 +3,16 @@ import {
   ArcRotateCamera,
   Engine,
   HemisphericLight,
-  MeshBuilder,
   Scene,
   Vector3,
 } from '@babylonjs/core'
+import { loadModel } from './modelLoader'
 
 /**
- * Minimal Babylon.js canvas — a single rotating cube on a lit scene.
- * Exists to prove the Babylon + React + Vite build path works end-to-end.
- * The real game scenes live alongside this under `src/scenes/`.
+ * Minimal Babylon.js canvas — loads the normalized treasure-chest GLB on a lit,
+ * orbit-controlled scene. Exists to prove the Babylon + React + Vite build path
+ * and the `loadModel()` GLB import pipeline work end-to-end. The real game
+ * scenes live alongside this under `src/scenes/`.
  */
 export function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -28,10 +29,10 @@ export function MainScene() {
 
     new HemisphericLight('light', new Vector3(0, 1, 0), scene)
 
-    const box = MeshBuilder.CreateBox('box', { size: 2 }, scene)
-    scene.onBeforeRenderObservable.add(() => {
-      box.rotation.y += 0.01
-    })
+    // Load the web-ready GLB through the shared loader so it lands at a sane
+    // size (longest side ~2 units), grounded on the floor plane, and centered.
+    // Fire-and-forget: the render loop below draws it as soon as it resolves.
+    void loadModel(scene, '/models/chest.glb')
 
     engine.runRenderLoop(() => scene.render())
 

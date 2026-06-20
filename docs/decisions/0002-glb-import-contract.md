@@ -49,5 +49,6 @@ functions with no engine state, unit-tested in `modelLoader.test.ts`.
 - The pure-math normalization is covered by unit tests; the full GLB load +
   on-screen result is a **visual-truth** check — verify in a browser with a real
   asset (the FLO-256 treasure-chest sample) before wiring a model into a shipped
-  scene. The current `MainScene` rotating cube is unchanged; wiring a loaded model
-  into a scene is follow-up work.
+  scene. This was done in FLO-261: `MainScene` now loads
+  `public/models/chest.glb` via `loadModel()` (replacing the placeholder rotating
+  cube), confirmed rendering grounded, lit, and orbit-controllable in a browser.
