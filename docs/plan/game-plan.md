@@ -181,16 +181,24 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 - **E3.3 Caravans ("грабить корованы")** `[~]` — **FLO-334** (Wayland, in_progress) — wandering caravan entities, ambush, loot tables, reward.
 - **E3.4 Inventory & loot** `[~]` — **FLO-335** (Wayland, in_progress) — pick up, carry, equip; HUD inventory panel.
 
-### Phase 4 — Factions & economy (the RPG layer) `[ ]`
+### Phase 4 — Factions & economy (the RPG layer) `[~]`
 
-- **E4.1 Faction system** `[ ]` — faction data, reputation, friend/foe targeting.
-- **E4.2 Faction selection & asymmetric goals** `[ ]`
+Epic: **[FLO-349](/FLO/issues/FLO-349)** — opened 2026-06-21 by Daedalus (CTO),
+decomposed into oneshot children. Sequence: E4.1 unlocks E4.2/E4.3/E4.5; E4.4
+follows Phase 3 (inventory). Ownership split across **Aldric** and **Wayland**
+(per board directive FLO-348 — balance load, not all on one engineer).
+
+- **E4.1 Faction system** `[~]` — **FLO-350** (Aldric, in_progress) — pure
+  `src/game/faction/` data + reputation + `resolveStance` friend/foe, `factionSlice`;
+  self-contained (not yet wired into scene/AI).
+- **E4.2 Faction selection & asymmetric goals** `[ ]` — **FLO-351** (Wayland, blocked by E4.1)
+  - [ ] New-Game faction picker (Iris-gated UI); choice persisted in versioned save.
   - [ ] Elf campaign: raid empire/villain, defend forest.
   - [ ] Palace Guard campaign: obey commander orders, defend palace.
   - [ ] Villain campaign: command own troops, order attacks on the palace.
-- **E4.3 Commander / order system** `[ ]` — issue/receive orders; squad follow & attack.
-- **E4.4 Economy & shops (Daggerfall-like)** `[ ]` — currency, shop UI, buy/sell, prices.
-- **E4.5 Character progression** `[ ]` — stats/skills that buying & combat feed into.
+- **E4.3 Commander / order system** `[ ]` — **FLO-352** (Aldric, blocked by E4.1) — issue/receive orders; squad follow & attack (extends soldier FSM).
+- **E4.4 Economy core (currency + buy/sell)** `[ ]` — **FLO-353** (Wayland, blocked by Phase 3) — transaction logic on the existing `src/game/economy/` module; **shop UI is a separate Iris-gated ticket.**
+- **E4.5 Character progression** `[ ]` — **FLO-354** (Aldric, blocked by E4.1) — stats/skills/XP fed by buying & combat.
 
 ### Phase 5 — Dense forest & LOD streaming `[ ]`
 
@@ -271,6 +279,13 @@ speculative batches (FLO-270).
   registered the player handle with the save bridge (only the `?dev` playground did).
   Wired `registerPlayer()` + `takeSpawn()` into the forest scene with a regression test;
   save/Continue now works end-to-end in the live slice. (Wayland)
+- **r13** (2026-06-21) — Phase 4 epic **FLO-349** opened (factions/economy/RPG layer) per
+  board directive **FLO-348** (deepen the backlog, balance load off Wayland). Decomposed into
+  E4.1 faction system [FLO-350] (Aldric, started), E4.2 faction selection [FLO-351] (Wayland,
+  blk E4.1), E4.3 commander/orders [FLO-352] (Aldric, blk E4.1), E4.4 economy core [FLO-353]
+  (Wayland, blk Phase 3), E4.5 progression [FLO-354] (Aldric, blk E4.1). Aldric owns 3/5 of the
+  new work. Dependents parked as `todo` backlog; CTO releases each when its predecessor lands
+  (blocked issues don't auto-transition). (Daedalus)
 - **r12** (2026-06-20) — Phase 3 epic **FLO-329** opened (world/caravans/loot); E3.1 (FLO-332), E3.1-UX (FLO-331), E3.2 (FLO-333), E3.3 (FLO-334), E3.4 (FLO-335) in progress. Bug fix FLO-326 (pause kills) merged 041404b (PR #37). Plan updated. (Daedalus)
 - **r10** (2026-06-20) — Phase 2 epic **FLO-307** opened (combat/health/injuries), delegated to Daedalus (CTO). Phase 2 marked `[~]` in plan tree. (Prospero)
 - **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
