@@ -27,9 +27,14 @@ describe('createRng', () => {
     }
   })
 
-  it('emits the same first value for seed 42 across builds (determinism regression)', () => {
-    const v = createRng(42)()
-    expect(v).toMatchSnapshot()
+  it('emits exact known values for seed 42', () => {
+    const rng = createRng(42)
+    expect([rng(), rng(), rng(), rng()]).toEqual([
+      0.601_103_751_920_163_6,
+      0.448_290_558_997_541_67,
+      0.852_465_793_490_409_9,
+      0.669_734_041_439_369_3,
+    ])
   })
 })
 

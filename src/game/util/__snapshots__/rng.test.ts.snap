@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`createRng > emits the same first value for seed 42 across builds (determinism regression) 1`] = `0.6011037519201636`;
