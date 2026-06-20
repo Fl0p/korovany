@@ -79,7 +79,9 @@ Binary game assets (GLB models, textures, audio) are stored in **Git LFS** — r
   Pages serves them from its CDN at `/models/<name>.glb`.
 - **Load** them at runtime with `loadModel(scene, '/models/x.glb')`
   ([`src/scenes/modelLoader.ts`](src/scenes/modelLoader.ts)), which normalizes
-  scale (longest side ≈ 2 units) and grounds the model on import.
+  scale (longest side ≈ 2 units) and grounds the model on import. The returned
+  `root` is a clean placement node; scene code may set `root.position` without
+  erasing the internal grounding offset.
 
 Rationale and the import contract: [`docs/decisions/0001-asset-hosting.md`](docs/decisions/0001-asset-hosting.md)
 and [`0002-glb-import-contract.md`](docs/decisions/0002-glb-import-contract.md).
