@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Vector3 } from '@babylonjs/core'
-import { fitScale, recenterOffset } from './modelLoader'
+import { MeshBuilder, NullEngine, Scene, Vector3 } from '@babylonjs/core'
+import { fitScale, normalizeImportedMeshes, recenterOffset } from './modelLoader'
 
 describe('fitScale', () => {
   it('scales the largest extent up to targetSize', () => {
@@ -43,5 +43,39 @@ describe('recenterOffset', () => {
     expect(offset.x).toBeCloseTo(-1.5)
     expect(offset.y).toBeCloseTo(-2)
     expect(offset.z).toBeCloseTo(-4)
+  })
+})
+
+describe('normalizeImportedMeshes', () => {
+  it('keeps the returned root as a clean placement node', () => {
+    const engine = new NullEngine()
+    const scene = new Scene(engine)
+    const mesh = MeshBuilder.CreateBox('off-origin-model', { size: 2 }, scene)
+    mesh.position = new Vector3(4, 5, -3)
+
+    const model = normalizeImportedMeshes(scene, 'off-origin.glb', [mesh], {
+      targetSize: 2,
+      groundIt: true,
+      yaw: Math.PI / 4,
+    })
+
+    expect(model.root.position.x).toBeCloseTo(0)
+    expect(model.root.position.y).toBeCloseTo(0)
+    expect(model.root.position.z).toBeCloseTo(0)
+    expect(model.root.scaling.x).toBeCloseTo(1)
+    expect(model.root.scaling.y).toBeCloseTo(1)
+    expect(model.root.scaling.z).toBeCloseTo(1)
+    expect(model.root.rotation.y).toBeCloseTo(Math.PI / 4)
+
+    const groundedAtOrigin = model.root.getHierarchyBoundingVectors(true)
+    expect(groundedAtOrigin.min.y).toBeCloseTo(0)
+
+    model.root.position = new Vector3(7, 0, 9)
+    model.root.computeWorldMatrix(true)
+    const groundedAfterPlacement = model.root.getHierarchyBoundingVectors(true)
+    expect(groundedAfterPlacement.min.y).toBeCloseTo(0)
+
+    scene.dispose()
+    engine.dispose()
   })
 })

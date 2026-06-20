@@ -24,17 +24,20 @@ A single loader, `loadModel(scene, url, opts)` in `src/scenes/modelLoader.ts`:
   want the returned meshes back to parent and normalize them, not merge blindly
   into the scene.
 - **Normalization on import:**
-  - Re-parent the loaded top-level meshes under one `TransformNode` root.
+  - Re-parent the loaded top-level meshes under an internal content node beneath
+    one returned `TransformNode` placement root.
   - **Scale:** uniform, so the longest bounding-box extent equals `targetSize`
     (default **2** scene units). `fitScale()`.
   - **Position:** recenter on the X/Z origin and, by default, **ground** the model
     so its lowest point sits at `y=0` (`groundIt: true`); set `false` to center on
-    the origin instead. `recenterOffset()`.
+    the origin instead. `recenterOffset()` is applied to the internal content
+    node, leaving the returned root at a clean `(0, 0, 0)` placement transform.
   - **Orientation:** none by default. glTF is right-handed / Y-up and the glTF
     loader already inserts its own handedness-conversion node, so re-flipping would
     double-correct. A `yaw` option (radians) is exposed for per-asset tweaks.
 - Returns `{ root, meshes }`; callers position/parent the `root`, never the raw
-  meshes.
+  meshes. Setting `root.position` must not erase the import-time scale or
+  grounding offset.
 
 The scale/position math (`fitScale`, `recenterOffset`) is factored into pure
 functions with no engine state, unit-tested in `modelLoader.test.ts`.

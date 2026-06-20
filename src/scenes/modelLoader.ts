@@ -35,7 +35,13 @@ export interface LoadModelOptions {
 }
 
 export interface LoadedModel {
-  /** Parent node holding the normalized model — position/parent this, not the raw meshes. */
+  /**
+   * Placement node for the normalized model.
+   *
+   * Position/parent/rotate this node in scene code. The import-time scale and
+   * grounding offset live on an internal child so placement cannot accidentally
+   * erase normalization.
+   */
   root: TransformNode
   /** The raw meshes returned by the loader (root mesh first). */
   meshes: AbstractMesh[]
@@ -68,6 +74,40 @@ export function recenterOffset(
 }
 
 /**
+ * Wrap imported meshes under a placement root whose transform starts clean.
+ *
+ * Meshy/glTF assets often arrive with their authored origin near the belly or
+ * visual centre. The returned root is intentionally NOT used for the grounding
+ * offset; callers set root.position freely when placing the asset in-world.
+ */
+export function normalizeImportedMeshes(
+  scene: Scene,
+  filename: string,
+  meshes: AbstractMesh[],
+  opts: LoadModelOptions = {},
+): LoadedModel {
+  const { targetSize = 2, groundIt = true, yaw = 0 } = opts
+
+  const root = new TransformNode(`model:${filename}`, scene)
+  const content = new TransformNode(`model:${filename}:content`, scene)
+  content.parent = root
+
+  for (const mesh of meshes) {
+    // Re-parent only the top-level meshes; descendants follow their own parents.
+    if (!mesh.parent) mesh.parent = content
+  }
+  content.computeWorldMatrix(true)
+
+  const { min, max } = content.getHierarchyBoundingVectors(true)
+  const scale = fitScale(min, max, targetSize)
+  content.scaling = new Vector3(scale, scale, scale)
+  content.position = recenterOffset(min, max, scale, groundIt)
+  root.rotation = new Vector3(0, yaw, 0)
+
+  return { root, meshes }
+}
+
+/**
  * Load a GLB/glTF model into `scene`, normalized under a single root node.
  *
  * @param url Full URL or path to the model, e.g. `/models/chest.glb` (served by
@@ -78,8 +118,6 @@ export async function loadModel(
   url: string,
   opts: LoadModelOptions = {},
 ): Promise<LoadedModel> {
-  const { targetSize = 2, groundIt = true, yaw = 0 } = opts
-
   // ImportMeshAsync resolves the loader plugin from the filename extension, so
   // split the URL into directory + filename rather than passing one blob.
   const lastSlash = url.lastIndexOf('/')
@@ -88,18 +126,5 @@ export async function loadModel(
 
   const result = await SceneLoader.ImportMeshAsync(null, rootUrl, filename, scene)
 
-  const root = new TransformNode(`model:${filename}`, scene)
-  for (const mesh of result.meshes) {
-    // Re-parent only the top-level meshes; descendants follow their own parents.
-    if (!mesh.parent) mesh.parent = root
-  }
-  root.computeWorldMatrix(true)
-
-  const { min, max } = root.getHierarchyBoundingVectors(true)
-  const scale = fitScale(min, max, targetSize)
-  root.scaling = new Vector3(scale, scale, scale)
-  root.position = recenterOffset(min, max, scale, groundIt)
-  root.rotation = new Vector3(0, yaw, 0)
-
-  return { root, meshes: result.meshes }
+  return normalizeImportedMeshes(scene, filename, result.meshes, opts)
 }

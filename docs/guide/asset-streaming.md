@@ -64,6 +64,14 @@ const instance = await spawnStreamedInstance(loader, scene, HERO_PLAYER_ASSET_ID
 - **`release(id)`** — decrements ref-count; at zero meshes/materials dispose.
 - **Load error** — phase becomes `error`; the placeholder stays (no crash).
 
+## Placement and pivots
+
+`loadModel` returns a clean placement root. Scene code may set
+`instance.root.position`, parent it to a gameplay capsule, or rotate it without
+erasing the GLB's import-time normalization. The scale/recenter/grounding offset
+is kept on an internal child node so off-origin assets — characters, trees, huts,
+and similar props — still rest on the intended ground plane after placement.
+
 ## HUD wiring
 
 `GameCanvas` passes `onAssetLoadingState` into `createGameEngine`, which
