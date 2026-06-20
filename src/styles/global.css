@@ -1,0 +1,59 @@
+/* Full-page reset: body/html fill the viewport with no scroll so the 3D canvas
+   can occupy 100vw x 100vh without any overflow or margin. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.render-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Minimal HUD overlay — temporary debug chrome, not final game UI. */
+.hud {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.hud h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+}
+
+.hud p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.hud button {
+  pointer-events: auto;
+  cursor: pointer;
+}

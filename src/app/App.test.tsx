@@ -6,9 +6,10 @@ import { store } from '../store'
 import { App } from './App'
 
 // Babylon.js needs a real WebGL context, which jsdom does not provide.
-// Stub the scene so the App can render in tests without a GPU.
-vi.mock('../scenes/MainScene', () => ({
-  MainScene: () => <div data-testid="main-scene" />,
+// Stub the canvas so the App can render in tests without a GPU. The engine
+// bootstrap itself is covered by src/engine/index.test.ts.
+vi.mock('../scenes/GameCanvas', () => ({
+  GameCanvas: () => <div data-testid="game-canvas" />,
 }))
 
 function renderApp() {
@@ -20,10 +21,10 @@ function renderApp() {
 }
 
 describe('<App />', () => {
-  it('renders the title and the stubbed scene', () => {
+  it('renders the title and the stubbed canvas', () => {
     renderApp()
     expect(screen.getByRole('heading', { name: 'Korovany' })).toBeInTheDocument()
-    expect(screen.getByTestId('main-scene')).toBeInTheDocument()
+    expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
   })
 
   it('increments the Redux score when +1 is clicked', async () => {

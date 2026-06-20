@@ -1,32 +1,26 @@
-import { MainScene } from '../scenes/MainScene'
+import { GameCanvas } from '../scenes/GameCanvas'
 import { addScore, useAppDispatch, useAppSelector } from '../store'
 
+/**
+ * App shell: a full-viewport stage holding the 3D canvas with a small HUD
+ * overlay on top. The HUD is intentionally minimal debug chrome (title + a
+ * Redux score probe) — real in-game UI will replace it. The canvas fills the
+ * whole page; see `src/styles/global.css` for the no-scroll reset.
+ */
 export function App() {
   const score = useAppSelector((state) => state.game.score)
   const dispatch = useAppDispatch()
 
   return (
-    <main
-      style={{
-        fontFamily: 'system-ui, sans-serif',
-        maxWidth: 720,
-        margin: '0 auto',
-        padding: '2rem 1rem',
-      }}
-    >
-      <h1>Korovany</h1>
-      <p>3D action game / browser SPA — hello world.</p>
-      <p>
-        Stack: TypeScript · React · Babylon.js · Redux Toolkit. Deployed to Cloudflare Pages via
-        GitHub Actions.
-      </p>
-
-      <MainScene />
-
-      <p style={{ marginTop: '1rem' }}>
-        Score (Redux): <strong>{score}</strong>{' '}
-        <button onClick={() => dispatch(addScore(1))}>+1</button>
-      </p>
-    </main>
+    <div className="app-shell">
+      <GameCanvas />
+      <div className="hud">
+        <h1>Korovany</h1>
+        <p>
+          Score (Redux): <strong>{score}</strong>{' '}
+          <button onClick={() => dispatch(addScore(1))}>+1</button>
+        </p>
+      </div>
+    </div>
   )
 }

@@ -42,14 +42,27 @@ contributors see [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
 
 ```
 src/app/        app shell & composition        src/store/    Redux Toolkit store + slices
-src/scenes/     Babylon.js scenes              src/components/ reusable React UI
-src/game/       engine-agnostic game logic     src/hooks/    shared React hooks
-src/assets/     bundled assets                 src/types/    shared types
-assets/         source binaries (Git LFS)      docs/         VitePress docs → GitHub Pages
-public/         static files served as-is      .github/workflows/  CI/CD
+src/engine/     Babylon Engine/Scene lifecycle src/scenes/   Babylon scenes & canvas wrapper
+src/game/       engine-agnostic game logic     src/components/ reusable React UI
+src/assets/     bundled assets                 src/hooks/    shared React hooks
+assets/         source binaries (Git LFS)      src/types/    shared types
+public/         static files served as-is      docs/         VitePress docs → GitHub Pages
 ```
 
 See [`docs/guide/architecture.md`](docs/guide/architecture.md) for where new code belongs.
+
+## Full-page game canvas
+
+The game renders into a **full-window 3D canvas** — the document never scrolls
+and there is no `max-width` container (`src/styles/global.css` resets
+`html/body/#root` and hides overflow). A thin HUD overlay carries debug chrome.
+
+The Babylon `Engine`/`Scene` lifecycle lives in **[`src/engine/`](src/engine/index.ts)**,
+not inline in a component. `createGameEngine(canvas)` owns engine + scene
+creation, the high-DPI resize handler (`setHardwareScalingLevel(1 / devicePixelRatio)`
+so the canvas stays crisp on retina), the render loop, and `dispose()`.
+[`src/scenes/GameCanvas.tsx`](src/scenes/GameCanvas.tsx) is a thin React wrapper
+that mounts the engine against a ref'd canvas and disposes it on unmount.
 
 ## 3D assets
 
