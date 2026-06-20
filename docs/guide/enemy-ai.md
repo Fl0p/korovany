@@ -61,9 +61,20 @@ render loop:
   5. if player HP == 0 → App.tsx death handler → returnToMenu
 ```
 
+## Mesh
+
+`SoldierEnemy` carries an invisible capsule as its position/collision proxy and
+mounts the **FLO-311 Empire soldier GLB** (`/models/empire-soldier.glb`) onto it,
+mirroring how the hero model is parented to the player capsule. The GLB load is
+best-effort: if the model can't be fetched (e.g. headless tests), the bare
+capsule placeholder stays visible. Pass `glbUrl: null` to force the placeholder.
+On death the mesh topples (rotates 90°) and stays in place for E2.4 to take over.
+
 ## Spawn
 
-One soldier is spawned at `(6, 0, 6)` in ForestScene. To spawn more, push additional `SoldierEnemy` instances into the scene and register them with the scheduler.
+One soldier is spawned at `(6, 0.9, 6)` in ForestScene (Y is the capsule
+half-height so it rests on the ground). To spawn more, push additional
+`SoldierEnemy` instances into the scene and register them with the scheduler.
 
 ## Tests
 

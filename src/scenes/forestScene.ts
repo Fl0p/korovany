@@ -190,7 +190,7 @@ export function createForestScene(
   // ------------------------------------------------------------------
   const soldiers: SoldierEnemy[] = [
     new SoldierEnemy(scene, {
-      spawn: new Vector3(6, 0, 6),
+      spawn: new Vector3(6, 0.9, 6),
       getPlayerPos: () => controller.mesh.position,
       onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
     }),
