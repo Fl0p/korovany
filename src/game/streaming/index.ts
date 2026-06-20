@@ -4,6 +4,13 @@ export { HERO_PLAYER_ASSET_ID, seedDefaultAssets } from './defaults'
 export { defaultLoadGlb } from './loadGlb'
 export { createPlaceholderBox } from './placeholder'
 export { spawnStreamedInstance, type StreamedInstance } from './streamedInstance'
+export {
+  ZoneStreamingManager,
+  type ZoneManifest,
+  type ZoneAssetPlacement,
+  type ZoneStreamingOptions,
+  type SpawnInstanceFn,
+} from './zoneStreaming'
 export type { AssetLoadPhase, AssetMetadata, AssetRecord } from './types'
 
 import type { Scene } from '@babylonjs/core'
