@@ -44,6 +44,7 @@ export default defineConfig({
           { text: 'Melee combat', link: '/guide/melee-combat' },
           { text: 'Enemy AI', link: '/guide/enemy-ai' },
           { text: 'Caravans', link: '/guide/caravans' },
+          { text: 'Faction system', link: '/guide/faction-system' },
           { text: 'Testing', link: '/guide/testing' },
         ],
       },
