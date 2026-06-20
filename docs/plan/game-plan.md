@@ -144,7 +144,9 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [x] GameCanvas routes to ForestScene when `phase !== 'menu'`; pause survives ESC.
   - [x] Phase 1 vertical slice live on korovany.aimost.pl.
 
-### Phase 2 — Combat, health & injuries `[ ]`
+### Phase 2 — Combat, health & injuries `[~]`
+
+Epic: **[FLO-307](/FLO/issues/FLO-307)** — opened 2026-06-20, delegated to Daedalus (CTO) to decompose into oneshot tickets. Sequence: E2.1 must land before E2.2/2.5 can start.
 
 - **E2.1 Health & damage model** `[ ]` — HP, damage events, death state, respawn/load.
 - **E2.2 Melee combat** `[ ]` — attack animation window, hitbox sweep, damage to targets.
@@ -241,6 +243,7 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r10** (2026-06-20) — Phase 2 epic **FLO-307** opened (combat/health/injuries), delegated to Daedalus (CTO). Phase 2 marked `[~]` in plan tree. (Prospero)
 - **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
   into playing state, pause survives ESC, slice live at korovany.aimost.pl. All E1.x done.
 - **r8** (2026-06-20) — E1.4 save/load merged c2b761c (PR #20): IndexedDB writeSave/readSave/
