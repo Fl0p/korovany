@@ -108,7 +108,7 @@ Epic: **[FLO-277](/FLO/issues/FLO-277)** — board plan approved 2026-06-20.
 - **E0.3 Input system** `[x]` — FLO-279 (PR #3)
   - [x] Keyboard/mouse intent mapping; pointer-lock for mouselook; rebindable map (data-driven).
 
-### Phase 1 — Vertical slice: "An elf in the forest" `[~]`
+### Phase 1 — Vertical slice: "An elf in the forest" `[x]`
 
 Goal: a deployed build where you start a new game, spawn as an elf in a small
 forest, walk/run/jump with a third-person camera over solid ground, and your
@@ -140,8 +140,9 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [x] writeSave/readSave/deleteSave/hasSave over IndexedDB (no backend, AUTOSAVE_SLOT).
   - [x] Autosave triggered on every pause transition; Continue button shown when slot exists.
   - [x] continueGame dispatches setSaveLoaded → phase → playing; 12 new tests → 132 total.
-- **E1.5 Deploy the slice** `[ ]` — FLO-297 (all blockers done ✅)
-  - [ ] Wire ForestScene into the app play state; ship to korovany.aimost.pl; smoke in a real browser.
+- **E1.5 Deploy the slice** `[x]` — FLO-297 ✅ merged e8ccf9a (PR #21)
+  - [x] GameCanvas routes to ForestScene when `phase !== 'menu'`; pause survives ESC.
+  - [x] Phase 1 vertical slice live on korovany.aimost.pl.
 
 ### Phase 2 — Combat, health & injuries `[ ]`
 
@@ -240,6 +241,8 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
+  into playing state, pause survives ESC, slice live at korovany.aimost.pl. All E1.x done.
 - **r8** (2026-06-20) — E1.4 save/load merged c2b761c (PR #20): IndexedDB writeSave/readSave/
   hasSave, AUTOSAVE_SLOT on pause, Continue button, continueGame→playing, 132 tests.
   FLO-296 done; FLO-297 all blockers clear → ready to implement.
