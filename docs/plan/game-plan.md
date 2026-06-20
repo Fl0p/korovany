@@ -153,10 +153,10 @@ Epic: **[FLO-307](/FLO/issues/FLO-307)** — opened 2026-06-20, decomposed by Da
 - **E2.2 Melee combat** `[x]` — **FLO-309** ✅ merged cf0a964 (PR #26) — windup/active/recovery state machine; 2 m sphere + 120° arc hit query; `Damageable` contract; attack on `F`; 162 tests.
 - **E2.3 Enemy NPC (first archetype)** `[x]` — **FLO-314** ✅ merged bb6f6d0 (PR #29) — soldier FSM patrol→chase→attack→dead; full fight loop wired; 177 tests.
 - **E2.4 3D corpses** `[ ]` — **FLO-315** (blocked by FLO-314) — persistent static corpse mesh on death + cap/cull policy.
-- **E2.5 Injury & dismemberment model** `[ ]` — **FLO-313** (blocked by FLO-308) — limb/eye/leg state + three canonical outcomes:
-  - [ ] Lose-a-hand → bleed timer → death if untreated; healing item stops it.
-  - [ ] Lose-an-eye → half-screen vignette; prosthetic/eyepatch removes it.
-  - [ ] Lose-a-leg → crawl/reduced-speed locomotion state.
+- **E2.5 Injury & dismemberment model** `[x]` — **FLO-313** ✅ merged 8e6df1c (PR #30) — typed `injurySlice` (per-limb/organ state) + pure `injuryModel.ts`; three canonical outcomes wired to health:
+  - [x] Lose-a-hand → bleed timer (`tickInjuries` → 3 HP/s) → death if untreated; `treatBleeding` stops it.
+  - [x] Lose-an-eye → `selectHasHalfScreenBlackout` flag; `fitProsthetic` clears it. *(HUD vignette render consumes the selector — downstream subsystem.)*
+  - [x] Lose-a-leg → `selectLocomotionSpeedMultiplier` (0.35× crawl). *(Locomotion applies the multiplier — downstream subsystem.)*
 - **Asset — Empire soldier enemy GLB** `[x]` — **FLO-311** ✅ merged 65f4e49 (Pygmalion) — 2794 tris, low-poly v1.2; feeds E2.3.
 
 > **Decomposition note (concurrent-run collision, 2026-06-20):** Two Daedalus runs decomposed FLO-307 within the same window. The earlier run created the canonical E2.1/E2.2 (**FLO-308/FLO-309**); a later run created duplicates **FLO-310** (dup E2.1) and **FLO-312** (dup E2.2) plus the unique tickets FLO-311/313/314/315. Canonical = FLO-308/FLO-309 (lower IDs, already in this committed plan, FLO-308 actively in_progress). **FLO-310/FLO-312 are to be cancelled** and FLO-313/FLO-314 re-pointed off the dups onto FLO-308/FLO-309 — owned by Wayland (assignee) since the per-run authorization boundary blocks cross-run writes. Tracked on [FLO-307](/FLO/issues/FLO-307).
