@@ -22,6 +22,7 @@ export default defineConfig({
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Project rules', link: '/guide/project-rules' },
           { text: 'Architecture', link: '/guide/architecture' },
+          { text: 'State management', link: '/guide/state-management' },
           { text: 'Game loop', link: '/guide/game-loop' },
           { text: 'Input system', link: '/guide/input-system' },
           { text: 'Asset streaming', link: '/guide/asset-streaming' },
