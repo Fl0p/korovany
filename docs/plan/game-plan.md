@@ -100,8 +100,8 @@ Epic: **[FLO-277](/FLO/issues/FLO-277)** — board plan approved 2026-06-20.
 
 - **E0.1 Full-page canvas & app shell** `[x]` — FLO-280 (PR #4), FLO-283 (PR #7)
   - [x] Make the Babylon canvas fill the viewport (replace fixed 320px); handle resize/DPR.
-  - [ ] App state machine: `menu → playing → paused`; ESC toggles pause. *(carried into E1.0)*
-  - [ ] Main menu shell (New Game / Continue / Settings) as a React overlay. *(carried into E1.0)*
+  - [x] App state machine: `menu → playing → paused`; ESC toggles pause. *(delivered in E1.0 — FLO-292, merged 82788cd)*
+  - [x] Main menu shell (New Game / Continue / Settings) as a React overlay. *(delivered in E1.0 — FLO-292, merged 82788cd; Continue/Settings refined in FLO-302)*
 - **E0.2 Game loop & system scheduler** `[x]` — FLO-278 (PR #5)
   - [x] Fixed-step update loop in `src/game/loop/` decoupled from render FPS; unit-tested.
   - [x] System registration API (systems get `update(dt, world)`).
@@ -247,6 +247,12 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r11** (2026-06-20) — Phase-0 checkbox reconciliation (FLO-320, Kirill asked why
+  Phase 0 still showed unfinished items). The two open E0.1 boxes (state machine,
+  menu shell) were never dropped — they were intentionally carried into the E1.0
+  prelude epic [FLO-292] and shipped there (merged 82788cd, refined in FLO-302).
+  Ticked them as *delivered in E1.0* so the plan reads honestly; no code work
+  outstanding in Phase 0. (Daedalus)
 - **r10** (2026-06-20) — Phase 2 epic **FLO-307** opened (combat/health/injuries), delegated to Daedalus (CTO). Phase 2 marked `[~]` in plan tree. (Prospero)
 - **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
   into playing state, pause survives ESC, slice live at korovany.aimost.pl. All E1.x done.
