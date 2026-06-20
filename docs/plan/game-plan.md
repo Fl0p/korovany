@@ -187,7 +187,7 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 > Mountains have no scene yet (locked in the map UI). Populating the world is
 > pulled into the **Minimum Playable Game** milestone below (MPG.5).
 
-### Phase 3.5 — Minimum Playable Game (MPG) `[ ]` ⭐ NEXT PRIORITY
+### Phase 3.5 — Minimum Playable Game (MPG) `[~]` ⭐ NEXT PRIORITY
 
 > **Why this phase exists (board feedback FLO-355, 2026-06-21: "она всё ещё не
 > играбельная").** A code audit of the deployed build confirmed the gap: every
@@ -206,37 +206,31 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 > onboarding so the player knows what to do — wired into the **live** scene,
 > **before** we deepen the RPG systems.
 
-Epic: **FLO-356** *(to open on board approval of this revision)* — child of FLO-273.
+Epic: **[FLO-362](/FLO/issues/FLO-362)** — opened 2026-06-21 by Daedalus (CTO), child of FLO-273.
 Design thesis: a game needs (1) a goal, (2) visible progress toward it, (3) a
 satisfying moment-to-moment loop, (4) onboarding. Build the thinnest version of
 each, wired into the live forest/world loop. Ownership split Aldric/Wayland per
 FLO-348; visual feel & onboarding UI are **Iris-gated**; animation assets →
 Pygmalion via Iris.
 
-- **MPG.1 Objective & win/lose loop** `[ ]` — the single biggest gap. A concrete,
-  HUD-surfaced goal (e.g. "Raid 3 caravans" / "Clear the soldier camp"), score
-  wired to kills+loot, and explicit **win** and **lose** screens with restart.
-  Turns directionless sandbox into a game with a point. *(engineer)*
-- **MPG.2 Onboarding & objective intro** `[ ]` — on New Game, a dismissible
-  controls card (WASD/sprint/jump/F-attack/M-map) and the current objective, so
-  the player is never a tabula rasa. *(Iris-gated UI → engineer)*
-- **MPG.3 Combat juice / hit feedback** `[ ]` — screen shake, hit flash,
-  floating damage/feedback, knockback, death emphasis. Make attacks feel like
-  they connect. *(Iris-gated → engineer)*
-- **MPG.4 Audio system + core SFX** `[ ]` — streamed audio module: footsteps,
-  attack, hit, loot pickup, death, ambient bed. Biggest feel-per-effort uplift.
-  *(engineer; asset sourcing TBD)*
-- **MPG.5 Populate the world** `[ ]` — make zones non-empty: spawn caravans +
-  soldiers in human-lands; raise encounter density in the forest beyond one of
-  each; make the loop repeatable across the two open zones. *(engineer)*
-- **MPG.6 Surface built-but-invisible systems** `[ ]` — render injury state in the
-  HUD (bleeding indicator, eye-loss vignette via `selectHasHalfScreenBlackout`),
-  apply leg-loss locomotion multiplier to the controller, and display
-  score/loot-count. Wire the selectors that already exist but nothing consumes.
-  *(engineer)*
-- **MPG.7 Basic character animation** `[ ]` — idle / walk / attack / death clips
-  for hero + soldier via the meshy rig/animate pipeline (FLO-330). Static meshes
-  read as broken; even minimal animation reads as "alive." *(Pygmalion via Iris)*
+- **MPG.1 Objective & win/lose loop** `[ ]` — **[FLO-363](/FLO/issues/FLO-363)** (Wayland)
+  HUD-surfaced "Raid 3 caravans" goal, score wired to kills+loot, explicit win and
+  lose screens with restart. Turns directionless sandbox into a game with a point.
+- **MPG.2 Onboarding & objective intro** `[ ]` — **[FLO-364](/FLO/issues/FLO-364)** (Iris)
+  Dismissible controls card (WASD/sprint/jump/F-attack/M-map) + current objective
+  on New Game. Blocked by MPG.1.
+- **MPG.3 Combat juice / hit feedback** `[ ]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
+  Screen shake, hit flash, floating damage numbers, death slow-mo. Blocked by MPG.1.
+- **MPG.4 Audio system + core SFX** `[ ]` — *(to open; engineer + asset sourcing TBD)*
+  Streamed audio module: footsteps, attack, hit, loot pickup, death, ambient bed.
+- **MPG.5 Populate the world** `[ ]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
+  Human-lands: 2 caravans + 3 soldier patrols. Forest: 3 caravans + 5 soldiers.
+  Makes the loop repeatable across both open zones.
+- **MPG.6 Surface built-but-invisible systems** `[ ]` — **[FLO-366](/FLO/issues/FLO-366)** (Wayland)
+  Bleeding HUD indicator, eye-loss vignette, leg-loss speed multiplier wired to
+  controller, kill+loot score panel. All selectors exist — ticket wires them.
+- **MPG.7 Basic character animation** `[ ]` — *(to open; Pygmalion via Iris)*
+  Idle / walk / attack / death clips for hero + soldier via meshy rig/animate pipeline.
 
 Acceptance for the milestone: a first-time player who clicks New Game **knows what
 to do, has a goal they can complete or fail, gets audible+visible feedback for
@@ -338,7 +332,12 @@ speculative batches (FLO-270).
   & win/lose loop, MPG.2 onboarding, MPG.3 combat juice, MPG.4 audio, MPG.5
   populate the world, MPG.6 surface built-but-invisible systems, MPG.7 basic
   animation. Phase 4 reprioritized behind MPG (in-flight E4.1 continues). Epic
-  FLO-356 to open on board approval of this revision. (Daedalus)
+  Epic **FLO-362** opened, children FLO-363/364/365/366/367 cut (Wayland/Iris/Aldric). (Daedalus)
+- **r15** (2026-06-21) — MPG epic **[FLO-362](/FLO/issues/FLO-362)** opened (child of FLO-273).
+  Five high-priority oneshots cut: MPG.1 objective+win/lose [FLO-363 Wayland], MPG.2 onboarding
+  [FLO-364 Iris, blk MPG.1], MPG.3 combat juice [FLO-367 Aldric, blk MPG.1], MPG.5 populate
+  world [FLO-365 Aldric], MPG.6 surface invisible systems [FLO-366 Wayland]. MPG.4 audio and
+  MPG.7 animation remain to open once MPG.1 lands. FLO-355 closed done. (Daedalus)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
