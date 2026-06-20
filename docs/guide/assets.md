@@ -29,6 +29,7 @@ any Community/showcase page.
 | **Roadside shrine (Salt Road)** | `public/models/roadside-shrine.glb` | **1984** | 394 KiB | static | `019ee73a-c8a6-73bd-a2ec-e21137a6dba2` (preview) / `019ee747-ae35-786a-a8c7-490e65d0cddd` (retexture) |
 | **Empire toll gate** | `public/models/toll-gate.glb` | **1947** | 4.1 MiB | static | preview `019ee748-205e-763a-a883-bdda11e91c7e` · retexture `019ee749-ae59-7680-aa94-e6a8842c7bd5` |
 | **Caravan wagon (Salt Road)** | `public/models/caravan-wagon.glb` | **2827** | 394 KiB | static | `019ee749-d4cf-79b9-b813-d98be2201197` (preview) / `019ee74d-2300-772c-8a22-612c27dd99dc` (retexture) |
+| **Ruined watchtower (Salt Road)** | `public/models/watchtower.glb` | **2564** | 379 KiB | static | `019ee749-6051-7990-b286-98be4ecf82b4` (retexture) |
 
 ### Empire toll gate — Phase 3.5 (Salt Road pack)
 
@@ -39,6 +40,44 @@ Salt Road landmark and navigation anchor (world-specs.md §1). Generated for [FL
 - **Rig:** static mesh, no skeleton.
 - **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs public/models/toll-gate.glb` → 2 meshes, 1947 tris, no errors.
 - **Handoff:** scene wiring (replacing the placeholder box in `humanLandsScene.ts`) is engineering scope — see [FLO-373](/FLO/issues/FLO-373).
+
+### Ruined watchtower (Salt Road landmark) — Phase 3.5 / MPG
+
+Tall round ruined stone tower, 3–4 stories, two crenellated tiers, a doorway at
+the base and a rubble skirt — a strong vertical silhouette to serve as a
+navigation anchor on the Velya Salt Road
+([world-specs](./worlds/velya-salt-road), `world-specs.md` landmark list).
+Generated for [FLO-374](/plan/game-plan); replaces the placeholder colored box
+in `src/scenes/humanLandsScene.ts`.
+
+- **Budget:** 2564 tris — 64 over the per-asset 2500 target but within the
+  binding v1.2 cap (≤ 3000 tris/object). Kept the clean retextured mesh rather
+  than decimating a *textured* model (post-texture `simplify` risks UV-seam
+  artifacts; this is a single static landmark, not an instanced prop, so the 2.5%
+  overage costs nothing at runtime). Bounding box ≈ 1.12 × 2.0 × 1.12 Meshy
+  units — engineering should scale it up in-scene to read as a 3–4 story tower
+  (real-world ≈ 10–14 m tall); up-axis +Y, pivot at base centre.
+- **Textured (board mandate — not grey):** weathered pale grey stone with cracked
+  stonework, baked into a single 1024² base-color map (JPEG, lighting removed for
+  flat low-poly shading). Geometry-preserving **Meshy retexture** (preferred over
+  PBR refine for low-poly), then textures resized 3.6 MB → 241 KiB via
+  `tools/meshy-3d/resize_glb_textures.py --max 1024 --quality 85`, taking the GLB
+  from 3.7 MB to **379 KiB** for the web payload budget.
+- **Provenance:** Meshy text-to-3D preview → retexture.
+  - Preview prompt: *"low-poly stylized ruined stone watchtower, tall round
+    tower 3-4 stories, cracked broken stonework, partly collapsed top, weathered
+    pale grey stone, faceted flat-shaded, strong vertical silhouette visible from
+    distance, fantasy ruin"*.
+  - Retexture style prompt: *"weathered pale grey stone, faceted flat-shaded
+    low-poly, dusty sun-bleached fantasy ruin, cracked broken stonework, muted
+    earthy palette"*. Retexture task id `019ee749-6051-7990-b286-98be4ecf82b4`,
+    10 Meshy credits.
+- **Rig:** ships **static** (no skeleton) — it is scenery, not animated.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
+  public/models/watchtower.glb` → 2 meshes, 2564 tris, no errors.
+- **Handoff:** wiring the GLB into the scene (replacing the procedural
+  watchtower box at `humanLandsScene.ts:60`) is engineering's job — for
+  Daedalus/CTO, not done here.
 
 ### Empire soldier (enemy) — Phase 2
 
