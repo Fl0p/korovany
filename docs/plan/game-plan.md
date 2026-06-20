@@ -121,7 +121,8 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
 
 - **E1.0 App state machine & menu shell** `[x]` — FLO-292 (Aldric) ✅ merged 82788cd *(carried from E0.1)*
   - [x] `menu → playing → paused` state machine; ESC toggles pause.
-  - [x] Main menu shell (New Game / Continue / Settings) as a React overlay over the canvas.
+  - [x] Main menu shell with focused New Game action; dead Continue/Settings actions stay hidden until save/settings systems exist.
+  - [x] Pause overlay with focused Resume and clickable Quit to Main Menu actions.
 - **E1.1 Third-person character controller** `[ ]` — FLO-293 (Wayland)
   - [ ] Capsule controller: WASD move, sprint, gravity, ground collision.
   - [ ] Jump with coyote-time; cannot double-jump.

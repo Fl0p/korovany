@@ -36,11 +36,11 @@ function renderApp(initialPhase: AppPhase = 'menu') {
 describe('<App />', () => {
   it('renders the menu over the stubbed canvas by default', () => {
     renderApp()
+    expect(screen.getAllByRole('heading', { name: 'Korovany' })).toHaveLength(1)
     expect(screen.getByRole('heading', { name: 'Korovany', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Korovany', level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'New Game' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New Game' })).toHaveFocus()
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument()
     expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
   })
 
@@ -66,9 +66,28 @@ describe('<App />', () => {
 
     await user.keyboard('{Escape}')
     expect(screen.getByRole('heading', { name: 'Paused' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Resume' })).toHaveFocus()
 
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('heading', { name: 'Paused' })).not.toBeInTheDocument()
+  })
+
+  it('resumes and quits from the pause overlay actions', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderApp('paused')
+
+    await user.click(screen.getByRole('button', { name: 'Resume' }))
+
+    expect(screen.queryByRole('heading', { name: 'Paused' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Korovany', level: 1 })).toBeInTheDocument()
+
+    unmount()
+    renderApp('paused')
+
+    await user.click(screen.getByRole('button', { name: 'Quit to Main Menu' }))
+
+    expect(screen.queryByRole('heading', { name: 'Paused' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New Game' })).toHaveFocus()
   })
 
   it('does not pause from the main menu when Escape is pressed', async () => {

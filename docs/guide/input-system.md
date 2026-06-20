@@ -73,6 +73,11 @@ ignores it. When pointer lock is wired into the playable scene, losing pointer
 lock should dispatch the same pause transition so physical ESC and browser
 unlock behavior stay aligned.
 
+The menu overlay exposes only actions that work in the current slice. `New Game`
+is the primary focused action on boot. The pause overlay focuses
+`Resume`, and also provides a clickable `Quit to Main Menu` path so players do
+not need to rely on Escape.
+
 ## Usage sketch
 
 ```ts

@@ -76,7 +76,7 @@ body {
   text-transform: uppercase;
 }
 
-.menu-panel h2,
+.menu-panel h1,
 .pause-panel h2 {
   margin: 0;
   font-size: 2rem;
@@ -106,6 +106,17 @@ body {
   border-color: #f7d774;
   background: rgba(247, 215, 116, 0.18);
   outline: none;
+}
+
+.menu-actions button.primary-action {
+  border-color: rgba(247, 215, 116, 0.85);
+  color: #17200f;
+  background: #f7d774;
+}
+
+.menu-actions button.primary-action:hover,
+.menu-actions button.primary-action:focus-visible {
+  background: #ffe791;
 }
 
 .pause-overlay {
