@@ -149,21 +149,24 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
     position. Fixed by wiring `registerPlayer()`/`takeSpawn()` into `forestScene.ts`
     (regression-tested). Save/Continue now works end-to-end in the deployed slice.
 
-### Phase 2 — Combat, health & injuries `[~]`
+### Phase 2 — Combat, health & injuries `[x]`
 
 Epic: **[FLO-307](/FLO/issues/FLO-307)** — opened 2026-06-20, decomposed by Daedalus (CTO) into oneshot tickets 2026-06-20. Sequence: E2.1 must land before E2.2/2.5; E2.3 integrates E2.1+E2.2+soldier asset; E2.4 follows E2.3.
 
 - **E2.1 Health & damage model** `[x]` — **FLO-308** ✅ merged aa65342 (PR #23) — pure `src/game/health` system: HP, applyDamage funnel, death state → returnToMenu; 147 tests.
 - **E2.2 Melee combat** `[x]` — **FLO-309** ✅ merged cf0a964 (PR #26) — windup/active/recovery state machine; 2 m sphere + 120° arc hit query; `Damageable` contract; attack on `F`; 162 tests.
 - **E2.3 Enemy NPC (first archetype)** `[x]` — **FLO-314** ✅ merged bb6f6d0 (PR #29) — soldier FSM patrol→chase→attack→dead; full fight loop wired; 177 tests.
-- **E2.4 3D corpses** `[ ]` — **FLO-315** (blocked by FLO-314) — persistent static corpse mesh on death + cap/cull policy.
+- **E2.4 3D corpses** `[x]` — **FLO-315** ✅ merged cfeabe6 (PR #36) — persistent static corpse mesh on death (`CorpseManager` + `corpses` store) + cap/cull policy; live soldier hidden and reaped into a corpse via `reapDeadSoldiers`.
 - **E2.5 Injury & dismemberment model** `[x]` — **FLO-313** ✅ merged 8e6df1c (PR #30) — typed `injurySlice` (per-limb/organ state) + pure `injuryModel.ts`; three canonical outcomes wired to health:
   - [x] Lose-a-hand → bleed timer (`tickInjuries` → 3 HP/s) → death if untreated; `treatBleeding` stops it.
   - [x] Lose-an-eye → `selectHasHalfScreenBlackout` flag; `fitProsthetic` clears it. *(HUD vignette render consumes the selector — downstream subsystem.)*
   - [x] Lose-a-leg → `selectLocomotionSpeedMultiplier` (0.35× crawl). *(Locomotion applies the multiplier — downstream subsystem.)*
 - **Asset — Empire soldier enemy GLB** `[x]` — **FLO-311** ✅ merged 65f4e49 (Pygmalion) — 2794 tris, low-poly v1.2; feeds E2.3.
+- **HUD — visible health bar** `[x]` — ✅ merged 11868b3 (PR #38) — in-game `.hud-health` bar (width tracks `current/max`, ARIA group). Salvaged the one user-facing gap from the superseded FLO-310 dup branch; canonical health model stays FLO-308/FLO-313.
 
-> **Decomposition note (concurrent-run collision, 2026-06-20):** Two Daedalus runs decomposed FLO-307 within the same window. The earlier run created the canonical E2.1/E2.2 (**FLO-308/FLO-309**); a later run created duplicates **FLO-310** (dup E2.1) and **FLO-312** (dup E2.2) plus the unique tickets FLO-311/313/314/315. Canonical = FLO-308/FLO-309 (lower IDs, already in this committed plan, FLO-308 actively in_progress). **FLO-310/FLO-312 are to be cancelled** and FLO-313/FLO-314 re-pointed off the dups onto FLO-308/FLO-309 — owned by Wayland (assignee) since the per-run authorization boundary blocks cross-run writes. Tracked on [FLO-307](/FLO/issues/FLO-307).
+> **Phase 2 complete & live.** All E2.x tickets + assets merged to `main`; 261 tests green. The full fight loop is playable: player melee (F) damages soldiers → they die into persistent corpses; soldiers chase/attack → player HP (now visible in the HUD) drains → death returns to menu; injuries (bleed/eye/leg) model the three canonical outcomes.
+
+> **Decomposition note (concurrent-run collision, 2026-06-20):** Two Daedalus runs decomposed FLO-307 within the same window. The earlier run created the canonical E2.1/E2.2 (**FLO-308/FLO-309**); a later run created duplicates **FLO-310** (dup E2.1) and **FLO-312** (dup E2.2) plus the unique tickets FLO-311/313/314/315. Canonical = FLO-308/FLO-309 (lower IDs, already in this committed plan). **FLO-312 cancelled; FLO-310's stale duplicate PR #31 closed (superseded by FLO-308 + the HUD salvage in #38)** — recommend marking FLO-310 `cancelled` to mirror FLO-312 (cross-run PATCH blocked by the per-run authorization boundary). Tracked on [FLO-307](/FLO/issues/FLO-307).
 
 ### Phase 3 — World, caravans & loot loop `[ ]`
 
