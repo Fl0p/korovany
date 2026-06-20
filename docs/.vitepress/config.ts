@@ -29,6 +29,7 @@ export default defineConfig({
           { text: 'Generated assets', link: '/guide/assets' },
           { text: 'Character controller', link: '/guide/character-controller' },
           { text: 'Forest zone', link: '/guide/forest-zone' },
+          { text: 'World map & zones', link: '/guide/world-map' },
           {
             text: 'World specs',
             link: '/guide/world-specs',
