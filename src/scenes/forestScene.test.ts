@@ -1,5 +1,5 @@
 import { NullEngine, Scene } from '@babylonjs/core'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   FOREST_TREE_ASSET_ID,
   WOODEN_HUT_ASSET_ID,
@@ -7,6 +7,12 @@ import {
   seedForestAssets,
 } from './forestScene'
 import { AssetRegistry } from '../game/streaming'
+import {
+  applyPlayerTransform,
+  readPlayerTransform,
+  stageSpawn,
+  takeSpawn,
+} from '../game/save/playerRuntime'
 
 // jsdom has no WebGL, so inject a headless NullEngine and skip hero/asset GLB
 // fetches. Asserts the scene wires the ground, controller, and streaming loader.
@@ -68,5 +74,43 @@ describe('createForestScene', () => {
     expect(game.scene.isDisposed).toBe(true)
     expect(() => game.dispose()).not.toThrow()
     remove.mockRestore()
+  })
+})
+
+// Regression guard for FLO-297: the deployed slice autosaved nothing and never
+// restored position because the forest scene mounted into `playing` forgot to
+// register the player handle with the save bridge (only the `?dev` playground
+// did). These assert the integration the E1.5 capstone is responsible for.
+describe('createForestScene — save bridge (E1.4/E1.5 integration)', () => {
+  beforeEach(() => {
+    // Clear any spawn staged by a previous test so each boot is deterministic.
+    takeSpawn()
+  })
+
+  it('registers the live player so autosave-on-pause has a pose to read', () => {
+    expect(readPlayerTransform()).toBeNull()
+    const game = boot()
+    const pose = readPlayerTransform()
+    expect(pose).not.toBeNull()
+    expect(pose!.position).toEqual({ x: 0, y: 2, z: 0 })
+    game.dispose()
+    // A torn-down scene must stop being the save source of truth.
+    expect(readPlayerTransform()).toBeNull()
+  })
+
+  it('lets Continue teleport the live capsule via applyPlayerTransform', () => {
+    const game = boot()
+    const target = { position: { x: 5, y: 2, z: -3 }, rotationY: 1 }
+    expect(applyPlayerTransform(target)).toBe(true)
+    expect(readPlayerTransform()).toEqual(target)
+    game.dispose()
+  })
+
+  it('boots at a staged Continue spawn instead of the clearing centre', () => {
+    const spawn = { position: { x: -8, y: 2, z: 11 }, rotationY: 0.5 }
+    stageSpawn(spawn)
+    const game = boot()
+    expect(readPlayerTransform()).toEqual(spawn)
+    game.dispose()
   })
 })

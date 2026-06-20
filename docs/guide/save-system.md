@@ -39,6 +39,26 @@ a UI concern, not a format change.
 The data lives only on the user's device. It is not uploaded anywhere and is not
 shared between browsers or machines.
 
+## The scene bridge (required wiring)
+
+The UI layer decides _when_ to save, but only the live Babylon scene knows the
+player's pose. They meet through
+[`src/game/save/playerRuntime.ts`](https://github.com/Flopsstuff/korovany/blob/main/src/game/save/playerRuntime.ts):
+
+- **Every scene mounted into the `playing` state must call `registerPlayer({ read, write })` on boot** and the returned unregister function on dispose.
+  `read` returns `controller.snapshot()`; `write` calls `controller.teleport(t)`.
+- Autosave-on-pause reads the pose via `readPlayerTransform()`. **If no scene
+  registered a handle, this returns `null` and the autosave silently writes
+  nothing** — so the wiring is not optional.
+- Continue stages the loaded pose with `stageSpawn()` (consumed by the next
+  scene's `takeSpawn()`) _and_ `applyPlayerTransform()` to teleport an
+  already-running scene, covering both "scene boots after Continue" and "scene
+  already running".
+
+Both the live forest zone (`forestScene.ts`) and the `?dev=controller`
+playground register this handle; `forestScene.test.ts` guards the registration
+so the slice cannot regress to saving nothing.
+
 ## When it saves and loads
 
 - **Autosave on pause.** Entering the paused state (Escape from play, the E1.0
