@@ -19,9 +19,9 @@ For the level-design lore and layout targets behind each zone, see the
 
 `available` zones have a scene and can be travelled to. `locked` zones are
 declared in the registry so the world map can list all four, but travel to them
-is disabled until their scene is built. E3.1 ships **Forest** (the Phase-1
-vertical slice) and a **Human-lands** stub so travel between two zones works
-end-to-end.
+is disabled until their scene is built. The open zones are **Forest** and
+**Human Lands**; MPG.5 populates both on entry with caravans and soldier patrols
+so fast-travel never lands the player in an empty combat zone.
 
 ## Zone registry
 

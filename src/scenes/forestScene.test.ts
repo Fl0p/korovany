@@ -250,8 +250,18 @@ describe('createForestScene — caravan loot loop (E3.5)', () => {
   it('spawns a wandering caravan into the live zone', () => {
     const game = boot()
     expect(game.caravan).toBeDefined()
+    expect(game.caravans).toHaveLength(3)
     expect(game.scene.getMeshByName('caravan')).not.toBeNull()
     expect(game.caravan.isDead()).toBe(false)
+    game.dispose()
+  })
+
+  it('meets the MPG.5 minimum population on zone enter', () => {
+    const game = boot()
+    expect(game.caravans.length).toBeGreaterThanOrEqual(3)
+    expect(game.soldiers.length).toBeGreaterThanOrEqual(5)
+    expect(game.caravans.every((caravan) => !caravan.isDead())).toBe(true)
+    expect(game.soldiers.every((soldier) => !soldier.isDead())).toBe(true)
     game.dispose()
   })
 

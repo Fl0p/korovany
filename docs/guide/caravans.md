@@ -115,11 +115,13 @@ ambush a caravan (forest scene)
   → <InventoryPanel> re-renders the new counts in the HUD "Loot" panel
 ```
 
-`createForestScene` accepts an `onCaravanLooted?` option and spawns one
-wandering caravan into the live zone (alongside the soldiers); the player ambushes
-it on the same melee path. `GameCanvas` supplies the callback only for the live
-`playing` scene, so the standalone `?dev=caravan` playground keeps logging to the
-console without touching the store.
+`createForestScene` and `createHumanLandsScene` accept an `onCaravanLooted?`
+option and spawn caravans into their live zones; the player ambushes them on the
+same melee path. MPG.5 guarantees the Forest boots with at least 3 caravans and
+Human Lands boots with at least 2, so the loop is repeatable after a zone enter.
+`GameCanvas` supplies the callback only for the live `playing` scene, so the
+standalone `?dev=caravan` playground keeps logging to the console without
+touching the store.
 
 ## Ambush loop (scene wiring)
 

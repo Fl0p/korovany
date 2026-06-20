@@ -122,6 +122,10 @@ export interface ForestScene {
   readonly controller: CharacterController
   /** The wandering caravan the player ambushes for loot (E3.5). */
   readonly caravan: CaravanEnemy
+  /** All caravans spawned into the zone on enter (MPG.5). */
+  readonly caravans: readonly CaravanEnemy[]
+  /** All soldier patrols spawned into the zone on enter (MPG.5). */
+  readonly soldiers: readonly SoldierEnemy[]
   /**
    * Advance one frame by `dt` seconds. The render loop calls this every frame;
    * tests drive it directly to step the simulation deterministically.
@@ -131,6 +135,18 @@ export interface ForestScene {
 }
 
 const DEFAULT_HERO_URL = '/models/korovany_hero_player-default.glb'
+const FOREST_SOLDIER_SPAWNS = [
+  new Vector3(6, 0.9, 6),
+  new Vector3(12, 0.9, -8),
+  new Vector3(-12, 0.9, 8),
+  new Vector3(16, 0.9, 12),
+  new Vector3(-16, 0.9, -10),
+] as const
+const FOREST_CARAVAN_SPAWNS = [
+  new Vector3(-8, 1, -6),
+  new Vector3(10, 1, -14),
+  new Vector3(-14, 1, 12),
+] as const
 
 function defaultEngineFactory(canvas: HTMLCanvasElement): Engine {
   return new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true)
@@ -233,27 +249,30 @@ export function createForestScene(
   }
 
   // ------------------------------------------------------------------
-  // Enemy soldiers — E2.3 fight loop.
+  // Enemy soldiers — E2.3 fight loop, populated for MPG.5.
   // ------------------------------------------------------------------
-  const soldiers: SoldierEnemy[] = [
-    new SoldierEnemy(scene, {
-      spawn: new Vector3(6, 0.9, 6),
-      getPlayerPos: () => controller.mesh.position,
-      onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
-    }),
-  ]
+  const soldiers = FOREST_SOLDIER_SPAWNS.map(
+    (spawn) =>
+      new SoldierEnemy(scene, {
+        spawn,
+        getPlayerPos: () => controller.mesh.position,
+        onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
+      }),
+  )
 
   // ------------------------------------------------------------------
-  // Caravan — E3.3 loot piñata wired into the live zone (E3.5). It wanders a
-  // loop until ambushed, flees when struck, and on defeat emits its rolled loot
-  // via `onCaravanLooted` — the reward event the caller dispatches into the
-  // inventory (E3.4) so the HUD reflects the haul.
+  // Caravans — E3.3 loot piñatas wired into the live zone (E3.5), expanded for
+  // MPG.5 so repeated raids are possible without leaving the zone.
   // ------------------------------------------------------------------
-  const caravan = new CaravanEnemy(scene, {
-    spawn: new Vector3(-8, 1, -6),
-    getPlayerPos: () => controller.mesh.position,
-    onLooted: onCaravanLooted,
-  })
+  const caravans = FOREST_CARAVAN_SPAWNS.map(
+    (spawn) =>
+      new CaravanEnemy(scene, {
+        spawn,
+        getPlayerPos: () => controller.mesh.position,
+        onLooted: onCaravanLooted,
+      }),
+  )
+  const caravan = caravans[0]
 
   // ------------------------------------------------------------------
   // Corpses — E2.4. Re-spawns any corpses recorded earlier this session and
@@ -273,7 +292,7 @@ export function createForestScene(
   const loop = new FixedStepLoop({ world: undefined, dt: 1 / 60 })
   loop.scheduler.register(controller)
   for (const s of soldiers) loop.scheduler.register(s)
-  loop.scheduler.register(caravan)
+  for (const c of caravans) loop.scheduler.register(c)
 
   // One simulation+render frame. Extracted so the render loop and tests share
   // the exact same stepping path.
@@ -294,14 +313,14 @@ export function createForestScene(
     prevAttack = frameIntent.attack
     meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
 
-    // During the active hit window, check all living targets — soldiers and the
-    // caravan share the same Damageable melee path; defeating the caravan fires
+    // During the active hit window, check all living targets — soldiers and
+    // caravans share the same Damageable melee path; defeating any caravan fires
     // its loot event (E3.5).
     if (meleeState.hitWindowOpen) {
       const playerPos = controller.mesh.position
       const forward = controller.mesh.forward
       const targets: Damageable[] = soldiers.filter((s) => !s.isDead())
-      if (!caravan.isDead()) targets.push(caravan)
+      targets.push(...caravans.filter((c) => !c.isDead()))
       const hits = getMeleeHits(meleeState, playerPos as unknown as Vec3, forward as unknown as Vec3, targets)
       hits.forEach((h) => h.takeDamage(25))
     }
@@ -327,6 +346,8 @@ export function createForestScene(
     scene,
     controller,
     caravan,
+    caravans,
+    soldiers,
     step: frame,
     dispose() {
       if (disposed) return
@@ -340,7 +361,7 @@ export function createForestScene(
       )
       zoneManager.dispose()
       for (const s of soldiers) s.dispose()
-      caravan.dispose()
+      for (const c of caravans) c.dispose()
       corpses.dispose() // meshes only — store records persist for re-enter
       scene.dispose()
       engine.dispose()
