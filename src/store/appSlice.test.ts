@@ -19,7 +19,7 @@ describe('appSlice', () => {
     expect(appReducer(state, startNewGame()).phase).toBe('playing')
   })
 
-  it('continues into playing when a save slot is restored', () => {
+  it('continues into the game from the menu (resume a save)', () => {
     const state: AppState = { phase: 'menu' }
     expect(appReducer(state, continueGame()).phase).toBe('playing')
   })

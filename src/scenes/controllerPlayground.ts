@@ -13,6 +13,8 @@ import { ThirdPersonCamera } from '../game/camera'
 import { CharacterController } from '../game/controller'
 import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
+import { registerPlayer, takeSpawn } from '../game/save/playerRuntime'
+import type { PlayerTransform } from '../game/save/types'
 import { loadModel } from './modelLoader'
 
 /**
@@ -32,6 +34,12 @@ export interface ControllerPlaygroundOptions {
   heroUrl?: string | null
   /** Engine factory — inject a headless `NullEngine` in tests. */
   createEngine?: (canvas: HTMLCanvasElement) => AbstractEngine
+  /**
+   * Spawn pose for the capsule. Defaults to whatever Continue staged via
+   * `takeSpawn()` (a loaded save), or the playground's default spawn when no save
+   * is pending. Pass explicitly in tests.
+   */
+  initialSpawn?: PlayerTransform | null
 }
 
 /** Live handle mirroring {@link import('../engine').GameEngine} so callers tear it down the same way. */
@@ -53,7 +61,11 @@ export function createControllerPlayground(
   canvas: HTMLCanvasElement,
   options: ControllerPlaygroundOptions = {},
 ): ControllerPlayground {
-  const { heroUrl = DEFAULT_HERO_URL, createEngine = defaultEngineFactory } = options
+  const {
+    heroUrl = DEFAULT_HERO_URL,
+    createEngine = defaultEngineFactory,
+    initialSpawn = takeSpawn(),
+  } = options
 
   const engine = createEngine(canvas)
   const scene = new Scene(engine)
@@ -87,10 +99,21 @@ export function createControllerPlayground(
 
   // The controller owns the capsule; the rig follows that capsule; the
   // controller then takes the rig's camera as its movement basis.
+  const spawnPos = initialSpawn
+    ? new Vector3(initialSpawn.position.x, initialSpawn.position.y, initialSpawn.position.z)
+    : new Vector3(0, 5, 0)
   const controller = new CharacterController({
     scene,
     getIntent: () => frameIntent,
-    spawn: new Vector3(0, 5, 0),
+    spawn: spawnPos,
+    spawnRotationY: initialSpawn?.rotationY ?? 0,
+  })
+
+  // Expose the live capsule to the save system: autosave-on-pause reads the pose,
+  // Continue teleports it to a loaded save.
+  const unregisterPlayer = registerPlayer({
+    read: () => controller.snapshot(),
+    write: (transform) => controller.teleport(transform),
   })
 
   const rig = new ThirdPersonCamera({ scene, target: controller.mesh })
@@ -137,6 +160,7 @@ export function createControllerPlayground(
     dispose() {
       if (disposed) return
       disposed = true
+      unregisterPlayer()
       window.removeEventListener('resize', onResize)
       input.dispose()
       engine.stopRenderLoop()

@@ -24,8 +24,13 @@ const healthSlice = createSlice({
     resetPlayerHealth(state) {
       state.player = createHealth(PLAYER_MAX_HP)
     },
+    /** Overwrite player health from a loaded save (Continue). */
+    restorePlayerHealth(state, action: PayloadAction<HealthState>) {
+      state.player = { current: action.payload.current, max: action.payload.max }
+    },
   },
 })
 
-export const { damagePlayer, healPlayer, resetPlayerHealth } = healthSlice.actions
+export const { damagePlayer, healPlayer, resetPlayerHealth, restorePlayerHealth } =
+  healthSlice.actions
 export const healthReducer = healthSlice.reducer

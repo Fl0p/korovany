@@ -108,6 +108,23 @@ body {
   outline: none;
 }
 
+.menu-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.menu-actions button:disabled:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: #aeb9c4;
+  text-align: center;
+}
+
 .pause-overlay {
   background: rgba(6, 10, 14, 0.38);
 }

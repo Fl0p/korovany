@@ -57,8 +57,8 @@ The game renders into a **full-window 3D canvas** — the document never scrolls
 and there is no `max-width` container (`src/styles/global.css` resets
 `html/body/#root` and hides overflow). React overlays sit above the canvas for
 the HUD, main menu, and pause screen. The app boots into the main menu; **New
-Game** enters play, **Continue** is present as a save-flow stub, and `ESC`
-toggles `playing ⇄ paused`.
+Game** enters play, **Continue** resumes the latest save (see
+[Saving progress](#saving-progress)), and `ESC` toggles `playing ⇄ paused`.
 
 The Babylon `Engine`/`Scene` lifecycle lives in **[`src/engine/`](src/engine/index.ts)**,
 not inline in a component. `createGameEngine(canvas)` owns engine + scene
@@ -83,6 +83,25 @@ Binary game assets (GLB models, textures, audio) are stored in **Git LFS** — r
 
 Rationale and the import contract: [`docs/decisions/0001-asset-hosting.md`](docs/decisions/0001-asset-hosting.md)
 and [`0002-glb-import-contract.md`](docs/decisions/0002-glb-import-contract.md).
+
+## Saving progress
+
+Player progress survives a browser reload. A small **versioned** snapshot — the
+player's transform (position + yaw), health (`current` + `max`), and zone id — is
+persisted to the browser's **IndexedDB** (`korovany-save` database, one autosave
+slot).
+
+- **Autosave on pause:** entering the paused state writes the snapshot.
+- **Continue:** the main menu's Continue button loads the latest slot and spawns
+  the player at the saved pose/health; it is disabled with an empty-state hint
+  when no save exists.
+- **Retention:** saves persist on the device until overwritten by the next
+  autosave or cleared (`clearSave()`, or clearing the site's browser data).
+  Nothing is uploaded; saves are local to the browser.
+
+The schema is **forever** — fields are never renamed; format changes bump
+`SAVE_VERSION` and add a migration. Full details, slot model, and the test
+approach (`fake-indexeddb`): [`docs/guide/save-system.md`](docs/guide/save-system.md).
 
 ## Deployment
 

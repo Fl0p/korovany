@@ -9,6 +9,7 @@ import {
 } from '@babylonjs/core'
 import type { System } from '../loop'
 import type { Intent } from '../input'
+import type { PlayerTransform } from '../save/types'
 import {
   DEFAULT_MOVEMENT_PARAMS,
   type MovementParams,
@@ -44,6 +45,8 @@ export interface CharacterControllerOptions {
   readonly params?: MovementParams
   /** Spawn position of the capsule origin (centre). Default `(0, 1, 0)`. */
   readonly spawn?: Vector3
+  /** Initial capsule yaw in radians (e.g. restored from a save). Default 0. */
+  readonly spawnRotationY?: number
   /** Total capsule height; also sets the ground-clamp half-height. Default 1.8. */
   readonly capsuleHeight?: number
   /** Capsule radius. Default 0.4. */
@@ -88,6 +91,7 @@ export class CharacterController implements System {
     const spawn = options.spawn ?? new Vector3(0, height / 2, 0)
     this.mesh = MeshBuilder.CreateCapsule('playerCapsule', { height, radius }, this.scene)
     this.mesh.position.copyFrom(spawn)
+    this.mesh.rotation.y = options.spawnRotationY ?? 0
     // The capsule is a collider, not a pick target: it must never register as
     // its own ground or occlude its own follow camera.
     this.mesh.isPickable = false
@@ -109,6 +113,28 @@ export class CharacterController implements System {
   /** Whether the capsule was resting on ground at the end of the last step. */
   get grounded(): boolean {
     return this.state.grounded
+  }
+
+  /**
+   * Serialisable snapshot of the capsule pose for the save system: world
+   * position plus yaw. Returns plain numbers (not the live `Vector3`) so callers
+   * can persist it without aliasing the mesh.
+   */
+  snapshot(): PlayerTransform {
+    const p = this.mesh.position
+    return { position: { x: p.x, y: p.y, z: p.z }, rotationY: this.mesh.rotation.y }
+  }
+
+  /**
+   * Teleport the capsule to a pose (e.g. restoring a save). Resets the authoritative
+   * movement state — not just the mesh — so the next step does not snap back, and
+   * clears vertical velocity so the player does not inherit a stale fall.
+   */
+  teleport(transform: PlayerTransform): void {
+    const { x, y, z } = transform.position
+    this.state = { ...this.state, posX: x, posY: y, posZ: z, velY: 0 }
+    this.mesh.position.set(x, y, z)
+    this.mesh.rotation.y = transform.rotationY
   }
 
   update(dt: number): void {

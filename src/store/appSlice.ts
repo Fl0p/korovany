@@ -16,6 +16,8 @@ const appSlice = createSlice({
       state.phase = 'playing'
     },
     continueGame(state) {
+      // Resume a loaded save: the player-state restore (health/zone + staged
+      // spawn transform) happens alongside this in the UI layer.
       state.phase = 'playing'
     },
     togglePause(state) {

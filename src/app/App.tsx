@@ -1,23 +1,35 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
+import { hasSave, loadLatest, saveGame } from '../game/save'
+import {
+  applyPlayerTransform,
+  readPlayerTransform,
+  stageSpawn,
+} from '../game/save/playerRuntime'
 import {
   continueGame,
+  resetPlayer,
   resetPlayerHealth,
+  restorePlayer,
+  restorePlayerHealth,
   returnToMenu,
   selectIsStreamingLoading,
-  setSaveExists,
-  setSaveLoaded,
   startNewGame,
   togglePause,
   useAppDispatch,
   useAppSelector,
 } from '../store'
-import { AUTOSAVE_SLOT, hasSave, readSave, writeSave } from '../game/save'
 
 /**
  * App shell: a full-viewport stage holding the 3D canvas with React overlays
  * above it. The app state machine owns coarse flow while Babylon remains
  * isolated behind GameCanvas.
+ *
+ * It also owns the save/load wiring (E1.4): autosave whenever the game enters
+ * `paused`, and a **Continue** button that restores the latest save. The live
+ * capsule transform crosses the React↔Babylon boundary only through the save
+ * `playerRuntime` bridge — never a direct mesh reference. Health is sourced from
+ * the canonical `healthSlice`; the zone id from `playerSlice`.
  *
  * See `src/styles/global.css` for the no-scroll, full-page reset and the
  * `.app-shell` / overlay layering.
@@ -25,40 +37,56 @@ import { AUTOSAVE_SLOT, hasSave, readSave, writeSave } from '../game/save'
 export function App() {
   const dispatch = useAppDispatch()
   const phase = useAppSelector((state) => state.app.phase)
+  const health = useAppSelector((state) => state.health.player)
+  const zoneId = useAppSelector((state) => state.player.zoneId)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
-  const hasSaveSlot = useAppSelector((state) => state.save.hasSave)
-  const score = useAppSelector((state) => state.game.score)
-  const playerHp = useAppSelector((state) => state.health.player.current)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
+
+  const [hasSaveSlot, setHasSaveSlot] = useState(false)
 
   // Return to menu on player death; reset HP so a subsequent New Game starts fresh.
   useEffect(() => {
     if (phase !== 'playing' && phase !== 'paused') return
-    if (playerHp > 0) return
+    if (health.current > 0) return
     dispatch(resetPlayerHealth())
     dispatch(returnToMenu())
-  }, [playerHp, phase, dispatch])
+  }, [health.current, phase, dispatch])
 
-  // Check for autosave on first mount so the Continue button can appear.
-  useEffect(() => {
-    void hasSave(AUTOSAVE_SLOT).then((exists) => dispatch(setSaveExists(exists)))
-  }, [dispatch])
+  // Latest player scalars, read at autosave time without re-arming the pause
+  // effect every time health/zone change.
+  const snapshotRef = useRef({ health, zoneId })
+  snapshotRef.current = { health, zoneId }
 
-  // Autosave whenever the game is paused.
+  // Probe whether a save exists so the Continue button can render enabled/empty.
   useEffect(() => {
-    if (phase !== 'paused') return
-    void writeSave(AUTOSAVE_SLOT, {
-      zoneId: 'forest',
-      playerPos: { x: 0, y: 0, z: 0 },
-      score,
-      savedAt: Date.now(),
-    }).then(() => dispatch(setSaveExists(true)))
-  }, [phase, score, dispatch])
+    let active = true
+    void hasSave()
+      .then((exists) => {
+        if (active) setHasSaveSlot(exists)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     if (phase === 'menu') menuPrimaryActionRef.current?.focus()
     else if (phase === 'paused') pausePrimaryActionRef.current?.focus()
+  }, [phase])
+
+  // Autosave on the transition into `paused`. The transform comes from the live
+  // scene via the bridge; health from `healthSlice`, zone from `playerSlice`. No
+  // scene mounted → skip.
+  useEffect(() => {
+    if (phase !== 'paused') return
+    const transform = readPlayerTransform()
+    if (!transform) return
+    const { health: hp, zoneId: zone } = snapshotRef.current
+    void saveGame({ transform, health: hp, zoneId: zone }, Date.now())
+      .then(() => setHasSaveSlot(true))
+      .catch(() => {})
   }, [phase])
 
   useEffect(() => {
@@ -72,12 +100,22 @@ export function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [dispatch])
 
-  function handleContinue() {
-    void readSave(AUTOSAVE_SLOT).then((save) => {
-      if (save) dispatch(setSaveLoaded(save))
-      dispatch(continueGame())
-    })
-  }
+  const onNewGame = useCallback(() => {
+    dispatch(resetPlayer())
+    dispatch(resetPlayerHealth())
+    dispatch(startNewGame())
+  }, [dispatch])
+
+  const onContinue = useCallback(async () => {
+    const data = await loadLatest()
+    if (!data) return
+    // Stage for a scene that boots later; teleport the one already running.
+    stageSpawn(data.transform)
+    applyPlayerTransform(data.transform)
+    dispatch(restorePlayerHealth(data.health))
+    dispatch(restorePlayer({ zoneId: data.zoneId }))
+    dispatch(continueGame())
+  }, [dispatch])
 
   return (
     <div className="app-shell">
@@ -98,16 +136,22 @@ export function App() {
                 ref={menuPrimaryActionRef}
                 type="button"
                 className="primary-action"
-                onClick={() => dispatch(startNewGame())}
+                onClick={onNewGame}
               >
                 New Game
               </button>
-              {hasSaveSlot ? (
-                <button type="button" onClick={handleContinue}>
-                  Continue
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => void onContinue()}
+                disabled={!hasSaveSlot}
+                aria-disabled={!hasSaveSlot}
+              >
+                Continue
+              </button>
             </div>
+            {!hasSaveSlot ? (
+              <p className="menu-hint">No saved game yet — start a new game.</p>
+            ) : null}
           </div>
         </main>
       ) : null}

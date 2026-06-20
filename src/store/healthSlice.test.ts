@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { damagePlayer, healPlayer, healthReducer, resetPlayerHealth } from './healthSlice'
+import {
+  damagePlayer,
+  healPlayer,
+  healthReducer,
+  resetPlayerHealth,
+  restorePlayerHealth,
+} from './healthSlice'
 
 describe('healthSlice', () => {
   it('boots with full player health (100)', () => {
@@ -38,5 +44,11 @@ describe('healthSlice', () => {
     const s1 = healthReducer(s0, damagePlayer(80))
     const s2 = healthReducer(s1, resetPlayerHealth())
     expect(s2.player.current).toBe(100)
+  })
+
+  it('restorePlayerHealth overwrites current + max from a loaded save', () => {
+    const s0 = healthReducer(undefined, { type: '@@INIT' })
+    const s1 = healthReducer(s0, restorePlayerHealth({ current: 37, max: 120 }))
+    expect(s1.player).toEqual({ current: 37, max: 120 })
   })
 })

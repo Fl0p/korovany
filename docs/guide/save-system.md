@@ -1,75 +1,74 @@
-# Save system (IndexedDB)
+# Save system
 
-The save system (E1.4) persists player progress to the browser's IndexedDB
-database — no backend, fully serverless. The implementation lives in
-`src/game/save/`.
+Korovany persists player progress locally so a game survives a browser reload.
+The system is small and deliberately scoped: a versioned snapshot of the player,
+stored in **IndexedDB**, restored on **Continue**.
 
-## Design
+Source lives in [`src/game/save/`](https://github.com/Flopsstuff/korovany/tree/main/src/game/save).
 
-| Concern | Where |
-| ------- | ----- |
-| Read/write/delete slots | `src/game/save/saveStore.ts` |
-| Slot key constants | `src/game/save/slots.ts` (`AUTOSAVE_SLOT`) |
-| Save/load state in Redux | `src/store/saveSlice.ts` |
-| Autosave trigger | `src/app/App.tsx` — fires on every `paused` phase transition |
-| Continue button | `src/app/App.tsx` — appears only when `state.save.hasSave` is `true` |
+## What is saved
 
-## API
+A save record is a single small JSON-shaped object:
 
-```ts
-import { writeSave, readSave, deleteSave, hasSave, AUTOSAVE_SLOT } from '../game/save'
+| Field       | Meaning                                                        |
+| ----------- | ------------------------------------------------------------- |
+| `version`   | Schema version the record was written with (currently `1`).   |
+| `transform` | Player capsule pose: `position` (`x,y,z`) + `rotationY` (yaw). |
+| `health`    | Player health as `{ current, max }` so max HP survives reload. |
+| `zoneId`    | Identifier of the zone the player was in.                     |
+| `savedAt`   | Epoch milliseconds the snapshot was taken (picks the latest). |
 
-// Save to the autosave slot
-await writeSave(AUTOSAVE_SLOT, {
-  zoneId: 'forest',
-  playerPos: { x: 0, y: 0, z: 0 },
-  score: 42,
-  savedAt: Date.now(),
-})
+Only this compact state is persisted. **Assets are never saved** — meshes,
+textures and audio always stream from their own pipeline. This mirrors the
+"one small volume" lens: the save store holds a tiny payload, never bulk data.
 
-// Read back
-const save = await readSave(AUTOSAVE_SLOT)  // SavePayload | null
+The transform comes from the live Babylon capsule; `health` comes from the
+canonical `healthSlice` (`{ current, max }`, the single health authority); and
+`zoneId` comes from the Redux `player` slice. (Zones are a placeholder today —
+E1.1 is movement + camera only — so the `player` slice seeds a sensible default:
+`zoneId: "forest"`. Health is real as of E2.1.)
 
-// Check existence (cheap — no deserialization)
-const exists = await hasSave(AUTOSAVE_SLOT) // boolean
-```
+## Where it is stored
 
-### `SavePayload`
+In the browser's **IndexedDB**, database `korovany-save`, object store `slots`
+keyed by a numeric slot id. There is currently **one slot** — slot `0`, the
+autosave slot. The slot model is built to grow: `saveGame`/`loadLatest` already
+take a `slot` option and `latest()` selects by `savedAt`, so additional slots are
+a UI concern, not a format change.
 
-```ts
-interface SavePayload {
-  zoneId: string          // zone the player was in
-  playerPos: PlayerPos    // { x, y, z } in scene units
-  score: number           // player score
-  savedAt: number         // ms since epoch
-}
-```
+The data lives only on the user's device. It is not uploaded anywhere and is not
+shared between browsers or machines.
 
-## Slots
+## When it saves and loads
 
-The system supports named slots (`AUTOSAVE_SLOT = 'autosave'`, or any string).
-The Phase-1 slice uses a single autosave slot. Manual save slots are a Phase-6
-feature (`src/game/save/slots.ts` is the canonical place to add them).
+- **Autosave on pause.** Entering the paused state (Escape from play, the E1.0
+  pause transition) writes the current player snapshot to the autosave slot.
+- **Continue.** The main-menu **Continue** button loads the most recent slot,
+  restores health + zone into the store, and teleports the player to the saved
+  transform. It is **disabled with an empty-state hint when no save exists**.
+- **New Game** resets the player to defaults; it does not erase the autosave, so
+  a later Continue still resumes the last paused session until it is overwritten.
 
-## Autosave behaviour
+## Retention and clearing
 
-`App.tsx` watches the Redux phase. When the phase transitions to `'paused'`, it
-calls `writeSave(AUTOSAVE_SLOT, ...)` with the current score and zone id, then
-dispatches `setSaveExists(true)` so the Continue button appears.
+Saves persist until overwritten by the next autosave or cleared. There is no
+expiry. Programmatic clearing is available via `clearSave()`. Because the data
+lives in IndexedDB, a user can also remove it by clearing site data for the app's
+origin in their browser. Corrupt or unreadable records are ignored on load (the
+game falls back to the empty-save state) rather than crashing.
 
-On mount, `hasSave(AUTOSAVE_SLOT)` is checked once to hydrate `state.save.hasSave`.
+## Schema is forever
 
-## Continue flow
+Once a field ships it is **never renamed or silently repurposed**. Evolving the
+format means bumping `SAVE_VERSION` in
+[`src/game/save/types.ts`](https://github.com/Flopsstuff/korovany/blob/main/src/game/save/types.ts)
+and adding a forward-migration step in `schema.ts` that maps the old shape onto
+the new one. `parseSaveData()` validates and migrates every record on read, so a
+save written by an old build still loads in a newer one.
 
-1. User clicks **Continue** in the main menu.
-2. `readSave(AUTOSAVE_SLOT)` resolves with the saved payload.
-3. `setSaveLoaded(payload)` is dispatched — the payload is available at
-   `state.save.loadedSave` for the scene to restore player position and score.
-4. `continueGame()` is dispatched → phase transitions to `'playing'`.
+## Testing
 
-## Tests
-
-- `src/game/save/saveStore.test.ts` — round-trip, overwrite, multi-slot isolation,
-  delete, hasSave (uses `fake-indexeddb` shim; 8 tests).
-- `src/store/saveSlice.test.ts` — slice initial state, setSaveExists, setSaveLoaded
-  (4 tests).
+The whole layer runs headless under jsdom by injecting an `IDBFactory`
+(`fake-indexeddb`) into `openSaveStore(factory)` / the convenience helpers — no
+globals required. See `src/game/save/save.test.ts` for the round-trip,
+version-field, empty-store and corrupt-record cases.
