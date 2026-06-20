@@ -87,8 +87,9 @@ and [`0002-glb-import-contract.md`](docs/decisions/0002-glb-import-contract.md).
 ## Saving progress
 
 Player progress survives a browser reload. A small **versioned** snapshot — the
-player's transform (position + yaw), health, and zone id — is persisted to the
-browser's **IndexedDB** (`korovany-save` database, one autosave slot).
+player's transform (position + yaw), health (`current` + `max`), and zone id — is
+persisted to the browser's **IndexedDB** (`korovany-save` database, one autosave
+slot).
 
 - **Autosave on pause:** entering the paused state writes the snapshot.
 - **Continue:** the main menu's Continue button loads the latest slot and spawns

@@ -14,7 +14,7 @@ A save record is a single small JSON-shaped object:
 | ----------- | ------------------------------------------------------------- |
 | `version`   | Schema version the record was written with (currently `1`).   |
 | `transform` | Player capsule pose: `position` (`x,y,z`) + `rotationY` (yaw). |
-| `health`    | Player health.                                                |
+| `health`    | Player health as `{ current, max }` so max HP survives reload. |
 | `zoneId`    | Identifier of the zone the player was in.                     |
 | `savedAt`   | Epoch milliseconds the snapshot was taken (picks the latest). |
 
@@ -22,10 +22,11 @@ Only this compact state is persisted. **Assets are never saved** — meshes,
 textures and audio always stream from their own pipeline. This mirrors the
 "one small volume" lens: the save store holds a tiny payload, never bulk data.
 
-The transform comes from the live Babylon capsule; `health` and `zoneId` come
-from the Redux `player` slice. (Health and zones are placeholders today — E1.1 is
-movement + camera only — so the slice seeds sensible defaults: `health: 100`,
-`zoneId: "forest"`.)
+The transform comes from the live Babylon capsule; `health` comes from the
+canonical `healthSlice` (`{ current, max }`, the single health authority); and
+`zoneId` comes from the Redux `player` slice. (Zones are a placeholder today —
+E1.1 is movement + camera only — so the `player` slice seeds a sensible default:
+`zoneId: "forest"`. Health is real as of E2.1.)
 
 ## Where it is stored
 

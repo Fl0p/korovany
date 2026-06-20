@@ -5,7 +5,7 @@ import { SAVE_VERSION, type SaveData } from './types'
 const valid: SaveData = {
   version: SAVE_VERSION,
   transform: { position: { x: 0, y: 1, z: 2 }, rotationY: 0.5 },
-  health: 100,
+  health: { current: 80, max: 100 },
   zoneId: 'forest',
   savedAt: 42,
 }
@@ -20,6 +20,8 @@ describe('isSaveData', () => {
     ['a string', 'nope'],
     ['missing transform', { ...valid, transform: undefined }],
     ['missing health', { ...valid, health: undefined }],
+    ['bare-number health (pre-structured)', { ...valid, health: 100 }],
+    ['health missing max', { ...valid, health: { current: 80 } }],
     ['non-finite position', { ...valid, transform: { position: { x: NaN, y: 0, z: 0 }, rotationY: 0 } }],
     ['missing zoneId', { ...valid, zoneId: undefined }],
     ['missing savedAt', { ...valid, savedAt: undefined }],

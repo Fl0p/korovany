@@ -1,3 +1,4 @@
+import type { HealthState } from '../health'
 import { SAVE_VERSION, type PlayerTransform, type SaveData, type Vec3 } from './types'
 
 /**
@@ -29,6 +30,17 @@ function isTransform(value: unknown): value is PlayerTransform {
   return isVec3(t.position) && typeof t.rotationY === 'number' && Number.isFinite(t.rotationY)
 }
 
+function isHealth(value: unknown): value is HealthState {
+  if (typeof value !== 'object' || value === null) return false
+  const h = value as Record<string, unknown>
+  return (
+    typeof h.current === 'number' &&
+    typeof h.max === 'number' &&
+    Number.isFinite(h.current) &&
+    Number.isFinite(h.max)
+  )
+}
+
 /** Structural guard for a record at the current schema version. */
 export function isSaveData(value: unknown): value is SaveData {
   if (typeof value !== 'object' || value === null) return false
@@ -36,8 +48,7 @@ export function isSaveData(value: unknown): value is SaveData {
   return (
     typeof d.version === 'number' &&
     isTransform(d.transform) &&
-    typeof d.health === 'number' &&
-    Number.isFinite(d.health) &&
+    isHealth(d.health) &&
     typeof d.zoneId === 'string' &&
     typeof d.savedAt === 'number'
   )

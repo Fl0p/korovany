@@ -4,11 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { IDBFactory } from 'fake-indexeddb'
 import { Provider } from 'react-redux'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { HealthState } from '../game/health'
 import { loadLatest, saveGame } from '../game/save'
 import { registerPlayer } from '../game/save/playerRuntime'
 import type { AssetLoadPhase } from '../game/streaming/types'
 import { appReducer, type AppPhase } from '../store/appSlice'
 import { gameReducer } from '../store/gameSlice'
+import { healthReducer } from '../store/healthSlice'
 import { DEFAULT_PLAYER_STATE, playerReducer, type PlayerState } from '../store/playerSlice'
 import { streamingReducer } from '../store/streamingSlice'
 import { App } from './App'
@@ -24,17 +26,20 @@ function renderApp(
   initialPhase: AppPhase = 'menu',
   streamingPhases: Record<string, AssetLoadPhase> = {},
   player: PlayerState = DEFAULT_PLAYER_STATE,
+  health: HealthState = { current: 100, max: 100 },
 ) {
   const store = configureStore({
     reducer: {
       app: appReducer,
       game: gameReducer,
+      health: healthReducer,
       player: playerReducer,
       streaming: streamingReducer,
     },
     preloadedState: {
       app: { phase: initialPhase },
       game: { score: 0 },
+      health: { player: health },
       player,
       streaming: { phases: streamingPhases },
     },
@@ -115,6 +120,11 @@ describe('<App />', () => {
     renderApp('menu', { 'hero.player-default': 'loading' })
     expect(screen.getByText('Loading…')).toBeInTheDocument()
   })
+
+  it('returns to menu when player HP reaches 0 during playing', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 0, max: 100 })
+    expect(screen.getByRole('button', { name: 'New Game' })).toBeInTheDocument()
+  })
 })
 
 describe('<App /> save/load (fake-indexeddb)', () => {
@@ -126,22 +136,24 @@ describe('<App /> save/load (fake-indexeddb)', () => {
     delete (globalThis as { indexedDB?: IDBFactory }).indexedDB
   })
 
-  it('autosaves the live player transform on pause', async () => {
+  it('autosaves the live player transform + health on pause', async () => {
     const unregister = registerPlayer({
       read: () => ({ position: { x: 4, y: 1, z: -2 }, rotationY: 1.25 }),
       write: vi.fn(),
     })
     try {
       const user = userEvent.setup()
-      renderApp('playing', {}, { health: 60, zoneId: 'forest' })
+      renderApp('playing', {}, { zoneId: 'forest' }, { current: 60, max: 120 })
 
       await user.keyboard('{Escape}') // playing → paused triggers autosave
 
       await waitFor(async () => {
         const saved = await loadLatest()
         expect(saved).not.toBeNull()
-        expect(saved?.health).toBe(60)
+        // Structured health round-trips both current and max.
+        expect(saved?.health).toEqual({ current: 60, max: 120 })
         expect(saved?.transform.position).toEqual({ x: 4, y: 1, z: -2 })
+        expect(saved?.zoneId).toBe('forest')
       })
     } finally {
       unregister()
@@ -150,7 +162,11 @@ describe('<App /> save/load (fake-indexeddb)', () => {
 
   it('enables Continue when a save exists and resumes into the game', async () => {
     await saveGame(
-      { transform: { position: { x: 7, y: 1, z: 7 }, rotationY: 0 }, health: 50, zoneId: 'forest' },
+      {
+        transform: { position: { x: 7, y: 1, z: 7 }, rotationY: 0 },
+        health: { current: 50, max: 100 },
+        zoneId: 'forest',
+      },
       123,
     )
 

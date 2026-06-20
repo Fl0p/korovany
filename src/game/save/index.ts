@@ -38,7 +38,7 @@ export function createSaveData(snapshot: PlayerSnapshot, savedAt: number): SaveD
   return {
     version: SAVE_VERSION,
     transform: snapshot.transform,
-    health: snapshot.health,
+    health: { current: snapshot.health.current, max: snapshot.health.max },
     zoneId: snapshot.zoneId,
     savedAt,
   }

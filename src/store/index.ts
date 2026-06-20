@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
 import { appReducer } from './appSlice'
 import { gameReducer } from './gameSlice'
+import { healthReducer } from './healthSlice'
 import { playerReducer } from './playerSlice'
 import { streamingReducer } from './streamingSlice'
 
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     app: appReducer,
     game: gameReducer,
+    health: healthReducer,
     player: playerReducer,
     streaming: streamingReducer,
   },
@@ -24,7 +26,14 @@ export { continueGame, returnToMenu, startNewGame, togglePause } from './appSlic
 export type { AppPhase, AppState } from './appSlice'
 export { addScore, resetScore } from './gameSlice'
 export type { GameState } from './gameSlice'
-export { restorePlayer, resetPlayer, setHealth, setZone, DEFAULT_PLAYER_STATE } from './playerSlice'
+export {
+  damagePlayer,
+  healPlayer,
+  resetPlayerHealth,
+  restorePlayerHealth,
+} from './healthSlice'
+export type { HealthStoreState } from './healthSlice'
+export { restorePlayer, resetPlayer, setZone, DEFAULT_PLAYER_STATE } from './playerSlice'
 export type { PlayerState } from './playerSlice'
 export { setAssetPhase, selectIsStreamingLoading, selectStreamingPhases } from './streamingSlice'
 export type { StreamingState } from './streamingSlice'

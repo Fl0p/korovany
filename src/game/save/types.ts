@@ -14,6 +14,8 @@
 /** Current on-disk schema version. Bump whenever {@link SaveData} changes shape. */
 export const SAVE_VERSION = 1
 
+import type { HealthState } from '../health'
+
 /** Plain serialisable 3-vector (Babylon `Vector3` is not JSON-safe). */
 export interface Vec3 {
   readonly x: number
@@ -37,8 +39,8 @@ export interface SaveData {
   readonly version: number
   /** Player capsule transform at save time. */
   readonly transform: PlayerTransform
-  /** Player health at save time. */
-  readonly health: number
+  /** Player health at save time (current + max), sourced from `healthSlice`. */
+  readonly health: HealthState
   /** Identifier of the zone the player was in. */
   readonly zoneId: string
   /** Epoch milliseconds when the snapshot was taken; used to pick the latest slot. */
@@ -54,6 +56,6 @@ export const DEFAULT_SLOT: SlotId = 0
 /** A snapshot of live player state, ready to be serialised into a {@link SaveData}. */
 export interface PlayerSnapshot {
   readonly transform: PlayerTransform
-  readonly health: number
+  readonly health: HealthState
   readonly zoneId: string
 }

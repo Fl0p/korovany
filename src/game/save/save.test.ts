@@ -20,7 +20,7 @@ beforeEach(() => {
 
 const snapshot: PlayerSnapshot = {
   transform: { position: { x: 1.5, y: 2, z: -3.25 }, rotationY: Math.PI / 2 },
-  health: 73,
+  health: { current: 73, max: 120 },
   zoneId: 'forest',
 }
 
@@ -30,7 +30,7 @@ describe('createSaveData', () => {
     expect(data.version).toBe(SAVE_VERSION)
     expect(data.savedAt).toBe(1000)
     expect(data.transform).toEqual(snapshot.transform)
-    expect(data.health).toBe(73)
+    expect(data.health).toEqual({ current: 73, max: 120 })
     expect(data.zoneId).toBe('forest')
   })
 })
@@ -44,7 +44,7 @@ describe('save round-trip (fake-indexeddb)', () => {
     expect(loaded).toEqual({
       version: SAVE_VERSION,
       transform: snapshot.transform,
-      health: 73,
+      health: { current: 73, max: 120 },
       zoneId: 'forest',
       savedAt: 1234,
     })
@@ -58,13 +58,13 @@ describe('save round-trip (fake-indexeddb)', () => {
 
   it('overwrites the same slot in place', async () => {
     await saveGame(snapshot, 1, { factory })
-    await saveGame({ ...snapshot, health: 10 }, 2, { factory })
+    await saveGame({ ...snapshot, health: { current: 10, max: 120 } }, 2, { factory })
 
     const store = await openSaveStore(factory)
     try {
       const all = await store.list()
       expect(all).toHaveLength(1)
-      expect(all[0].data.health).toBe(10)
+      expect(all[0].data.health).toEqual({ current: 10, max: 120 })
       expect(all[0].data.savedAt).toBe(2)
     } finally {
       store.close()

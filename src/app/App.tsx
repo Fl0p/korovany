@@ -9,7 +9,9 @@ import {
 import {
   continueGame,
   resetPlayer,
+  resetPlayerHealth,
   restorePlayer,
+  restorePlayerHealth,
   returnToMenu,
   selectIsStreamingLoading,
   startNewGame,
@@ -26,7 +28,8 @@ import {
  * It also owns the save/load wiring (E1.4): autosave whenever the game enters
  * `paused`, and a **Continue** button that restores the latest save. The live
  * capsule transform crosses the React↔Babylon boundary only through the save
- * `playerRuntime` bridge — never a direct mesh reference.
+ * `playerRuntime` bridge — never a direct mesh reference. Health is sourced from
+ * the canonical `healthSlice`; the zone id from `playerSlice`.
  *
  * See `src/styles/global.css` for the no-scroll, full-page reset and the
  * `.app-shell` / overlay layering.
@@ -34,17 +37,26 @@ import {
 export function App() {
   const dispatch = useAppDispatch()
   const phase = useAppSelector((state) => state.app.phase)
-  const player = useAppSelector((state) => state.player)
+  const health = useAppSelector((state) => state.health.player)
+  const zoneId = useAppSelector((state) => state.player.zoneId)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
 
+  // Return to menu on player death; reset HP so a subsequent New Game starts fresh.
+  useEffect(() => {
+    if (phase !== 'playing' && phase !== 'paused') return
+    if (health.current > 0) return
+    dispatch(resetPlayerHealth())
+    dispatch(returnToMenu())
+  }, [health.current, phase, dispatch])
+
   // Latest player scalars, read at autosave time without re-arming the pause
   // effect every time health/zone change.
-  const playerRef = useRef(player)
-  playerRef.current = player
+  const snapshotRef = useRef({ health, zoneId })
+  snapshotRef.current = { health, zoneId }
 
   // Probe whether a save exists so the Continue button can render enabled/empty.
   useEffect(() => {
@@ -65,15 +77,14 @@ export function App() {
   }, [phase])
 
   // Autosave on the transition into `paused`. The transform comes from the live
-  // scene via the bridge; health/zone from the store. No scene mounted → skip.
+  // scene via the bridge; health from `healthSlice`, zone from `playerSlice`. No
+  // scene mounted → skip.
   useEffect(() => {
     if (phase !== 'paused') return
     const transform = readPlayerTransform()
     if (!transform) return
-    void saveGame(
-      { transform, health: playerRef.current.health, zoneId: playerRef.current.zoneId },
-      Date.now(),
-    )
+    const { health: hp, zoneId: zone } = snapshotRef.current
+    void saveGame({ transform, health: hp, zoneId: zone }, Date.now())
       .then(() => setHasSaveSlot(true))
       .catch(() => {})
   }, [phase])
@@ -91,6 +102,7 @@ export function App() {
 
   const onNewGame = useCallback(() => {
     dispatch(resetPlayer())
+    dispatch(resetPlayerHealth())
     dispatch(startNewGame())
   }, [dispatch])
 
@@ -100,7 +112,8 @@ export function App() {
     // Stage for a scene that boots later; teleport the one already running.
     stageSpawn(data.transform)
     applyPlayerTransform(data.transform)
-    dispatch(restorePlayer({ health: data.health, zoneId: data.zoneId }))
+    dispatch(restorePlayerHealth(data.health))
+    dispatch(restorePlayer({ zoneId: data.zoneId }))
     dispatch(continueGame())
   }, [dispatch])
 
