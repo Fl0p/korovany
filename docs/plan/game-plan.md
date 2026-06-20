@@ -131,11 +131,11 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
 - **E1.2 Asset streaming manager** `[x]` — FLO-294 (Soren) ✅ merged 5ace1aa
   - [x] Asset registry (id → URL + metadata); `streaming/` loads GLB on demand, caches, disposes.
   - [x] Loading state surfaced to HUD; graceful fallback placeholder while loading.
-- **E1.3 First zone (forest stub)** `[ ]` — FLO-295 (Lyra, **unblocked** — assets landed FLO-299 ✅)
-  - [ ] Ground/terrain mesh for a small forest clearing with collision.
-  - [ ] Scatter a handful of streamed tree + hut GLBs (static, no LOD yet).
-  - *Assets:* the tree + hut GLBs come from **FLO-299** (Pygmalion); they did not
-    exist in the repo when Phase 1 was decomposed. Land FLO-299 before E1.3 starts.
+- **E1.3 First zone (forest stub)** `[x]` — FLO-295 ✅ merged 054fc43 (PR #18)
+  - [x] Ground/terrain mesh (60×60, pickable) for a small forest clearing with collision.
+  - [x] 12 trees + 3 huts scattered via streaming system (placeholder → GLB swap).
+  - [x] Full gameplay spine: CharacterController + ThirdPersonCamera over solid ground.
+  - [x] `?dev=forest` browser-QA flag; 6 new tests → 120 total.
 - **E1.4 Save/load (IndexedDB)** `[ ]` — FLO-296 (Wayland, unblocked ✅ — FLO-293 done)
   - [ ] Serialize player transform + health + zone id to IndexedDB; restore on Continue.
   - [ ] Save-slot UI (≥1 slot); autosave on pause.
@@ -239,6 +239,9 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r7** (2026-06-20) — E1.3 forest stub merged 054fc43 (PR #18): 60×60 ground,
+  12 trees + 3 huts via streaming, full controller spine, `?dev=forest` QA flag, 120 tests.
+  FLO-295 done; FLO-297 now blocked only by FLO-296 (save/load).
 - **r6** (2026-06-20) — E1.1 character controller merged 5c33e4a (PR #17): capsule
   WASD/sprint/gravity/jump (coyote-time, no double-jump), third-person follow camera with
   collision-aware boom, `?dev=controller` playground, 114 tests. FLO-293 done; FLO-296 unblocked.
