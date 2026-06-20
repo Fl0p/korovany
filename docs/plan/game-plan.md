@@ -123,10 +123,11 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [x] `menu → playing → paused` state machine; ESC toggles pause.
   - [x] Main menu shell (New Game focused; Continue/Settings stubs removed) as a React overlay.
   - [x] Pause overlay: aria-modal dialog, Resume + Quit to Main Menu; focus management on phase change.
-- **E1.1 Third-person character controller** `[ ]` — FLO-293 (Wayland)
-  - [ ] Capsule controller: WASD move, sprint, gravity, ground collision.
-  - [ ] Jump with coyote-time; cannot double-jump.
-  - [ ] Third-person follow camera with collision-aware boom.
+- **E1.1 Third-person character controller** `[x]` — FLO-293 (Wayland) ✅ merged 5c33e4a (PR #17)
+  - [x] Capsule controller: WASD move, sprint, gravity, ground collision via downward ray.
+  - [x] Jump with coyote-time (0.12 s); cannot double-jump (rising-edge guard).
+  - [x] Third-person follow camera with collision-aware boom; mouse-look via input system.
+  - [x] `?dev=controller` playground scene; 35 new tests (114 total).
 - **E1.2 Asset streaming manager** `[x]` — FLO-294 (Soren) ✅ merged 5ace1aa
   - [x] Asset registry (id → URL + metadata); `streaming/` loads GLB on demand, caches, disposes.
   - [x] Loading state surfaced to HUD; graceful fallback placeholder while loading.
@@ -135,7 +136,7 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [ ] Scatter a handful of streamed tree + hut GLBs (static, no LOD yet).
   - *Assets:* the tree + hut GLBs come from **FLO-299** (Pygmalion); they did not
     exist in the repo when Phase 1 was decomposed. Land FLO-299 before E1.3 starts.
-- **E1.4 Save/load (IndexedDB)** `[ ]` — FLO-296 (Wayland, blocked by FLO-293)
+- **E1.4 Save/load (IndexedDB)** `[ ]` — FLO-296 (Wayland, unblocked ✅ — FLO-293 done)
   - [ ] Serialize player transform + health + zone id to IndexedDB; restore on Continue.
   - [ ] Save-slot UI (≥1 slot); autosave on pause.
 - **E1.5 Deploy the slice** `[ ]` — FLO-297 (Wayland, blocked by FLO-292/293/295/296)
@@ -238,6 +239,9 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r6** (2026-06-20) — E1.1 character controller merged 5c33e4a (PR #17): capsule
+  WASD/sprint/gravity/jump (coyote-time, no double-jump), third-person follow camera with
+  collision-aware boom, `?dev=controller` playground, 114 tests. FLO-293 done; FLO-296 unblocked.
 - **r5** (2026-06-20) — FLO-302 UX polish merged b33cdb7: focused New Game button,
   hide HUD title in menu, pause overlay is proper aria-modal dialog with Resume + Quit
   to Main Menu; Continue/Settings stubs removed; 79 tests pass.
