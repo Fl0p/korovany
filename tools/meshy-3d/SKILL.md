@@ -28,12 +28,22 @@ optional `refine` (adds PBR textures). Always preview first, look at the result,
 and only refine when the geometry is good — this is the credit-saving discipline.
 
 ```bash
-# 1. Preview: create → poll → fetch, save GLB + thumbnail
+# 1. Preview: create → poll → fetch, save GLB + thumbnail.
+#    Meshy defaults to target_polycount=30000 — WAY over the v1.1 ≤3000-tri
+#    budget. Always pass --target-polycount for a game/web prop.
 python tools/meshy-3d/meshy.py text "a low-poly stylized treasure chest, game asset" \
-    --art-style realistic --out ./assets/chest --download
+    --art-style realistic --target-polycount 3000 --topology triangle \
+    --out ./assets/chest --download
 
-# 2. Refine the preview into a textured model (uses the preview task id)
-python tools/meshy-3d/meshy.py refine <PREVIEW_TASK_ID> --out ./assets/chest_final --download
+# 2. Refine the preview into a PBR-textured model (uses the preview task id).
+#    --enable-pbr generates albedo/normal/roughness/metallic maps.
+python tools/meshy-3d/meshy.py refine <PREVIEW_TASK_ID> --enable-pbr \
+    --out ./assets/chest_final --download
+
+# 3. Refine embeds ~2K JPEG maps (~8 MiB) — too heavy for the browser. Downscale
+#    the textures to a sane web payload (keeps mesh data byte-identical).
+python tools/meshy-3d/resize_glb_textures.py \
+    ./assets/chest_final.glb ./assets/chest_web.glb --max 1024 --quality 85
 ```
 
 `--download` writes `<out>.glb` and `<out>.thumb.png`. Drop `--download` to just
@@ -59,7 +69,15 @@ python tools/meshy-3d/meshy.py status <TASK_ID> --kind text-to-3d
 | `--art-style` | `realistic` | text mode; e.g. `realistic`, `sculpture` |
 | `--negative-prompt` | — | text mode |
 | `--no-remesh` | off | disable Meshy auto-remesh (keep dense topology) |
+| `--target-polycount` | `30000` | text mode; remesh target tris (100–300000). Set low for web/game props |
+| `--topology` | `triangle` | text mode; `triangle` (decimated) or `quad` |
+| `--enable-pbr` | off | refine mode; generate PBR maps (albedo/normal/roughness/metallic) |
+| `--hd-texture` | off | refine mode; 4K base-color (heavier payload — leave off for web) |
 | `--interval` / `--timeout` | 5s / 900s | poll cadence and ceiling |
+
+`target_polycount`/`topology` only apply when remesh is on (the default). PBR/HD
+flags only apply to `refine`. After a refine, run `resize_glb_textures.py` to bring
+the embedded maps down to a web-safe size — Meshy embeds full-res (~2K) JPEGs.
 
 ## Output contract for the korovany app
 

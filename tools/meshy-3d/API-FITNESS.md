@@ -83,3 +83,23 @@ license.
 3. Export GLB → host per CTO (Daedalus) guidance → load in Babylon.js.
 4. Always report poly/size/texture vs. web payload budget; open the asset before
    marking delivered.
+
+## Finished-asset e2e run (FLO-263) — low-poly + textured + web-sized
+
+Produced the first **delivered** chest (not the geometry-only preview above),
+verified rendering in the live app.
+
+| Stage | Task id | Params | Output |
+|-------|---------|--------|--------|
+| preview | `019ee4ef-e318-7dea-bdfa-259948486ce6` | `target_polycount=3000`, `topology=triangle` | **2,805 tris**, 135 KiB, untextured |
+| refine | (same lineage) | `enable_pbr=true` | **2,781 tris**, 4× ~2K JPEG PBR maps, **8.0 MiB** |
+| resize | `resize_glb_textures.py --max 1024` | local, no credits | 2,781 tris, 4× 1024² maps, **565 KiB** |
+
+- Credits: preview 20 + refine 10 = **30**. Resize is free (local Pillow repack).
+- Key lesson: **set `target_polycount` at the preview stage** — Meshy's 30k
+  default is what made the original `chest.glb` 29,992 tris. Refine preserves the
+  preview topology, so the budget is locked in at preview, not refine.
+- Refine embeds full-res maps; the 8 MiB → 565 KiB downscale is mandatory for a
+  web payload. 1024² PBR is ample for a small prop.
+- Rendered in `MainScene` (Babylon `loadModel`) at a real viewport — lit,
+  textured, correct. Screenshot attached to [FLO-263](/FLO/issues/FLO-263).

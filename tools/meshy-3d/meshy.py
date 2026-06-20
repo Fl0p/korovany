@@ -148,6 +148,11 @@ def cmd_text(a):
         "art_style": a.art_style,
         "should_remesh": not a.no_remesh,
     }
+    if not a.no_remesh:
+        # target_polycount / topology only apply when remesh is on. Keeps the
+        # mesh inside the web/game poly budget instead of Meshy's 30k default.
+        payload["target_polycount"] = a.target_polycount
+        payload["topology"] = a.topology
     if a.negative_prompt:
         payload["negative_prompt"] = a.negative_prompt
     tid = _create("/v2/text-to-3d", payload)
@@ -159,7 +164,12 @@ def cmd_text(a):
 
 
 def cmd_refine(a):
-    tid = _create("/v2/text-to-3d", {"mode": "refine", "preview_task_id": a.preview_task_id})
+    payload = {"mode": "refine", "preview_task_id": a.preview_task_id}
+    if a.enable_pbr:
+        payload["enable_pbr"] = True  # albedo/normal/roughness/metallic maps
+    if a.hd_texture:
+        payload["hd_texture"] = True  # 4K base color — heavier web payload
+    tid = _create("/v2/text-to-3d", payload)
     if not tid:
         return 1
     print(f"refine task: {tid}", file=sys.stderr)
@@ -205,10 +215,17 @@ def main():
     t.add_argument("--art-style", default="realistic")
     t.add_argument("--negative-prompt", default="")
     t.add_argument("--no-remesh", action="store_true")
+    t.add_argument("--target-polycount", type=int, default=30000,
+                   help="remesh target poly count (100-300000); web/game budget is low")
+    t.add_argument("--topology", default="triangle", choices=["triangle", "quad"])
     common(t)
 
     r = sub.add_parser("refine", help="refine a preview task into a textured model")
     r.add_argument("preview_task_id")
+    r.add_argument("--enable-pbr", action="store_true",
+                   help="generate PBR maps (albedo/normal/roughness/metallic)")
+    r.add_argument("--hd-texture", action="store_true",
+                   help="4K base-color texture (heavier payload; off for web)")
     common(r)
 
     im = sub.add_parser("image", help="image-to-3D")
