@@ -44,16 +44,6 @@ body {
 }
 
 .hud h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.25rem;
-}
-
-.hud p {
   margin: 0;
-  font-size: 0.875rem;
-}
-
-.hud button {
-  pointer-events: auto;
-  cursor: pointer;
+  font-size: 1.25rem;
 }
