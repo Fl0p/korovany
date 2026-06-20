@@ -27,6 +27,17 @@ any Community/showcase page.
 | Chest | `public/models/chest.glb` | — | — | static | — |
 | **Empire soldier (enemy)** | `public/models/empire-soldier.glb` | **2794** | 130 KiB | static (no skeleton) | `019ee601-93f0-7988-86f8-e35ce1067881` |
 | **Roadside shrine (Salt Road)** | `public/models/roadside-shrine.glb` | **1984** | 394 KiB | static | `019ee73a-c8a6-73bd-a2ec-e21137a6dba2` (preview) / `019ee747-ae35-786a-a8c7-490e65d0cddd` (retexture) |
+| **Empire toll gate** | `public/models/toll-gate.glb` | **1947** | 4.1 MiB | static | preview `019ee748-205e-763a-a883-bdda11e91c7e` · retexture `019ee749-ae59-7680-aa94-e6a8842c7bd5` |
+
+### Empire toll gate — Phase 3.5 (Salt Road pack)
+
+Salt Road landmark and navigation anchor (world-specs.md §1). Generated for [FLO-373](/FLO/issues/FLO-373).
+
+- **Budget:** 1947 tris ≤ 2500 (v1.2). Bounding box ≈ 2.0 × 1.6 × 0.7 units (road-spanning prop). Textured (retexture pass).
+- **Provenance:** Meshy text-to-3D preview at `--target-polycount 2000 --art-style realistic`, followed by retexture pass. Prompt: *"low-poly stylized empire toll gate, two wooden barrier arms across a road, small wooden ledger booth, tall flagpole with imperial banner, weathered wood and iron, faceted flat-shaded, austere straight imperial design, readable silhouette"*. Retexture style: *"weathered wood planks, rusted iron fittings, imperial red and gold banner, stone road surface, earthy tones, flat low-poly colors"*. 20 preview + 10 retexture = 30 Meshy credits.
+- **Rig:** static mesh, no skeleton.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs public/models/toll-gate.glb` → 2 meshes, 1947 tris, no errors.
+- **Handoff:** scene wiring (replacing the placeholder box in `humanLandsScene.ts`) is engineering scope — see [FLO-373](/FLO/issues/FLO-373).
 
 ### Empire soldier (enemy) — Phase 2
 
