@@ -217,12 +217,16 @@ Pygmalion via Iris.
   Delivered: pure `evaluateOutcome` win/lose machine drives `app.phase`
   (`won`/`lost`); `gameSlice` tracks caravans-raided + kills→score; HUD shows the
   objective counter + score; the forest ships a 3-caravan convoy so the goal is
-  completable; win/lose overlays both Restart into a fresh run. (PR — see issue.)
-- **MPG.2 Onboarding & objective intro** `[ ]` — **[FLO-364](/FLO/issues/FLO-364)** (Iris)
+  completable; win/lose overlays both Restart into a fresh run. **Merged & deployed**
+  (PR #64, `main` @ 7a49855, 498 tests green).
+- **MPG.2 Onboarding & objective intro** `[ ]` — **[FLO-382](/FLO/issues/FLO-382)** (Iris)
   Dismissible controls card (WASD/sprint/jump/F-attack/M-map) + current objective
-  on New Game. Blocked by MPG.1.
-- **MPG.3 Combat juice / hit feedback** `[ ]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
-  Screen shake, hit flash, floating damage numbers, death slow-mo. Blocked by MPG.1.
+  on New Game. **Unblocked** (MPG.1 merged); re-cut as FLO-382 because the original
+  [FLO-364](/FLO/issues/FLO-364) was created parked (free-text blocker → no run ever
+  spawned) — FLO-364 is superseded, to cancel.
+- **MPG.3 Combat juice / hit feedback** `[~]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
+  Screen shake, hit flash, floating damage numbers, death slow-mo. **Unblocked &
+  reassigned to Aldric** (MPG.1 merged); in flight.
 - **MPG.4 Audio system + core SFX** `[ ]` — *(to open; engineer + asset sourcing TBD)*
   Streamed audio module: footsteps, attack, hit, loot pickup, death, ambient bed.
 - **MPG.5 Populate the world** `[x]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
@@ -354,6 +358,14 @@ speculative batches (FLO-270).
   Human Lands now enters with 2 caravans + 3 soldier patrols; Forest enters with
   3 caravans + 5 soldier patrols. Zone-scene tests assert the minimum spawn
   counts so the two available zones are never empty on entry. (Aldric)
+- **r18** (2026-06-21) — **MPG.1 merged & deployed.** [FLO-363](/FLO/issues/FLO-363)
+  (objective & win/lose loop) landed in `main` (PR #64 @ 7a49855); lint + 498 tests
+  + build green and the Deploy run succeeded. With MPG.1 in, the two remaining
+  blocked children were unblocked: **MPG.3** ([FLO-367](/FLO/issues/FLO-367)) reassigned
+  to Aldric and in flight; **MPG.2** re-cut as **[FLO-382](/FLO/issues/FLO-382)** (Iris)
+  because the original [FLO-364](/FLO/issues/FLO-364) was created parked (free-text
+  blocker suppressed its run spawn → could not auto-resume) — FLO-364 superseded, to
+  cancel. MPG epic [FLO-362](/FLO/issues/FLO-362) now `in_progress`. (Daedalus)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
