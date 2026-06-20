@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
 import { damagePlayer, useAppDispatch, useAppSelector } from '../store'
 import { setAssetPhase } from '../store/streamingSlice'
+import { createCaravanPlayground } from './caravanPlayground'
 import { createControllerPlayground } from './controllerPlayground'
 import { createForestScene } from './forestScene'
 
@@ -12,6 +13,7 @@ import { createForestScene } from './forestScene'
  * Scene routing:
  * - `?dev=controller` — controller playground (E1.1 QA)
  * - `?dev=forest`     — forest zone standalone (E1.3 QA)
+ * - `?dev=caravan`    — caravan ambush playground (E3.3 QA)
  * - `phase === menu`  — engine smoke scene (hero preview, streaming HUD)
  * - `phase === playing | paused` — forest zone (E1.5 integration)
  *
@@ -39,9 +41,11 @@ export function GameCanvas() {
     const game =
       dev === 'controller'
         ? createControllerPlayground(canvas)
-        : dev === 'forest'
-          ? createForestScene(canvas)
-          : inGame
+        : dev === 'caravan'
+          ? createCaravanPlayground(canvas)
+          : dev === 'forest'
+            ? createForestScene(canvas)
+            : inGame
             ? createForestScene(canvas, {
                 onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
                 isPaused: () => phaseRef.current === 'paused',
