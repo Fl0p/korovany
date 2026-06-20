@@ -12,21 +12,25 @@ A save record is a single small JSON-shaped object:
 
 | Field       | Meaning                                                        |
 | ----------- | ------------------------------------------------------------- |
-| `version`   | Schema version the record was written with (currently `1`).   |
+| `version`   | Schema version the record was written with (currently `2`).   |
 | `transform` | Player capsule pose: `position` (`x,y,z`) + `rotationY` (yaw). |
 | `health`    | Player health as `{ current, max }` so max HP survives reload. |
 | `zoneId`    | Identifier of the zone the player was in.                     |
+| `inventory` | Carried loot: `{ counts: {itemId: n}, equippedItemId }` (v2).  |
 | `savedAt`   | Epoch milliseconds the snapshot was taken (picks the latest). |
 
 Only this compact state is persisted. **Assets are never saved** — meshes,
 textures and audio always stream from their own pipeline. This mirrors the
 "one small volume" lens: the save store holds a tiny payload, never bulk data.
+The inventory follows the same discipline: it stores only item **ids + counts**,
+never display names or art — those resolve from the static catalog at render time.
 
 The transform comes from the live Babylon capsule; `health` comes from the
-canonical `healthSlice` (`{ current, max }`, the single health authority); and
-`zoneId` comes from the Redux `player` slice. (Zones are a placeholder today —
-E1.1 is movement + camera only — so the `player` slice seeds a sensible default:
-`zoneId: "forest"`. Health is real as of E2.1.)
+canonical `healthSlice` (`{ current, max }`, the single health authority);
+`zoneId` comes from the Redux `player` slice; and `inventory` comes from the
+`inventory` slice (E3.4). (Zones are a placeholder today — E1.1 is movement +
+camera only — so the `player` slice seeds a sensible default: `zoneId: "forest"`.
+Health is real as of E2.1.)
 
 ## Where it is stored
 
@@ -85,6 +89,15 @@ format means bumping `SAVE_VERSION` in
 and adding a forward-migration step in `schema.ts` that maps the old shape onto
 the new one. `parseSaveData()` validates and migrates every record on read, so a
 save written by an old build still loads in a newer one.
+
+Version history:
+
+- **v1** — `transform`, `health`, `zoneId`, `savedAt`.
+- **v2** — added `inventory` (E3.4). `migrate()` fills a fresh empty inventory for
+  any pre-v2 save, so a v1 record loads cleanly as an empty-handed player. The
+  guard (`isSaveData`) validates only the fields present since v1, leaving newer
+  fields to `migrate()` — that is what keeps old saves loadable instead of
+  rejected. See the v1 → v2 migration test in `src/game/save/schema.test.ts`.
 
 ## Testing
 

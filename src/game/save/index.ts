@@ -40,6 +40,10 @@ export function createSaveData(snapshot: PlayerSnapshot, savedAt: number): SaveD
     transform: snapshot.transform,
     health: { current: snapshot.health.current, max: snapshot.health.max },
     zoneId: snapshot.zoneId,
+    inventory: {
+      counts: { ...snapshot.inventory.counts },
+      equippedItemId: snapshot.inventory.equippedItemId,
+    },
     savedAt,
   }
 }

@@ -4,6 +4,7 @@ import { appReducer } from './appSlice'
 import { gameReducer } from './gameSlice'
 import { healthReducer } from './healthSlice'
 import { injuryReducer } from './injurySlice'
+import { inventoryReducer } from './inventorySlice'
 import { playerReducer } from './playerSlice'
 import { streamingReducer } from './streamingSlice'
 
@@ -13,6 +14,7 @@ export const store = configureStore({
     game: gameReducer,
     health: healthReducer,
     injury: injuryReducer,
+    inventory: inventoryReducer,
     player: playerReducer,
     streaming: streamingReducer,
   },
@@ -52,3 +54,13 @@ export { restorePlayer, resetPlayer, setZone, DEFAULT_PLAYER_STATE } from './pla
 export type { PlayerState } from './playerSlice'
 export { setAssetPhase, selectIsStreamingLoading, selectStreamingPhases } from './streamingSlice'
 export type { StreamingState } from './streamingSlice'
+export {
+  pickUpLoot,
+  dropItem,
+  equip,
+  unequipItem,
+  resetInventory,
+  restoreInventory,
+  inventoryReducer,
+} from './inventorySlice'
+export type { LootDrop } from './inventorySlice'

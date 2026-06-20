@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
+import { InventoryPanel } from './InventoryPanel'
 import { hasSave, loadLatest, saveGame } from '../game/save'
 import {
   applyPlayerTransform,
@@ -9,8 +10,10 @@ import {
 import {
   continueGame,
   resetInjuries,
+  resetInventory,
   resetPlayer,
   resetPlayerHealth,
+  restoreInventory,
   restorePlayer,
   restorePlayerHealth,
   returnToMenu,
@@ -42,6 +45,7 @@ export function App() {
   const phase = useAppSelector((state) => state.app.phase)
   const health = useAppSelector((state) => state.health.player)
   const zoneId = useAppSelector((state) => state.player.zoneId)
+  const inventory = useAppSelector((state) => state.inventory)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
   const isBleeding = useAppSelector(selectIsBleeding)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
@@ -73,8 +77,8 @@ export function App() {
 
   // Latest player scalars, read at autosave time without re-arming the pause
   // effect every time health/zone change.
-  const snapshotRef = useRef({ health, zoneId })
-  snapshotRef.current = { health, zoneId }
+  const snapshotRef = useRef({ health, zoneId, inventory })
+  snapshotRef.current = { health, zoneId, inventory }
 
   // Probe whether a save exists so the Continue button can render enabled/empty.
   useEffect(() => {
@@ -101,8 +105,8 @@ export function App() {
     if (phase !== 'paused') return
     const transform = readPlayerTransform()
     if (!transform) return
-    const { health: hp, zoneId: zone } = snapshotRef.current
-    void saveGame({ transform, health: hp, zoneId: zone }, Date.now())
+    const { health: hp, zoneId: zone, inventory: inv } = snapshotRef.current
+    void saveGame({ transform, health: hp, zoneId: zone, inventory: inv }, Date.now())
       .then(() => setHasSaveSlot(true))
       .catch(() => {})
   }, [phase])
@@ -121,6 +125,7 @@ export function App() {
   const onNewGame = useCallback(() => {
     dispatch(resetPlayer())
     dispatch(resetPlayerHealth())
+    dispatch(resetInventory())
     dispatch(startNewGame())
   }, [dispatch])
 
@@ -132,6 +137,7 @@ export function App() {
     applyPlayerTransform(data.transform)
     dispatch(restorePlayerHealth(data.health))
     dispatch(restorePlayer({ zoneId: data.zoneId }))
+    dispatch(restoreInventory(data.inventory))
     dispatch(continueGame())
   }, [dispatch])
 
@@ -158,6 +164,7 @@ export function App() {
               {health.current}/{health.max}
             </span>
           </div>
+          <InventoryPanel inventory={inventory} />
         </div>
       ) : null}
       {phase === 'menu' ? (
