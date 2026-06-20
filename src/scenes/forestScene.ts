@@ -264,6 +264,7 @@ export function createForestScene(
         hero.root.position = new Vector3(0, -0.9, 0)
         for (const mesh of hero.meshes) mesh.isPickable = false
         controller.mesh.isVisible = false
+        controller.animator.node = hero.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
       }),
     )
   }
@@ -339,6 +340,7 @@ export function createForestScene(
     const attackPressed = frameIntent.attack && !prevAttack
     prevAttack = frameIntent.attack
     meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
+    controller.setAttackPhase(meleeState.phase)
 
     // During the active hit window, check all living targets — soldiers and
     // caravans share the same Damageable melee path; defeating any caravan fires

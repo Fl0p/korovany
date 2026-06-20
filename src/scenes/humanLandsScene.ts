@@ -172,6 +172,7 @@ export function createHumanLandsScene(
         hero.root.parent = controller.mesh
         hero.root.position = new Vector3(0, -0.9, 0)
         for (const mesh of hero.meshes) mesh.isPickable = false
+        controller.animator.node = hero.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
       }),
     )
   }
@@ -219,6 +220,7 @@ export function createHumanLandsScene(
     const attackPressed = frameIntent.attack && !prevAttack
     prevAttack = frameIntent.attack
     meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
+    controller.setAttackPhase(meleeState.phase)
 
     if (meleeState.hitWindowOpen) {
       const playerPos = controller.mesh.position
