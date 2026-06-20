@@ -129,7 +129,7 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
 - **E1.2 Asset streaming manager** `[x]` — FLO-294 (Soren) ✅ merged 5ace1aa
   - [x] Asset registry (id → URL + metadata); `streaming/` loads GLB on demand, caches, disposes.
   - [x] Loading state surfaced to HUD; graceful fallback placeholder while loading.
-- **E1.3 First zone (forest stub)** `[ ]` — FLO-295 (Lyra, blocked by FLO-294; **needs assets FLO-299**)
+- **E1.3 First zone (forest stub)** `[ ]` — FLO-295 (Lyra, **unblocked** — assets landed FLO-299 ✅)
   - [ ] Ground/terrain mesh for a small forest clearing with collision.
   - [ ] Scatter a handful of streamed tree + hut GLBs (static, no LOD yet).
   - *Assets:* the tree + hut GLBs come from **FLO-299** (Pygmalion); they did not
@@ -190,7 +190,7 @@ Models are generated **only** on concrete tickets, via the `tools/meshy-3d`
 pipeline, in low-poly visual language v1.2. Near-term needs, in slice order:
 
 1. Elf player character (Phase 1) — *already have a generic hero GLB; evaluate reuse first.* → decision folded into **FLO-299** (recommend reuse for the slice).
-2. Forest tree + wooden hut (Phase 1) — **FLO-299** (Pygmalion), unblocks E1.3.
+2. Forest tree + wooden hut (Phase 1) — **FLO-299** ✅ merged b9979d7 (unblocked E1.3).
 3. Empire soldier enemy (Phase 2).
 4. Corpse variant (Phase 2).
 5. Caravan + cargo (Phase 3).
