@@ -92,7 +92,12 @@ export class CharacterController implements System {
     // its own ground or occlude its own follow camera.
     this.mesh.isPickable = false
 
-    this.isGround = options.isGround ?? ((mesh) => mesh.isPickable && mesh !== this.mesh)
+    // Exclude the capsule and anything parented under it (the hero visual) — a
+    // pickable mesh riding on the capsule would otherwise be hit by the
+    // downward ground ray and clamp the capsule onto itself every frame.
+    this.isGround =
+      options.isGround ??
+      ((mesh) => mesh.isPickable && mesh !== this.mesh && !mesh.isDescendantOf(this.mesh))
     this.state = { ...createMovementState(spawn.x, spawn.y, spawn.z) }
   }
 

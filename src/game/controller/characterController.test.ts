@@ -87,6 +87,17 @@ describe('CharacterController (NullEngine)', () => {
     expect(controller.mesh.position.y).toBeGreaterThan(restY)
   })
 
+  it('ignores its own parented visual mesh when probing for ground', () => {
+    const controller = makeController(5)
+    // A pickable hero-style visual riding on the capsule must NOT register as
+    // ground (else the capsule clamps onto itself and flies upward).
+    const visual = MeshBuilder.CreateBox('heroVisual', { size: 1 }, world.scene)
+    visual.parent = controller.mesh
+    visual.isPickable = true
+    for (let i = 0; i < 240; i++) controller.update(DT)
+    expect(controller.mesh.position.y).toBeCloseTo(0.9, 2) // landed on the real ground
+  })
+
   it('runs as a scheduler System under the fixed-step loop', () => {
     const controller = makeController(5)
     const loop = new FixedStepLoop({ world: undefined, dt: DT })

@@ -107,6 +107,8 @@ export function createControllerPlayground(
       hero.root.parent = controller.mesh
       // Drop the visual so its feet sit at the capsule's feet (origin − halfHeight).
       hero.root.position = new Vector3(0, -0.9, 0)
+      // A pure visual: never a ground-ray or camera-boom pick target.
+      for (const mesh of hero.meshes) mesh.isPickable = false
       controller.mesh.isVisible = false
     })
   }
@@ -127,7 +129,7 @@ export function createControllerPlayground(
   window.addEventListener('resize', onResize)
 
   let disposed = false
-  return {
+  const handle = {
     engine,
     scene,
     controller,
@@ -142,4 +144,11 @@ export function createControllerPlayground(
       engine.dispose()
     },
   }
+
+  // Dev-only debug handle so the playground can be inspected from the console.
+  if (import.meta.env.DEV) {
+    ;(globalThis as Record<string, unknown>).__korovanyPlayground = handle
+  }
+
+  return handle
 }

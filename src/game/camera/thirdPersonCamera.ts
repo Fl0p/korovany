@@ -53,8 +53,12 @@ export class ThirdPersonCamera {
     this.scene = options.scene
     this.target = options.target
     this.params = options.params ?? DEFAULT_CAMERA_PARAMS
+    // The player capsule and its parented visual must never occlude their own
+    // follow camera, so exclude the target and its descendants by default.
     this.occludes =
-      options.occludes ?? ((mesh) => mesh.isPickable && mesh !== this.target)
+      options.occludes ??
+      ((mesh) =>
+        mesh.isPickable && mesh !== this.target && !mesh.isDescendantOf(this.target))
 
     // Start behind and slightly above the player, looking down at the rig's
     // mid-pitch. Alpha = -π/2 places the camera on -Z (behind a +Z-facing hero).
