@@ -11,6 +11,8 @@ import type { AssetLoadPhase } from '../game/streaming/types'
 import { appReducer, type AppPhase } from '../store/appSlice'
 import { gameReducer } from '../store/gameSlice'
 import { healthReducer } from '../store/healthSlice'
+import { injuryReducer } from '../store/injurySlice'
+import { createInjuryState } from '../game/health/injuryModel'
 import { DEFAULT_PLAYER_STATE, playerReducer, type PlayerState } from '../store/playerSlice'
 import { streamingReducer } from '../store/streamingSlice'
 import { App } from './App'
@@ -33,6 +35,7 @@ function renderApp(
       app: appReducer,
       game: gameReducer,
       health: healthReducer,
+      injury: injuryReducer,
       player: playerReducer,
       streaming: streamingReducer,
     },
@@ -42,6 +45,7 @@ function renderApp(
       health: { player: health },
       player,
       streaming: { phases: streamingPhases },
+      injury: createInjuryState(),
     },
   })
 

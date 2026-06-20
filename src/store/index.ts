@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { appReducer } from './appSlice'
 import { gameReducer } from './gameSlice'
 import { healthReducer } from './healthSlice'
+import { injuryReducer } from './injurySlice'
 import { playerReducer } from './playerSlice'
 import { streamingReducer } from './streamingSlice'
 
@@ -11,6 +12,7 @@ export const store = configureStore({
     app: appReducer,
     game: gameReducer,
     health: healthReducer,
+    injury: injuryReducer,
     player: playerReducer,
     streaming: streamingReducer,
   },
@@ -33,6 +35,19 @@ export {
   restorePlayerHealth,
 } from './healthSlice'
 export type { HealthStoreState } from './healthSlice'
+export {
+  advanceBleed,
+  fitPlayerProsthetic,
+  resetInjuries,
+  selectHasHalfScreenBlackout,
+  selectInjury,
+  selectIsBleeding,
+  selectIsCrawling,
+  selectLocomotionSpeedMultiplier,
+  severPlayerLimb,
+  tickInjuries,
+  treatPlayerBleeding,
+} from './injurySlice'
 export { restorePlayer, resetPlayer, setZone, DEFAULT_PLAYER_STATE } from './playerSlice'
 export type { PlayerState } from './playerSlice'
 export { setAssetPhase, selectIsStreamingLoading, selectStreamingPhases } from './streamingSlice'

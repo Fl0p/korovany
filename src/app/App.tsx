@@ -8,13 +8,16 @@ import {
 } from '../game/save/playerRuntime'
 import {
   continueGame,
+  resetInjuries,
   resetPlayer,
   resetPlayerHealth,
   restorePlayer,
   restorePlayerHealth,
   returnToMenu,
+  selectIsBleeding,
   selectIsStreamingLoading,
   startNewGame,
+  tickInjuries,
   togglePause,
   useAppDispatch,
   useAppSelector,
@@ -40,18 +43,31 @@ export function App() {
   const health = useAppSelector((state) => state.health.player)
   const zoneId = useAppSelector((state) => state.player.zoneId)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
+  const isBleeding = useAppSelector(selectIsBleeding)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
 
-  // Return to menu on player death; reset HP so a subsequent New Game starts fresh.
+  // Return to menu on player death; reset HP and injuries so a subsequent New
+  // Game starts fresh.
   useEffect(() => {
     if (phase !== 'playing' && phase !== 'paused') return
     if (health.current > 0) return
     dispatch(resetPlayerHealth())
+    dispatch(resetInjuries())
     dispatch(returnToMenu())
   }, [health.current, phase, dispatch])
+
+  // Bleed-out: while a wound is untreated and the game is live, drain HP each
+  // second. tickInjuries funnels the damage into the health system, so an
+  // untreated bleed reaches 0 HP and triggers the death effect above.
+  useEffect(() => {
+    if (phase !== 'playing') return
+    if (!isBleeding) return
+    const id = window.setInterval(() => dispatch(tickInjuries(1)), 1000)
+    return () => window.clearInterval(id)
+  }, [isBleeding, phase, dispatch])
 
   // Latest player scalars, read at autosave time without re-arming the pause
   // effect every time health/zone change.
