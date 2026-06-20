@@ -255,3 +255,197 @@ body {
   font-size: 0.875rem;
   opacity: 0.85;
 }
+
+/* World-map / fast-travel overlay (E3.1). */
+.hud-travel {
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  color: #f8fafc;
+  background: rgba(10, 16, 20, 0.55);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto; /* the .hud itself is click-through */
+}
+
+.hud-travel:hover,
+.hud-travel:focus-visible {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.18);
+  outline: none;
+}
+
+.hud-travel kbd {
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  font-size: 0.75em;
+}
+
+.worldmap-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(6, 10, 14, 0.6);
+}
+
+.worldmap-panel {
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(10, 16, 20, 0.9);
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
+}
+
+.worldmap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.worldmap-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.worldmap-close {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  cursor: pointer;
+}
+
+.worldmap-zones {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.worldmap-zone {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+  font: inherit;
+  cursor: pointer;
+}
+
+.worldmap-zone:hover:not(:disabled),
+.worldmap-zone:focus-visible:not(:disabled) {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.16);
+  outline: none;
+}
+
+.worldmap-zone.is-selected {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.22);
+}
+
+.worldmap-zone:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.worldmap-zone.is-current {
+  opacity: 0.85;
+}
+
+.worldmap-zone-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.worldmap-zone-lore {
+  font-size: 0.8125rem;
+  color: #c7d2a2;
+}
+
+.worldmap-zone-owner {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.worldmap-badge {
+  justify-self: start;
+  margin-top: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.worldmap-badge-here {
+  background: rgba(120, 200, 120, 0.25);
+  border: 1px solid rgba(120, 200, 120, 0.5);
+}
+
+.worldmap-badge-locked {
+  background: rgba(200, 120, 120, 0.2);
+  border: 1px solid rgba(200, 120, 120, 0.45);
+}
+
+.worldmap-footer {
+  margin-top: 1.25rem;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.worldmap-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.worldmap-confirm button {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 6px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.worldmap-confirm button:hover,
+.worldmap-confirm button:focus-visible {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.18);
+  outline: none;
+}
+
+.worldmap-hint,
+.worldmap-status,
+.worldmap-empty {
+  margin: 0;
+  color: #d9e3ea;
+}
+
+.worldmap-error {
+  margin: 0;
+  color: #f3b0a8;
+  font-weight: 700;
+}
