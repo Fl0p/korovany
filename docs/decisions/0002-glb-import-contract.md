@@ -49,6 +49,8 @@ functions with no engine state, unit-tested in `modelLoader.test.ts`.
 - The pure-math normalization is covered by unit tests; the full GLB load +
   on-screen result is a **visual-truth** check — verify in a browser with a real
   asset (the FLO-256 treasure-chest sample) before wiring a model into a shipped
-  scene. This was done in FLO-261: `MainScene` now loads
-  `public/models/chest.glb` via `loadModel()` (replacing the placeholder rotating
-  cube), confirmed rendering grounded, lit, and orbit-controllable in a browser.
+  scene. This was done in FLO-261: the scene loads `public/models/chest.glb` via
+  `loadModel()` (replacing the placeholder rotating cube), confirmed rendering
+  grounded, lit, and orbit-controllable in a browser. As of FLO-280 the load
+  happens in `src/engine/` (`createGameEngine`), which keeps the chest as the
+  Babylon render smoke for the full-page canvas.
