@@ -27,6 +27,8 @@ implementation notes, and a 20-by-20 text map:
   Elf homeland, dense woodland, stealth, and LOD proving ground.
 - [Black Crown Pass](./worlds/black-crown-pass.md) — mountain lands, villain
   fortress approach, and vertical combat map.
+- [The Imperial March](./worlds/empire-imperial-march.md) — Empire heartland,
+  marching route toward the capital, fortified corridor map.
 
 ## 1. The Salt Road of Velya
 
