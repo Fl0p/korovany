@@ -50,9 +50,11 @@ export function App() {
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
 
   // Return to menu on player death; reset HP and injuries so a subsequent New
-  // Game starts fresh.
+  // Game starts fresh. Death is a consequence of the live sim, so it is only
+  // processed while `playing` — never while `paused`, where combat is frozen and
+  // the player cannot take damage (FLO-326).
   useEffect(() => {
-    if (phase !== 'playing' && phase !== 'paused') return
+    if (phase !== 'playing') return
     if (health.current > 0) return
     dispatch(resetPlayerHealth())
     dispatch(resetInjuries())

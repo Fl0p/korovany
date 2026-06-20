@@ -84,6 +84,11 @@ The top-level screen/phase the player is on.
   `returnToMenu()` — each sets `phase`.
 - **Read via:** `useAppSelector((s) => s.app.phase)` (see `App.tsx`,
   `GameCanvas.tsx`).
+- **Single gate for "is the sim live".** `phase` is the one switch the forest
+  simulation reads: combat (soldier AI, movement, melee) only advances while
+  `playing`, and the player-death effect / bleed-out tick only fire while
+  `playing`. When `paused` the scene freezes, so the player cannot take damage or
+  die on the pause screen (FLO-326, see [forest-zone.md](./forest-zone.md)).
 
 ### `gameSlice` — in-run gameplay stats
 

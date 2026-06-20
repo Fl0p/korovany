@@ -119,12 +119,24 @@ export interface ForestSceneOptions {
   corpseStore?: CorpseStore
   /** Soldier GLB to mount on corpses; `null` keeps bare capsules (tests). */
   corpseGlbUrl?: string | null
+  /**
+   * Pause gate (FLO-326). While this returns `true` the per-frame simulation —
+   * soldier AI, player movement, and melee damage — is frozen; the scene still
+   * renders so the paused frame stays visible under the React pause overlay.
+   * Defaults to never paused.
+   */
+  isPaused?: () => boolean
 }
 
 export interface ForestScene {
   readonly engine: AbstractEngine
   readonly scene: Scene
   readonly controller: CharacterController
+  /**
+   * Advance one frame by `dt` seconds. The render loop calls this every frame;
+   * tests drive it directly to step the simulation deterministically.
+   */
+  step(dt: number): void
   dispose(): void
 }
 
@@ -154,6 +166,7 @@ export function createForestScene(
     initialSpawn = takeSpawn(),
     corpseStore,
     corpseGlbUrl,
+    isPaused,
   } = options
 
   const engine = createEngine(canvas)
@@ -271,9 +284,19 @@ export function createForestScene(
   loop.scheduler.register(controller)
   for (const s of soldiers) loop.scheduler.register(s)
 
-  engine.runRenderLoop(() => {
+  // One simulation+render frame. Extracted so the render loop and tests share
+  // the exact same stepping path.
+  const frame = (dt: number) => {
+    // Pause gate (FLO-326): while paused, freeze the whole sim — no input
+    // sampling, no melee, no soldier AI, no movement — but keep rendering so the
+    // frozen frame stays visible under the pause overlay. The phase state
+    // machine is the single source of truth for "is the sim live".
+    if (isPaused?.()) {
+      scene.render()
+      return
+    }
+
     frameIntent = input.sample()
-    const dt = engine.getDeltaTime() / 1000
 
     // Advance the player melee state machine (edge-triggered on F key).
     const attackPressed = frameIntent.attack && !prevAttack
@@ -295,7 +318,9 @@ export function createForestScene(
     loop.advance(dt)
     rig.update(frameIntent.lookDX, frameIntent.lookDY)
     scene.render()
-  })
+  }
+
+  engine.runRenderLoop(() => frame(engine.getDeltaTime() / 1000))
 
   const onResize = () => resizeEngineToDisplay(engine, window.devicePixelRatio)
   onResize()
@@ -306,6 +331,7 @@ export function createForestScene(
     engine,
     scene,
     controller,
+    step: frame,
     dispose() {
       if (disposed) return
       disposed = true

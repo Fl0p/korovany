@@ -135,6 +135,98 @@ describe('createForestScene — save bridge (E1.4/E1.5 integration)', () => {
   })
 })
 
+// Regression guard for FLO-326: while the game is paused the forest scene's
+// per-frame sim (soldier AI + melee) must not advance — an idle player was
+// approached, killed, and bounced to the menu on the pause screen. The pause
+// gate freezes the whole frame; only rendering survives.
+describe('createForestScene — pause gating (FLO-326)', () => {
+  beforeEach(() => {
+    // Consume any spawn staged by a previous test so the player boots at the
+    // clearing centre and the soldier (spawned at 6,6) is in detection range.
+    takeSpawn()
+  })
+
+  // Drive the deterministic frame step instead of the rAF render loop.
+  function drive(game: { step(dt: number): void }, frames: number) {
+    for (let i = 0; i < frames; i++) game.step(1 / 60)
+  }
+
+  it('does not advance soldier AI or damage the player while paused', () => {
+    const onPlayerDamaged = vi.fn()
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      onPlayerDamaged,
+      isPaused: () => true,
+    })
+
+    const soldier = game.scene.getMeshByName('soldier')!
+    const startX = soldier.position.x
+    const startZ = soldier.position.z
+
+    // Step well past the time the soldier would need to close in and attack.
+    drive(game, 600)
+
+    expect(onPlayerDamaged).not.toHaveBeenCalled()
+    // The frozen soldier must not have moved a single step.
+    expect(soldier.position.x).toBe(startX)
+    expect(soldier.position.z).toBe(startZ)
+
+    game.dispose()
+  })
+
+  it('advances combat and damages the player when not paused (control)', () => {
+    const onPlayerDamaged = vi.fn()
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      onPlayerDamaged,
+      isPaused: () => false,
+    })
+
+    // The soldier detects the idle player, chases, and lands a hit — proving the
+    // paused case above genuinely suppresses live combat, not a dead scene.
+    drive(game, 600)
+
+    expect(onPlayerDamaged).toHaveBeenCalled()
+
+    game.dispose()
+  })
+
+  it('freezes mid-session when the pause gate flips, then resumes', () => {
+    const onPlayerDamaged = vi.fn()
+    let paused = false
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      onPlayerDamaged,
+      isPaused: () => paused,
+    })
+
+    const soldier = game.scene.getMeshByName('soldier')!
+
+    // Live: let the soldier close in.
+    drive(game, 200)
+    const pausedX = soldier.position.x
+    const pausedZ = soldier.position.z
+
+    // Pause: no movement, no damage while frozen.
+    paused = true
+    onPlayerDamaged.mockClear()
+    drive(game, 400)
+    expect(soldier.position.x).toBe(pausedX)
+    expect(soldier.position.z).toBe(pausedZ)
+    expect(onPlayerDamaged).not.toHaveBeenCalled()
+
+    // Resume: combat advances again and the player can take damage.
+    paused = false
+    drive(game, 400)
+    expect(onPlayerDamaged).toHaveBeenCalled()
+
+    game.dispose()
+  })
+})
+
 describe('reapDeadSoldiers (live → corpse transition)', () => {
   function makeSoldier(scene: Scene) {
     return new SoldierEnemy(scene, {

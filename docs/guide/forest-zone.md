@@ -60,11 +60,30 @@ interface ForestSceneOptions {
   onPlayerDamaged?: (amount: number) => void                    // enemy hit → dispatch
   corpseStore?: CorpseStore                                     // E2.4 persistence
   corpseGlbUrl?: string | null                                  // corpse GLB path
+  isPaused?: () => boolean                                      // pause gate (FLO-326)
 }
 ```
 
 Pass `heroUrl: null` / `corpseGlbUrl: null` and inject a `NullEngine` in tests to
 skip network fetches.
+
+The returned `ForestScene` exposes `step(dt)` — the exact per-frame function the
+render loop runs — so tests can advance the simulation deterministically instead
+of relying on `requestAnimationFrame`.
+
+## Pause gating
+
+While the game is **paused** (ESC), the whole forest simulation freezes — soldier
+AI, player movement, and melee damage do not advance — so the player **cannot take
+damage or die on the pause screen** (FLO-326). The scene still renders the frozen
+frame so it stays visible under the React pause overlay.
+
+The gate is the `app.phase` state machine, the single source of truth for "is the
+sim live". `GameCanvas` passes `isPaused: () => phase === 'paused'` (read live via
+a ref so a pause toggle never remounts the scene), and `step()` early-returns
+after `scene.render()` whenever it reports `true`. Death is likewise only processed
+while `phase === 'playing'` (see [state-management.md](./state-management.md)),
+never while paused.
 
 ## Enemies & corpses
 
@@ -77,4 +96,7 @@ re-enter within a session — full details in [corpses.md](corpses.md).
 
 - `forestScene.test.ts` — `seedForestAssets` (registry entries + sizes), scene
   boot (live camera, capsule, ground pickable), dispose idempotency, corpse
-  re-spawn on boot, and the `reapDeadSoldiers` live→corpse transition.
+  re-spawn on boot, the `reapDeadSoldiers` live→corpse transition, and the
+  **pause-gating** regression (FLO-326): stepping the scene while paused moves no
+  soldier and deals no player damage, with a live control proving combat does
+  advance when unpaused.
