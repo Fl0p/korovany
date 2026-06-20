@@ -24,6 +24,13 @@ export function GameCanvas() {
   const phase = useAppSelector((state) => state.app.phase)
   const inGame = phase !== 'menu'
 
+  // Mirror the live phase into a ref so the forest render loop can read "is
+  // paused" every frame without re-running the mount effect — pause must not
+  // remount the scene. The scene closure reads `phaseRef.current` at frame time
+  // (FLO-326).
+  const phaseRef = useRef(phase)
+  phaseRef.current = phase
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -37,6 +44,7 @@ export function GameCanvas() {
           : inGame
             ? createForestScene(canvas, {
                 onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
+                isPaused: () => phaseRef.current === 'paused',
               })
             : createGameEngine(canvas, {
                 onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),

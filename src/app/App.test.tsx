@@ -141,6 +141,14 @@ describe('<App />', () => {
     renderApp('menu')
     expect(screen.queryByText('100/100')).not.toBeInTheDocument()
   })
+
+  it('does not bounce to menu on death while paused — combat is frozen (FLO-326)', () => {
+    // 0 HP while paused must NOT trigger returnToMenu: the player cannot die on
+    // the pause screen. Death is only processed while `playing`.
+    renderApp('paused', {}, DEFAULT_PLAYER_STATE, { current: 0, max: 100 })
+    expect(screen.getByRole('heading', { name: 'Paused' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'New Game' })).not.toBeInTheDocument()
+  })
 })
 
 describe('<App /> save/load (fake-indexeddb)', () => {
