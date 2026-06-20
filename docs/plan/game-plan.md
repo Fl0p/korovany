@@ -89,17 +89,22 @@ has **no** React/Babylon imports where avoidable, so it is unit-testable in jsdo
 Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 Each epic becomes a **child issue of FLO-273**; each task a child of its epic.
 
-### Phase 0 — Foundation cleanup (unblocks everything) `[ ]`
+### Phase 0 — Foundation cleanup (unblocks everything) `[~]`
 
-- **E0.1 Full-page canvas & app shell** `[ ]`
+Epic: **[FLO-277](/FLO/issues/FLO-277)** — opened 2026-06-20, board plan approved.
+Tasks cut and assigned (one MR each, `flo-<n>-<slug>` off `main`):
+
+- **E0.1 Full-page canvas & app shell** `[~]` → **[FLO-280](/FLO/issues/FLO-280)** (Wayland, in flight)
   - [ ] Make the Babylon canvas fill the viewport (replace fixed 320px); handle resize/DPR.
-  - [ ] App state machine: `menu → playing → paused`; ESC toggles pause.
-  - [ ] Main menu shell (New Game / Continue / Settings) as a React overlay.
-- **E0.2 Game loop & system scheduler** `[ ]`
-  - [ ] Fixed-step update loop in `src/game/loop/` decoupled from render FPS; unit-tested.
-  - [ ] System registration API (systems get `update(dt, world)`).
-- **E0.3 Input system** `[ ]`
-  - [ ] Keyboard/mouse intent mapping; pointer-lock for mouselook; rebindable map (data-driven).
+  - [ ] Extract `Engine`/`Scene` lifecycle into reusable `src/engine/`; React wrapper only mounts/disposes.
+  - [ ] Drop the hello-world chrome; keep the chest GLB smoke rendering.
+  - *App state machine (`menu → playing → paused`) + main-menu overlay deferred to a follow-up E0.x once the shell lands.*
+- **E0.2 Game loop & system scheduler** `[~]` → **[FLO-281](/FLO/issues/FLO-281)** (Wayland, blocked by FLO-280)
+  - [ ] Fixed-step update loop decoupled from render FPS; spiral-of-death clamp; unit-tested.
+  - [ ] Ordered system scheduler API (systems get `update(dt, world)`).
+- **E0.3 Input system** `[~]` → **[FLO-282](/FLO/issues/FLO-282)** (Aldric, blocked by FLO-280)
+  - [ ] Pointer-lock + key/mouse state snapshot, `justPressed`/`justReleased`, mouse-delta; unit-tested.
+  - [ ] *Data-driven rebindable mapping deferred to a Phase 6 polish task; v1 hardcodes WASD/mouse.*
 
 ### Phase 1 — Vertical slice: "An elf in the forest" `[ ]`
 
@@ -209,3 +214,8 @@ speculative batches (FLO-270).
 
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
+- **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
+  three oneshots: E0.1 app shell [FLO-280] (Wayland, started), E0.2 game loop
+  [FLO-281] (Wayland, blocked by E0.1), E0.3 input [FLO-282] (Aldric, blocked by
+  E0.1). Phase 0 marked in progress; menu/state-machine sub-items deferred to a
+  follow-up so the slice path stays the critical line.
