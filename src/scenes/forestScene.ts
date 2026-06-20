@@ -21,6 +21,8 @@ import {
   type StreamedInstance,
 } from '../game/streaming'
 import { createMeleeAttack, getMeleeHits, stepMeleeAttack } from '../game/combat'
+import { registerPlayer, takeSpawn } from '../game/save/playerRuntime'
+import type { PlayerTransform } from '../game/save'
 import { SoldierEnemy } from './soldierEnemy'
 
 // ---------------------------------------------------------------------------
@@ -82,6 +84,12 @@ export interface ForestSceneOptions {
   heroUrl?: string | null
   /** Called when an enemy hits the player. Caller dispatches damagePlayer. */
   onPlayerDamaged?: (amount: number) => void
+  /**
+   * Spawn pose for the player capsule. Defaults to a staged Continue spawn
+   * (`takeSpawn()`) so a loaded save lands the player where it left off, falling
+   * back to the clearing centre for a New Game.
+   */
+  initialSpawn?: PlayerTransform | null
 }
 
 export interface ForestScene {
@@ -110,7 +118,12 @@ export function createForestScene(
   canvas: HTMLCanvasElement,
   options: ForestSceneOptions = {},
 ): ForestScene {
-  const { createEngine = defaultEngineFactory, heroUrl = DEFAULT_HERO_URL, onPlayerDamaged } = options
+  const {
+    createEngine = defaultEngineFactory,
+    heroUrl = DEFAULT_HERO_URL,
+    onPlayerDamaged,
+    initialSpawn = takeSpawn(),
+  } = options
 
   const engine = createEngine(canvas)
   const scene = new Scene(engine)
@@ -159,10 +172,22 @@ export function createForestScene(
   const input = createInputController(canvas)
   let frameIntent: Intent = input.sample()
 
+  const spawnPos = initialSpawn
+    ? new Vector3(initialSpawn.position.x, initialSpawn.position.y, initialSpawn.position.z)
+    : new Vector3(0, 2, 0)
   const controller = new CharacterController({
     scene,
     getIntent: () => frameIntent,
-    spawn: new Vector3(0, 2, 0),
+    spawn: spawnPos,
+    spawnRotationY: initialSpawn?.rotationY ?? 0,
+  })
+
+  // Bridge the live capsule to the save system: autosave-on-pause reads this
+  // pose (E1.4) and Continue teleports it to a loaded save. Without this the
+  // forest slice would autosave nothing and never restore position (E1.5).
+  const unregisterPlayer = registerPlayer({
+    read: () => controller.snapshot(),
+    write: (transform) => controller.teleport(transform),
   })
 
   const rig = new ThirdPersonCamera({ scene, target: controller.mesh })
@@ -239,6 +264,7 @@ export function createForestScene(
     dispose() {
       if (disposed) return
       disposed = true
+      unregisterPlayer()
       window.removeEventListener('resize', onResize)
       input.dispose()
       engine.stopRenderLoop()

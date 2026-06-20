@@ -144,6 +144,10 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
 - **E1.5 Deploy the slice** `[x]` — FLO-297 ✅ merged e8ccf9a (PR #21)
   - [x] GameCanvas routes to ForestScene when `phase !== 'menu'`; pause survives ESC.
   - [x] Phase 1 vertical slice live on korovany.aimost.pl.
+  - [x] Browser-smoke follow-up: the live forest scene never registered the save
+    bridge, so autosave-on-pause wrote nothing and Continue could not restore
+    position. Fixed by wiring `registerPlayer()`/`takeSpawn()` into `forestScene.ts`
+    (regression-tested). Save/Continue now works end-to-end in the deployed slice.
 
 ### Phase 2 — Combat, health & injuries `[~]`
 
@@ -253,6 +257,11 @@ speculative batches (FLO-270).
   prelude epic [FLO-292] and shipped there (merged 82788cd, refined in FLO-302).
   Ticked them as *delivered in E1.0* so the plan reads honestly; no code work
   outstanding in Phase 0. (Daedalus)
+- **r11** (2026-06-20) — E1.5 browser-smoke follow-up (FLO-297): the deployed forest
+  slice autosaved nothing and never restored position because `forestScene.ts` never
+  registered the player handle with the save bridge (only the `?dev` playground did).
+  Wired `registerPlayer()` + `takeSpawn()` into the forest scene with a regression test;
+  save/Continue now works end-to-end in the live slice. (Wayland)
 - **r10** (2026-06-20) — Phase 2 epic **FLO-307** opened (combat/health/injuries), delegated to Daedalus (CTO). Phase 2 marked `[~]` in plan tree. (Prospero)
 - **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
   into playing state, pause survives ESC, slice live at korovany.aimost.pl. All E1.x done.
