@@ -119,9 +119,10 @@ tickets 2026-06-20 (one MR each). **Check these before cutting any new Phase-1
 child** (Phase 0 was built 3× by concurrent runs). Blocker DAG:
 E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
 
-- **E1.0 App state machine & menu shell** `[x]` — FLO-292 (Aldric) ✅ merged 82788cd *(carried from E0.1)*
+- **E1.0 App state machine & menu shell** `[x]` — FLO-292 (Aldric) ✅ merged 82788cd; FLO-302 UX polish ✅ merged b33cdb7 *(carried from E0.1)*
   - [x] `menu → playing → paused` state machine; ESC toggles pause.
-  - [x] Main menu shell (New Game / Continue / Settings) as a React overlay over the canvas.
+  - [x] Main menu shell (New Game focused; Continue/Settings stubs removed) as a React overlay.
+  - [x] Pause overlay: aria-modal dialog, Resume + Quit to Main Menu; focus management on phase change.
 - **E1.1 Third-person character controller** `[ ]` — FLO-293 (Wayland)
   - [ ] Capsule controller: WASD move, sprint, gravity, ground collision.
   - [ ] Jump with coyote-time; cannot double-jump.
@@ -237,6 +238,9 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r5** (2026-06-20) — FLO-302 UX polish merged b33cdb7: focused New Game button,
+  hide HUD title in menu, pause overlay is proper aria-modal dialog with Resume + Quit
+  to Main Menu; Continue/Settings stubs removed; 79 tests pass.
 - **r4** (2026-06-20) — progress review (FLO-298). Phase 1 oneshots are in flight:
   E1.0 [FLO-292] (Aldric), E1.1 [FLO-293] (Wayland), E1.2 [FLO-294] (Soren) are
   **in progress**; E1.3/E1.4/E1.5 [FLO-295/296/297] correctly **blocked** by their
