@@ -26,6 +26,7 @@ any Community/showcase page.
 | Wooden hut | `public/models/wooden-hut.glb` | 1893 | — | static | — |
 | Chest | `public/models/chest.glb` | — | — | static | — |
 | **Empire soldier (enemy)** | `public/models/empire-soldier.glb` | **2794** | 130 KiB | static (no skeleton) | `019ee601-93f0-7988-86f8-e35ce1067881` |
+| **Roadside shrine (Salt Road)** | `public/models/roadside-shrine.glb` | **1984** | 394 KiB | static | `019ee73a-c8a6-73bd-a2ec-e21137a6dba2` (preview) / `019ee747-ae35-786a-a8c7-490e65d0cddd` (retexture) |
 
 ### Empire soldier (enemy) — Phase 2
 
@@ -53,3 +54,32 @@ ticket E2.3).
   ticket). Flag rig needs to Pygmalion if a skeletal pass is wanted.
 - **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
   public/models/empire-soldier.glb` → 2 meshes, 2794 tris, no errors.
+
+### Roadside shrine (Salt Road) — Phase 3.5 (MPG)
+
+Humble rural Salt Road landmark ([world-specs](/plan/world-specs) §1), replacing
+the placeholder colored box in `src/scenes/humanLandsScene.ts`. Small weathered
+stone structure with an arched niche, aged-wood back, and a low offering ledge —
+a readable, distinct silhouette. Generated for [FLO-375](/plan/game-plan).
+
+- **Budget:** 1984 tris ≤ 2000 (within ticket budget), **394 KiB** web payload.
+  Bounding box ≈ 1.52 × 2.00 × 1.15 units (real-world scale, ~2 m tall).
+- **Textured** (board mandate — never grey): single 1024² base-color map,
+  flat/unlit albedo (worn pale stone with moss accents + aged grey-brown wood).
+- **Provenance:** Meshy text-to-3D **preview** (`019ee73a-…`, geometry only,
+  1985 tris, 20 cr) → **retexture** (`019ee747-…`, geometry-preserving UV-unwrap
+  + paint, 10 cr) → `resize_glb_textures.py --max 1024 --quality 85` (4.3 MiB →
+  394 KiB, mesh bytes untouched). Retexture over PBR refine keeps the faceted
+  low-poly silhouette ([meshy PBR drift](#) — see `API-FITNESS.md`). Prompt:
+  *"low-poly stylized roadside shrine, small weathered stone structure with an
+  arched niche, simple offering ledge, worn pale stone and aged wood, faceted
+  flat-shaded, humble rural fantasy aesthetic, readable silhouette"*; retexture
+  style prompt: *"worn pale weathered stone shrine with aged grey-brown wood,
+  humble rural fantasy, flat low-poly muted earthy palette, faceted unlit
+  albedo"*.
+- **Rig:** static prop — no skeleton.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
+  public/models/roadside-shrine.glb` → 2 meshes, 1984 tris, 1 embedded texture,
+  no errors.
+- **Handoff:** wiring this GLB into the scene (replacing the procedural box in
+  `humanLandsScene.ts`) is engineering's job — handed to Daedalus/CTO.
