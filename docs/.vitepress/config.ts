@@ -31,6 +31,7 @@ export default defineConfig({
           { text: 'Save system', link: '/guide/save-system' },
           { text: 'Health system', link: '/guide/health-system' },
           { text: 'Melee combat', link: '/guide/melee-combat' },
+          { text: 'Enemy AI', link: '/guide/enemy-ai' },
           { text: 'Testing', link: '/guide/testing' },
         ],
       },
