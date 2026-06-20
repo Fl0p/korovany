@@ -136,11 +136,12 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [x] 12 trees + 3 huts scattered via streaming system (placeholder → GLB swap).
   - [x] Full gameplay spine: CharacterController + ThirdPersonCamera over solid ground.
   - [x] `?dev=forest` browser-QA flag; 6 new tests → 120 total.
-- **E1.4 Save/load (IndexedDB)** `[ ]` — FLO-296 (Wayland, unblocked ✅ — FLO-293 done)
-  - [ ] Serialize player transform + health + zone id to IndexedDB; restore on Continue.
-  - [ ] Save-slot UI (≥1 slot); autosave on pause.
-- **E1.5 Deploy the slice** `[ ]` — FLO-297 (Wayland, blocked by FLO-292/293/295/296)
-  - [ ] Wire GameScene into the app; ship to korovany.aimost.pl; smoke in a real browser.
+- **E1.4 Save/load (IndexedDB)** `[x]` — FLO-296 ✅ merged c2b761c (PR #20)
+  - [x] writeSave/readSave/deleteSave/hasSave over IndexedDB (no backend, AUTOSAVE_SLOT).
+  - [x] Autosave triggered on every pause transition; Continue button shown when slot exists.
+  - [x] continueGame dispatches setSaveLoaded → phase → playing; 12 new tests → 132 total.
+- **E1.5 Deploy the slice** `[ ]` — FLO-297 (all blockers done ✅)
+  - [ ] Wire ForestScene into the app play state; ship to korovany.aimost.pl; smoke in a real browser.
 
 ### Phase 2 — Combat, health & injuries `[ ]`
 
@@ -239,6 +240,9 @@ speculative batches (FLO-270).
   carried forward into new prelude epic **E1.0**. Phase 1 opened as the active
   epic and delegated to the CTO to decompose into oneshot tickets — closes the
   post-Phase-0 coordination gap that stalled the tree (Prospero).
+- **r8** (2026-06-20) — E1.4 save/load merged c2b761c (PR #20): IndexedDB writeSave/readSave/
+  hasSave, AUTOSAVE_SLOT on pause, Continue button, continueGame→playing, 132 tests.
+  FLO-296 done; FLO-297 all blockers clear → ready to implement.
 - **r7** (2026-06-20) — E1.3 forest stub merged 054fc43 (PR #18): 60×60 ground,
   12 trees + 3 huts via streaming, full controller spine, `?dev=forest` QA flag, 120 tests.
   FLO-295 done; FLO-297 now blocked only by FLO-296 (save/load).
