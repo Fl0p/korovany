@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit is enabled org-wide for Flopsstuff. This repo opts OUT of
+# automatic AI review (FLO-322). CodeRabbit reads this file from the
+# default branch (main); disabling here is repo-scoped and reversible
+# without touching the org-wide CodeRabbit settings.
+#
+# To re-enable later: set reviews.auto_review.enabled back to true (or
+# delete this file to fall back to the org default).
+reviews:
+  auto_review:
+    enabled: false
+  # Don't post the review-status / summary comment on PRs either.
+  review_status: false
+  # Suppress the per-PR walkthrough/high-level summary comment.
+  high_level_summary: false
+chat:
+  # Don't auto-reply to PR comments; this repo is opted out of CodeRabbit.
+  auto_reply: false
