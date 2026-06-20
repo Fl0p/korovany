@@ -4,6 +4,7 @@ import { InventoryPanel } from './InventoryPanel'
 import { WorldMap } from '../components/WorldMap'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
+import { totalItemCount } from '../game/economy'
 import { hasSave, loadLatest, saveGame } from '../game/save'
 import { listZones, planTravel, type ZoneId } from '../game/world'
 import {
@@ -21,9 +22,11 @@ import {
   restorePlayer,
   restorePlayerHealth,
   returnToMenu,
+  selectHasHalfScreenBlackout,
   selectIsBleeding,
   selectIsStreamingLoading,
   selectPlayerFactionId,
+  selectScore,
   setPlayerFaction,
   setZone,
   startNewGame,
@@ -59,6 +62,9 @@ export function App() {
   const playerFactionId = useAppSelector(selectPlayerFactionId)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
   const isBleeding = useAppSelector(selectIsBleeding)
+  const hasHalfScreenBlackout = useAppSelector(selectHasHalfScreenBlackout)
+  const score = useAppSelector(selectScore)
+  const lootCount = totalItemCount(inventory)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
@@ -224,6 +230,9 @@ export function App() {
   return (
     <div className="app-shell">
       <GameCanvas />
+      {phase !== 'menu' && hasHalfScreenBlackout ? (
+        <div className="injury-vignette" aria-hidden="true" />
+      ) : null}
       {isLoadingAssets ? <p className="hud-loading">Loading…</p> : null}
       {phase !== 'menu' ? (
         <div className="hud">
@@ -242,6 +251,22 @@ export function App() {
             </span>
             <span className="hud-health-value">
               {health.current}/{health.max}
+            </span>
+          </div>
+          {isBleeding ? (
+            <div className="hud-bleeding" role="status">
+              <span className="hud-bleeding-dot" aria-hidden="true" />
+              Bleeding — find a bandage
+            </div>
+          ) : null}
+          <div className="hud-score" role="group" aria-label="Score">
+            <span className="hud-score-stat">
+              <span className="hud-score-label">Kills</span>
+              <span className="hud-score-value">{score}</span>
+            </span>
+            <span className="hud-score-stat">
+              <span className="hud-score-label">Loot</span>
+              <span className="hud-score-value">{lootCount}</span>
             </span>
           </div>
           <InventoryPanel inventory={inventory} />

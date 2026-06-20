@@ -41,6 +41,13 @@ export interface CharacterControllerOptions {
   readonly camera?: ArcRotateCamera
   /** Pulls the resolved intent each step (e.g. `() => input.intent()`). */
   readonly getIntent: () => Intent
+  /**
+   * Per-step horizontal locomotion multiplier (1 = normal). The leg-loss crawl
+   * outcome surfaces here: the caller feeds `selectLocomotionSpeedMultiplier`
+   * (e.g. `0.35` while crawling) so a severed leg actually slows the capsule.
+   * Defaults to a constant `1` — no injury, full speed.
+   */
+  readonly getSpeedMultiplier?: () => number
   /** Movement tuning. Defaults to {@link DEFAULT_MOVEMENT_PARAMS}. */
   readonly params?: MovementParams
   /** Spawn position of the capsule origin (centre). Default `(0, 1, 0)`. */
@@ -68,6 +75,7 @@ export class CharacterController implements System {
   camera: ArcRotateCamera | null
   private readonly scene: Scene
   private readonly getIntent: () => Intent
+  private readonly getSpeedMultiplier: () => number
   private readonly params: MovementParams
   private readonly groundProbe: number
   private readonly isGround: (mesh: AbstractMesh) => boolean
@@ -77,6 +85,7 @@ export class CharacterController implements System {
     this.scene = options.scene
     this.camera = options.camera ?? null
     this.getIntent = options.getIntent
+    this.getSpeedMultiplier = options.getSpeedMultiplier ?? (() => 1)
     this.groundProbe = options.groundProbe ?? 0.4
 
     const height = options.capsuleHeight ?? 1.8
@@ -142,9 +151,21 @@ export class CharacterController implements System {
     const dir = this.worldMoveDir(intent)
     const ground = this.groundHeightUnderCapsule()
 
+    // Leg-loss locomotion: scale the (already unit-clamped) move direction by the
+    // injury multiplier so a crawling player moves slower. `stepMovement` derives
+    // displacement from the direction magnitude, so a 0.35 multiplier yields 35%
+    // speed for both walk and sprint. Facing still uses the unscaled `dir` below,
+    // so a slowed player keeps turning normally.
+    const speedMultiplier = this.getSpeedMultiplier()
+
     this.state = stepMovement(
       this.state,
-      { dirX: dir.x, dirZ: dir.z, sprint: intent.sprint, jump: intent.jump },
+      {
+        dirX: dir.x * speedMultiplier,
+        dirZ: dir.z * speedMultiplier,
+        sprint: intent.sprint,
+        jump: intent.jump,
+      },
       ground,
       this.params,
       dt,

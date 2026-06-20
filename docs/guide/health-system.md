@@ -38,6 +38,20 @@ numeric `current/max` readout. The bar is an ARIA `group` labelled
 `Player health: <current> of <max> hit points` for screen readers; the visual
 bar itself is `aria-hidden`.
 
+Alongside it the HUD surfaces the other built-but-previously-invisible systems
+(MPG.6, FLO-366):
+
+- **Bleeding indicator** (`.hud-bleeding`, ARIA `status`) — shown while
+  `selectIsBleeding` is true, with a pulsing dot and a "find a bandage" prompt.
+- **Score panel** (`.hud-score`, ARIA `group` "Score") — two tabular stats:
+  **Kills** (`selectScore`, the `game.score` tally) and **Loot**
+  (`totalItemCount(inventory)`). Kill increments are wired by the objective loop
+  (MPG.1, FLO-363); the panel surfaces the counter regardless.
+- **Eye-loss vignette** (`.injury-vignette`) — a full-viewport, click-through
+  overlay darkening the left half of the screen, rendered (outside the menu)
+  whenever `selectHasHalfScreenBlackout` is true. It carries no `z-index`,
+  relying on DOM order to sit above the canvas but below every overlay.
+
 ## Death → menu transition
 
 `App.tsx` watches `state.health.player.current`. When it reaches 0 while the phase is `playing` or `paused`, the app dispatches `resetPlayerHealth()` (so a subsequent New Game starts with full HP) then `returnToMenu()`.
@@ -97,9 +111,13 @@ the half-screen); `treatBleeding` stops a bleed without restoring the hand.
 
 Selectors: `selectInjury`, `selectIsBleeding`, `selectHasHalfScreenBlackout`,
 `selectIsCrawling`, `selectLocomotionSpeedMultiplier` — all importable from
-`'../store'`. The HUD vignette and locomotion speed read these selectors; this
-ticket delivers the model and the bleed→HP wire, leaving rendering and movement
-application to their respective subsystems.
+`'../store'`. As of MPG.6 (FLO-366) these are fully surfaced: the HUD renders the
+bleeding indicator and eye-loss vignette (see [HUD](#hud) above), and the
+locomotion multiplier reaches movement via
+`CharacterController.getSpeedMultiplier`. `GameCanvas` reads
+`selectLocomotionSpeedMultiplier(store.getState())` each step and passes it
+(through `ZoneSceneOptions`) to the controller, which scales the per-step move
+direction — so a severed leg drops the capsule to 35% speed (`CRAWL_SPEED_MULTIPLIER`).
 
 `App.tsx` ticks `tickInjuries(1)` once a second while the player is bleeding and
 the game is `playing`, and resets both health and injuries on death.

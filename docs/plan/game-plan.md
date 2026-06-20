@@ -224,9 +224,14 @@ Pygmalion via Iris.
 - **MPG.5 Populate the world** `[x]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
   Human-lands: 2 caravans + 3 soldier patrols. Forest: 3 caravans + 5 soldiers.
   Makes the loop repeatable across both open zones.
-- **MPG.6 Surface built-but-invisible systems** `[ ]` — **[FLO-366](/FLO/issues/FLO-366)** (Wayland)
+- **MPG.6 Surface built-but-invisible systems** `[x]` — **[FLO-366](/FLO/issues/FLO-366)** (Wayland)
   Bleeding HUD indicator, eye-loss vignette, leg-loss speed multiplier wired to
-  controller, kill+loot score panel. All selectors exist — ticket wires them.
+  controller, kill+loot score panel. All selectors existed — this ticket wired
+  them: `selectIsBleeding` → `.hud-bleeding` status; `selectHasHalfScreenBlackout`
+  → `.injury-vignette` overlay; `selectLocomotionSpeedMultiplier` →
+  `CharacterController.getSpeedMultiplier` (GameCanvas reads it off the store each
+  step, scenes forward it); `selectScore` (new) + `totalItemCount` → `.hud-score`
+  panel. Kill increments land with MPG.1 (FLO-363, `addScore`).
 - **MPG.7 Basic character animation** `[ ]` — *(to open; Pygmalion via Iris)*
   Idle / walk / attack / death clips for hero + soldier via meshy rig/animate pipeline.
 

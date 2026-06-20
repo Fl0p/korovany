@@ -14,7 +14,7 @@ import { gameReducer } from '../store/gameSlice'
 import { healthReducer } from '../store/healthSlice'
 import { injuryReducer } from '../store/injurySlice'
 import { inventoryReducer } from '../store/inventorySlice'
-import { createInjuryState } from '../game/health/injuryModel'
+import { createInjuryState, severLimb, type InjuryState } from '../game/health/injuryModel'
 import { createInventory, type InventoryState } from '../game/economy'
 import { FACTION_IDS } from '../game/faction'
 import { DEFAULT_PLAYER_STATE, playerReducer, type PlayerState } from '../store/playerSlice'
@@ -34,6 +34,8 @@ function renderApp(
   player: PlayerState = DEFAULT_PLAYER_STATE,
   health: HealthState = { current: 100, max: 100 },
   inventory: InventoryState = createInventory(),
+  injury: InjuryState = createInjuryState(),
+  score = 0,
 ) {
   const store = configureStore({
     reducer: {
@@ -49,12 +51,12 @@ function renderApp(
     preloadedState: {
       app: { phase: initialPhase },
       faction: DEFAULT_FACTION_STATE,
-      game: { score: 0 },
+      game: { score },
       health: { player: health },
       inventory,
       player,
       streaming: { phases: streamingPhases },
-      injury: createInjuryState(),
+      injury,
     },
   })
 
@@ -208,6 +210,68 @@ describe('<App />', () => {
     renderApp('paused', {}, DEFAULT_PLAYER_STATE, { current: 0, max: 100 })
     expect(screen.getByRole('heading', { name: 'Paused' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'New Game' })).not.toBeInTheDocument()
+  })
+})
+
+describe('<App /> surfaced injury & score systems (MPG.6)', () => {
+  const full = { current: 100, max: 100 }
+  const noInventory = createInventory()
+  const bleeding = severLimb(createInjuryState(), 'leftHand')
+  const eyeLost = severLimb(createInjuryState(), 'leftEye')
+
+  it('shows the bleeding indicator while a wound is untreated', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, full, noInventory, bleeding)
+    expect(screen.getByRole('status')).toHaveTextContent(/Bleeding/)
+  })
+
+  it('hides the bleeding indicator when not bleeding', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, full, noInventory, createInjuryState())
+    expect(screen.queryByText(/Bleeding/)).not.toBeInTheDocument()
+  })
+
+  it('renders the eye-loss half-screen vignette when an eye is lost', () => {
+    const { container } = renderApp(
+      'playing',
+      {},
+      DEFAULT_PLAYER_STATE,
+      full,
+      noInventory,
+      eyeLost,
+    )
+    expect(container.querySelector('.injury-vignette')).toBeInTheDocument()
+  })
+
+  it('does not render the vignette with both eyes intact', () => {
+    const { container } = renderApp('playing', {}, DEFAULT_PLAYER_STATE, full, noInventory)
+    expect(container.querySelector('.injury-vignette')).not.toBeInTheDocument()
+  })
+
+  it('hides the vignette in the main menu even when an eye is lost', () => {
+    const { container } = renderApp('menu', {}, DEFAULT_PLAYER_STATE, full, noInventory, eyeLost)
+    expect(container.querySelector('.injury-vignette')).not.toBeInTheDocument()
+  })
+
+  it('shows the kill + loot score panel while playing', () => {
+    renderApp(
+      'playing',
+      {},
+      DEFAULT_PLAYER_STATE,
+      full,
+      { counts: { gold: 14, blade: 1 }, equippedItemId: 'blade' },
+      createInjuryState(),
+      7,
+    )
+    const panel = screen.getByRole('group', { name: 'Score' })
+    expect(panel).toHaveTextContent('Kills')
+    expect(panel).toHaveTextContent('7')
+    expect(panel).toHaveTextContent('Loot')
+    // 14 gold + 1 blade = 15 carried items.
+    expect(panel).toHaveTextContent('15')
+  })
+
+  it('hides the score panel in the main menu', () => {
+    renderApp('menu', {}, DEFAULT_PLAYER_STATE, full, noInventory, createInjuryState(), 3)
+    expect(screen.queryByRole('group', { name: 'Score' })).not.toBeInTheDocument()
   })
 })
 

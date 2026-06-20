@@ -13,6 +13,11 @@ export interface ZoneSceneOptions {
   /** Fired when the player defeats a caravan (E3.5); ignored by zones with no caravan. */
   onCaravanLooted?: (drop: LootDrop) => void
   isPaused?: () => boolean
+  /**
+   * Per-step locomotion speed multiplier (1 = normal). Surfaces the leg-loss
+   * crawl outcome to the capsule controller (MPG.6). Defaults to full speed.
+   */
+  getSpeedMultiplier?: () => number
 }
 
 /** The minimal handle the GameCanvas needs to tear a zone scene down. */

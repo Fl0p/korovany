@@ -49,6 +49,11 @@ export interface HumanLandsSceneOptions {
   onPlayerDamaged?: (amount: number) => void
   /** Fired once when the player defeats a caravan; caller dispatches loot pickup. */
   onCaravanLooted?: (drop: LootDrop) => void
+  /**
+   * Per-step locomotion speed multiplier (1 = normal). Surfaces the leg-loss
+   * crawl outcome to the capsule controller (MPG.6). Defaults to full speed.
+   */
+  getSpeedMultiplier?: () => number
 }
 
 export interface HumanLandsScene {
@@ -104,6 +109,7 @@ export function createHumanLandsScene(
     isPaused,
     onPlayerDamaged,
     onCaravanLooted,
+    getSpeedMultiplier,
   } = options
 
   const engine = createEngine(canvas)
@@ -137,6 +143,7 @@ export function createHumanLandsScene(
   const controller = new CharacterController({
     scene,
     getIntent: () => frameIntent,
+    getSpeedMultiplier,
     spawn: spawnPos,
     spawnRotationY: initialSpawn?.rotationY ?? 0,
   })
