@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { Provider } from 'react-redux'
 import { describe, expect, it, vi } from 'vitest'
 import { store } from '../store'
@@ -21,17 +20,14 @@ function renderApp() {
 }
 
 describe('<App />', () => {
-  it('renders the title and the stubbed canvas', () => {
+  it('renders the title and the stubbed canvas as the full-page shell', () => {
     renderApp()
     expect(screen.getByRole('heading', { name: 'Korovany' })).toBeInTheDocument()
     expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
   })
 
-  it('increments the Redux score when +1 is clicked', async () => {
+  it('drops the hello-world chrome — no score probe button', () => {
     renderApp()
-    const user = userEvent.setup()
-    const before = store.getState().game.score
-    await user.click(screen.getByRole('button', { name: '+1' }))
-    expect(store.getState().game.score).toBe(before + 1)
+    expect(screen.queryByRole('button', { name: '+1' })).not.toBeInTheDocument()
   })
 })

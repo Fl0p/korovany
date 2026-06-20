@@ -1,25 +1,21 @@
 import { GameCanvas } from '../scenes/GameCanvas'
-import { addScore, useAppDispatch, useAppSelector } from '../store'
 
 /**
- * App shell: a full-viewport stage holding the 3D canvas with a small HUD
- * overlay on top. The HUD is intentionally minimal debug chrome (title + a
- * Redux score probe) — real in-game UI will replace it. The canvas fills the
- * whole page; see `src/styles/global.css` for the no-scroll reset.
+ * App shell: a full-viewport stage holding the 3D canvas with a minimal HUD
+ * title overlaid on top. The game canvas *is* the app now — the hello-world
+ * chrome (copy + Redux score probe) is gone. The Redux store stays wired in
+ * `main.tsx` for later phases (HUD, score, menus) even though this shell does
+ * not read it yet.
+ *
+ * See `src/styles/global.css` for the no-scroll, full-page reset and the
+ * `.app-shell` / `.hud` layering.
  */
 export function App() {
-  const score = useAppSelector((state) => state.game.score)
-  const dispatch = useAppDispatch()
-
   return (
     <div className="app-shell">
       <GameCanvas />
       <div className="hud">
         <h1>Korovany</h1>
-        <p>
-          Score (Redux): <strong>{score}</strong>{' '}
-          <button onClick={() => dispatch(addScore(1))}>+1</button>
-        </p>
       </div>
     </div>
   )
