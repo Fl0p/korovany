@@ -6,11 +6,15 @@ import {
   readPlayerTransform,
   stageSpawn,
 } from '../game/save/playerRuntime'
+import type { PlayerTransform } from '../game/save/types'
 import {
+  applyPlayerDamage,
   continueGame,
+  playerDied,
   resetInjuries,
   resetPlayer,
   resetPlayerHealth,
+  respawn,
   restorePlayer,
   restorePlayerHealth,
   returnToMenu,
@@ -22,6 +26,13 @@ import {
   useAppDispatch,
   useAppSelector,
 } from '../store'
+
+/** Default safe spawn — matches the forest scene's controller spawn `(0, 2, 0)`. */
+const SAFE_SPAWN: PlayerTransform = { position: { x: 0, y: 2, z: 0 }, rotationY: 0 }
+
+/** Dev-only debug-damage key and the HP it deals per press / default console call. */
+const DEBUG_DAMAGE_KEY = 'KeyK'
+const DEBUG_DAMAGE_AMOUNT = 10
 
 /**
  * App shell: a full-viewport stage holding the 3D canvas with React overlays
@@ -46,22 +57,21 @@ export function App() {
   const isBleeding = useAppSelector(selectIsBleeding)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
+  const deathPrimaryActionRef = useRef<HTMLButtonElement>(null)
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
 
-  // Return to menu on player death; reset HP and injuries so a subsequent New
-  // Game starts fresh.
+  // Enter the death state when HP hits 0 during live play. HP/injuries are NOT
+  // reset here — the death screen shows the wipe and respawn does the reset.
   useEffect(() => {
     if (phase !== 'playing' && phase !== 'paused') return
     if (health.current > 0) return
-    dispatch(resetPlayerHealth())
-    dispatch(resetInjuries())
-    dispatch(returnToMenu())
+    dispatch(playerDied())
   }, [health.current, phase, dispatch])
 
   // Bleed-out: while a wound is untreated and the game is live, drain HP each
   // second. tickInjuries funnels the damage into the health system, so an
-  // untreated bleed reaches 0 HP and triggers the death effect above.
+  // untreated bleed reaches 0 HP and triggers the death state above.
   useEffect(() => {
     if (phase !== 'playing') return
     if (!isBleeding) return
@@ -90,7 +100,28 @@ export function App() {
   useEffect(() => {
     if (phase === 'menu') menuPrimaryActionRef.current?.focus()
     else if (phase === 'paused') pausePrimaryActionRef.current?.focus()
+    else if (phase === 'dead') deathPrimaryActionRef.current?.focus()
   }, [phase])
+
+  // Debug damage affordance (dev builds only): press K to take a chunk of damage,
+  // or call `window.korovanyDamage(n)` from the console. Lets later combat
+  // tickets drive the health pipeline before melee/enemies exist. All routed
+  // through the typed `applyPlayerDamage` funnel with a `debug` source.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const hurt = (amount = DEBUG_DAMAGE_AMOUNT) =>
+      dispatch(applyPlayerDamage({ amount, source: 'debug', kind: 'true' }))
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== DEBUG_DAMAGE_KEY) return
+      hurt()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    ;(window as unknown as { korovanyDamage?: (n?: number) => void }).korovanyDamage = hurt
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      delete (window as unknown as { korovanyDamage?: (n?: number) => void }).korovanyDamage
+    }
+  }, [dispatch])
 
   // Autosave on the transition into `paused`. The transform comes from the live
   // scene via the bridge; health from `healthSlice`, zone from `playerSlice`. No
@@ -133,6 +164,16 @@ export function App() {
     dispatch(continueGame())
   }, [dispatch])
 
+  // Respawn from the death screen: refill HP, clear injuries, and return the
+  // live capsule to the safe spawn before re-entering play.
+  const onRespawn = useCallback(() => {
+    dispatch(resetPlayerHealth())
+    dispatch(resetInjuries())
+    stageSpawn(SAFE_SPAWN)
+    applyPlayerTransform(SAFE_SPAWN)
+    dispatch(respawn())
+  }, [dispatch])
+
   return (
     <div className="app-shell">
       <GameCanvas />
@@ -140,6 +181,22 @@ export function App() {
       {phase !== 'menu' ? (
         <div className="hud">
           <h1>Korovany</h1>
+          <div
+            className="hud-health"
+            role="group"
+            aria-label={`Player health: ${health.current} of ${health.max} hit points`}
+          >
+            <span className="hud-health-label">HP</span>
+            <span className="hud-health-bar" aria-hidden="true">
+              <span
+                className="hud-health-fill"
+                style={{ width: `${Math.max(0, (health.current / health.max) * 100)}%` }}
+              />
+            </span>
+            <span className="hud-health-value">
+              {health.current}/{health.max}
+            </span>
+          </div>
         </div>
       ) : null}
       {phase === 'menu' ? (
@@ -188,6 +245,32 @@ export function App() {
                 onClick={() => dispatch(togglePause())}
               >
                 Resume
+              </button>
+              <button type="button" onClick={() => dispatch(returnToMenu())}>
+                Quit to Main Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {phase === 'dead' ? (
+        <div
+          className="death-overlay"
+          role="dialog"
+          aria-labelledby="death-title"
+          aria-modal="true"
+        >
+          <div className="death-panel">
+            <h2 id="death-title">You Died</h2>
+            <p className="death-hint">The forest claims another soul.</p>
+            <div className="menu-actions" aria-label="Death actions">
+              <button
+                ref={deathPrimaryActionRef}
+                type="button"
+                className="primary-action"
+                onClick={onRespawn}
+              >
+                Respawn
               </button>
               <button type="button" onClick={() => dispatch(returnToMenu())}>
                 Quit to Main Menu

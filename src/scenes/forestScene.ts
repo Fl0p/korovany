@@ -88,6 +88,12 @@ export interface ForestScene {
   readonly engine: AbstractEngine
   readonly scene: Scene
   readonly controller: CharacterController
+  /**
+   * Enable/disable simulation. While inactive the scene keeps rendering but
+   * skips input sampling, movement, melee and AI — used to freeze the world
+   * while the player is dead or the game is paused.
+   */
+  setActive(active: boolean): void
   dispose(): void
 }
 
@@ -204,9 +210,23 @@ export function createForestScene(
   loop.scheduler.register(controller)
   for (const s of soldiers) loop.scheduler.register(s)
 
+  // Simulation gate: when false the world is frozen (no input/movement/AI) but
+  // still rendered. Driven by app phase (dead/paused) via {@link setActive}.
+  let active = true
+
   engine.runRenderLoop(() => {
-    frameIntent = input.sample()
     const dt = engine.getDeltaTime() / 1000
+
+    // Frozen: keep drawing the last frame but advance nothing. Drain look deltas
+    // so they don't burst when control resumes.
+    if (!active) {
+      input.sample()
+      rig.update(0, 0)
+      scene.render()
+      return
+    }
+
+    frameIntent = input.sample()
 
     // Advance the player melee state machine (edge-triggered on F key).
     const attackPressed = frameIntent.attack && !prevAttack
@@ -236,6 +256,9 @@ export function createForestScene(
     engine,
     scene,
     controller,
+    setActive(value: boolean) {
+      active = value
+    },
     dispose() {
       if (disposed) return
       disposed = true

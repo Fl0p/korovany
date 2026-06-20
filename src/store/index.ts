@@ -24,17 +24,21 @@ export type AppDispatch = typeof store.dispatch
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 export const useAppSelector = useSelector.withTypes<RootState>()
 
-export { continueGame, returnToMenu, startNewGame, togglePause } from './appSlice'
+export { continueGame, playerDied, respawn, returnToMenu, startNewGame, togglePause } from './appSlice'
 export type { AppPhase, AppState } from './appSlice'
 export { addScore, resetScore } from './gameSlice'
 export type { GameState } from './gameSlice'
 export {
+  applyPlayerDamage,
   damagePlayer,
   healPlayer,
   resetPlayerHealth,
   restorePlayerHealth,
+  selectIsAlive,
+  selectLastDamageAt,
+  selectPlayerHealth,
 } from './healthSlice'
-export type { HealthStoreState } from './healthSlice'
+export type { DamageEvent, DamageKind, DamageSource, HealthStoreState } from './healthSlice'
 export {
   advanceBleed,
   fitPlayerProsthetic,

@@ -1,6 +1,20 @@
 # Health system
 
-The health system is a pure-function model (`src/game/health/`) backed by a Redux slice (`healthSlice`). It tracks the player's current and maximum hit points and wires death to a menu transition.
+The health system is a pure-function model (`src/game/health/`) backed by a Redux slice (`healthSlice`). It tracks the player's current/maximum hit points, whether they are alive, and when they were last hurt — and wires 0 HP to a dedicated **death state** with respawn (E2.1).
+
+> **Units.** Hit points (HP) are an abstract integer pool. The player starts at `max = 100`; damage and healing are plain HP amounts. There is no passive regen — HP changes only through the damage funnel, heals, reset, or a loaded save.
+
+## Slice state
+
+```ts
+interface HealthStoreState {
+  player: { current: number; max: number } // canonical HP, round-trips through the save
+  isAlive: boolean                          // derived player.current > 0, kept in sync
+  lastDamageAt: number | null               // epoch ms of the last hit this life
+}
+```
+
+Selectors (`'../store'`): `selectPlayerHealth`, `selectIsAlive`, `selectLastDamageAt`.
 
 ## API
 
@@ -15,24 +29,60 @@ isAlive(applyDamage(hp, 9999))        // false
 
 All functions are **pure** — they return a new `HealthState` and never mutate the input.
 
+## The damage funnel (trust-the-boundary)
+
+All player damage flows through **one** typed event, `applyPlayerDamage`. The
+amount is validated exactly once at the funnel boundary (non-finite / ≤ 0 → 0);
+internally the slice trusts it. The funnel clamps HP ≥ 0, refreshes `isAlive`,
+and stamps `lastDamageAt`.
+
+```ts
+import { applyPlayerDamage } from '../store'
+
+dispatch(applyPlayerDamage({ amount: 25, source: 'enemy', kind: 'physical' }))
+//        amount: HP to remove (required)
+//        source: 'enemy' | 'environment' | 'fall' | 'bleed' | 'debug' | 'unknown'
+//        kind:   'physical' | 'fire' | 'poison' | 'true'
+//        at?:    epoch ms; defaults to Date.now() (pass explicitly in tests)
+```
+
 ## Redux actions
 
 | Action | Payload | Effect |
 |---|---|---|
-| `damagePlayer(n)` | `number` | Reduce player HP by *n*, clamp at 0 |
-| `healPlayer(n)` | `number` | Restore player HP by *n*, clamp at max |
-| `resetPlayerHealth()` | — | Restore player HP to max (100) |
+| `applyPlayerDamage(e)` | `DamageEvent` | **The funnel.** Validate once, clamp at 0, set `isAlive`, stamp `lastDamageAt` |
+| `damagePlayer(n)` | `number` | Numeric convenience (bleed ticks / legacy callers) — routes through the same funnel |
+| `healPlayer(n)` | `number` | Restore player HP by *n*, clamp at max; revives if `current > 0` |
+| `resetPlayerHealth()` | — | Restore HP to max (100), `isAlive = true`, clear `lastDamageAt` |
 | `restorePlayerHealth(h)` | `HealthState` | Replace player HP with a loaded `{ current, max }` (used by Continue) |
 
-Import from `'../store'`:
+Import from `'../store'`.
 
-```ts
-import { damagePlayer, healPlayer, resetPlayerHealth, restorePlayerHealth } from '../store'
-```
+## Death state & respawn
 
-## Death → menu transition
+Death is a first-class app phase (`appSlice`), not a bounce to the menu:
 
-`App.tsx` watches `state.health.player.current`. When it reaches 0 while the phase is `playing` or `paused`, the app dispatches `resetPlayerHealth()` (so a subsequent New Game starts with full HP) then `returnToMenu()`.
+1. `App.tsx` watches `state.health.player.current`. At 0 HP during `playing`/`paused` it dispatches `playerDied()` → phase `'dead'`.
+2. While `'dead'`, the **You Died** overlay shows and the forest scene is frozen — `GameCanvas` calls the scene's `setActive(false)` whenever the phase is not `'playing'`, so movement, input, melee and AI all stop (this also freezes the world on pause).
+3. **Respawn** refills HP (`resetPlayerHealth`), clears injuries (`resetInjuries`), teleports the capsule to the safe spawn `(0, 2, 0)` via the `playerRuntime` bridge, then dispatches `respawn()` → phase `'playing'`.
+4. **Quit to Main Menu** from the death screen returns to the menu; a later New Game resets HP.
+
+## HUD
+
+The in-game HUD (`App.tsx`) renders a labelled HP bar — `HP [▮▮▮▯▯] 60/100` —
+sourced from `state.health.player`. The bar width tracks `current / max`; the
+numeric value states the exact pool. Shown in every non-menu phase.
+
+## Debug damage (dev only)
+
+In dev builds (`import.meta.env.DEV`) a debug affordance drives damage before
+melee/enemies are wired into a zone:
+
+- Press **K** to take 10 HP of `debug`-sourced damage.
+- Call `window.korovanyDamage(n)` from the console (defaults to 10).
+
+Both route through `applyPlayerDamage`, so they exercise the real death/respawn
+path. The affordance is removed entirely from production bundles.
 
 ## Save persistence
 

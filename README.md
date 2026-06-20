@@ -56,9 +56,14 @@ See [`docs/guide/architecture.md`](docs/guide/architecture.md) for where new cod
 The game renders into a **full-window 3D canvas** — the document never scrolls
 and there is no `max-width` container (`src/styles/global.css` resets
 `html/body/#root` and hides overflow). React overlays sit above the canvas for
-the HUD, main menu, and pause screen. The app boots into the main menu; **New
-Game** enters play, **Continue** resumes the latest save (see
-[Saving progress](#saving-progress)), and `ESC` toggles `playing ⇄ paused`.
+the HUD, main menu, pause screen, and death screen. The app boots into the main
+menu; **New Game** enters play, **Continue** resumes the latest save (see
+[Saving progress](#saving-progress)), and `ESC` toggles `playing ⇄ paused`. The
+HUD shows a labelled HP bar (`60/100`). At 0 HP the game enters a **death state**
+(`You Died`) with **Respawn** (refill HP + return to the safe spawn) or **Quit to
+Main Menu**; movement and input are frozen while dead. See
+[`docs/guide/health-system.md`](docs/guide/health-system.md). In dev builds, press
+**K** (or call `window.korovanyDamage(n)`) to apply debug damage.
 
 The Babylon `Engine`/`Scene` lifecycle lives in **[`src/engine/`](src/engine/index.ts)**,
 not inline in a component. `createGameEngine(canvas)` owns engine + scene

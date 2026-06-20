@@ -79,11 +79,12 @@ bodies may "mutate" the draft state directly (or return a new state object).
 
 The top-level screen/phase the player is on.
 
-- **State:** `{ phase: 'menu' | 'playing' | 'paused' }` (`AppState`, `AppPhase`).
+- **State:** `{ phase: 'menu' | 'playing' | 'paused' | 'dead' }` (`AppState`, `AppPhase`).
 - **Actions:** `startNewGame()`, `continueGame()`, `togglePause()`,
+  `playerDied()` (→ `dead`, only from live play), `respawn()` (→ `playing`),
   `returnToMenu()` — each sets `phase`.
 - **Read via:** `useAppSelector((s) => s.app.phase)` (see `App.tsx`,
-  `GameCanvas.tsx`).
+  `GameCanvas.tsx`). `GameCanvas` freezes the scene whenever `phase !== 'playing'`.
 
 ### `gameSlice` — in-run gameplay stats
 

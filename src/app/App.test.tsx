@@ -42,7 +42,7 @@ function renderApp(
     preloadedState: {
       app: { phase: initialPhase },
       game: { score: 0 },
-      health: { player: health },
+      health: { player: health, isAlive: health.current > 0, lastDamageAt: null },
       player,
       streaming: { phases: streamingPhases },
       injury: createInjuryState(),
@@ -125,9 +125,26 @@ describe('<App />', () => {
     expect(screen.getByText('Loading…')).toBeInTheDocument()
   })
 
-  it('returns to menu when player HP reaches 0 during playing', () => {
+  it('enters the death screen when player HP reaches 0 during playing', () => {
     renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 0, max: 100 })
-    expect(screen.getByRole('button', { name: 'New Game' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'You Died' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Respawn' })).toBeInTheDocument()
+  })
+
+  it('respawn from the death screen refills HP and returns to play', async () => {
+    const user = userEvent.setup()
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 0, max: 100 })
+
+    await user.click(screen.getByRole('button', { name: 'Respawn' }))
+
+    expect(screen.queryByRole('heading', { name: 'You Died' })).not.toBeInTheDocument()
+    // Back in play: HUD shows full HP restored.
+    expect(screen.getByText('100/100')).toBeInTheDocument()
+  })
+
+  it('shows the HP readout in the HUD during play', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 60, max: 100 })
+    expect(screen.getByText('60/100')).toBeInTheDocument()
   })
 })
 

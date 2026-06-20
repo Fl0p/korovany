@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   appReducer,
   continueGame,
+  playerDied,
+  respawn,
   returnToMenu,
   startNewGame,
   togglePause,
@@ -32,5 +34,20 @@ describe('appSlice', () => {
 
   it('can return to the menu', () => {
     expect(appReducer({ phase: 'paused' }, returnToMenu()).phase).toBe('menu')
+  })
+
+  it('enters the dead state from live play, but not from the menu', () => {
+    expect(appReducer({ phase: 'playing' }, playerDied()).phase).toBe('dead')
+    expect(appReducer({ phase: 'paused' }, playerDied()).phase).toBe('dead')
+    expect(appReducer({ phase: 'menu' }, playerDied()).phase).toBe('menu')
+  })
+
+  it('respawn returns from dead to playing, and is a no-op otherwise', () => {
+    expect(appReducer({ phase: 'dead' }, respawn()).phase).toBe('playing')
+    expect(appReducer({ phase: 'menu' }, respawn()).phase).toBe('menu')
+  })
+
+  it('pause is ignored while dead', () => {
+    expect(appReducer({ phase: 'dead' }, togglePause()).phase).toBe('dead')
   })
 })

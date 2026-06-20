@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-export type AppPhase = 'menu' | 'playing' | 'paused'
+export type AppPhase = 'menu' | 'playing' | 'paused' | 'dead'
 
 export interface AppState {
   phase: AppPhase
@@ -27,11 +27,28 @@ const appSlice = createSlice({
         state.phase = 'playing'
       }
     },
+    /**
+     * Player HP reached 0 — enter the `dead` state. Only reachable from live
+     * play (`playing`/`paused`); ignored otherwise so a stray dispatch can't
+     * kill the menu. Input/movement are gated off while `dead` (see GameCanvas).
+     */
+    playerDied(state) {
+      if (state.phase === 'playing' || state.phase === 'paused') {
+        state.phase = 'dead'
+      }
+    },
+    /** Respawn from the death screen back into live play (HP/transform reset by the UI layer). */
+    respawn(state) {
+      if (state.phase === 'dead') {
+        state.phase = 'playing'
+      }
+    },
     returnToMenu(state) {
       state.phase = 'menu'
     },
   },
 })
 
-export const { continueGame, returnToMenu, startNewGame, togglePause } = appSlice.actions
+export const { continueGame, playerDied, respawn, returnToMenu, startNewGame, togglePause } =
+  appSlice.actions
 export const appReducer = appSlice.reducer
