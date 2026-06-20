@@ -24,6 +24,9 @@ import {
 } from '../game/ai'
 import type { System } from '../game/loop'
 
+/** FLO-311 Empire soldier mesh — web-ready GLB shipped in /public/models. */
+export const DEFAULT_SOLDIER_GLB = '/models/empire-soldier.glb'
+
 export interface SoldierEnemyOptions {
   spawn: Vector3
   params?: SoldierFSMParams
@@ -31,6 +34,11 @@ export interface SoldierEnemyOptions {
   getPlayerPos: () => Vector3
   /** Callback when soldier attacks the player — caller dispatches damagePlayer. */
   onAttackPlayer: (damage: number) => void
+  /**
+   * Soldier GLB to mount on the capsule (FLO-311); `null` keeps the bare
+   * capsule placeholder. Defaults to the shipped Empire soldier model.
+   */
+  glbUrl?: string | null
 }
 
 export class SoldierEnemy implements System, Damageable {
@@ -61,12 +69,34 @@ export class SoldierEnemy implements System, Damageable {
     const mat = new StandardMaterial('soldierMat', scene)
     mat.diffuseColor = new Color3(0.6, 0.25, 0.1)
     this.mesh.material = mat
+
+    // Mount the FLO-311 GLB onto the capsule (best-effort: the bare capsule
+    // stays as a fallback if the model can't be fetched, e.g. in headless tests).
+    const glbUrl = options.glbUrl === undefined ? DEFAULT_SOLDIER_GLB : options.glbUrl
+    if (glbUrl) {
+      void import('./modelLoader')
+        .then(({ loadModel }) =>
+          loadModel(scene, glbUrl, { targetSize: 1.8, groundIt: true }).then((model) => {
+            model.root.parent = this.mesh
+            model.root.position = new Vector3(0, -0.9, 0)
+            for (const m of model.meshes) m.isPickable = false
+            this.mesh.isVisible = false // hide the placeholder capsule
+          }),
+        )
+        .catch(() => {
+          /* keep the capsule placeholder visible */
+        })
+    }
   }
 
   /** Damageable — called by getMeleeHits callers when the player strikes. */
   takeDamage(amount: number): void {
+    if (this.fsm.phase === 'dead') return
     this.fsm = applyDamageToSoldier(this.fsm, amount)
     if (this.fsm.phase === 'dead') {
+      // Topple in place so the kill reads clearly; E2.4 (FLO-313) takes over
+      // the death sequence — we deliberately do not despawn the mesh.
+      this.mesh.rotation.z = Math.PI / 2
       const mat = this.mesh.material as StandardMaterial | null
       if (mat) mat.diffuseColor = new Color3(0.3, 0.3, 0.3)
     }
