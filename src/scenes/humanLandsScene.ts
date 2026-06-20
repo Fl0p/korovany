@@ -24,6 +24,10 @@ import {
   type Damageable,
   type Vec3,
 } from '../game/combat'
+import { HitFlashManager } from '../game/combat/hitFlash'
+import { DeathEmphasisManager, type TimeScaleable } from '../game/combat/deathEmphasis'
+import { ScreenShakeManager } from '../game/camera/screenShake'
+import { emitDamage, emitKill, emitShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { CaravanEnemy } from './caravanEnemy'
 
@@ -172,12 +176,20 @@ export function createHumanLandsScene(
     )
   }
 
+  const hitFlash = new HitFlashManager()
+  const deathEmphasis = new DeathEmphasisManager(engine as TimeScaleable)
+  const screenShake = new ScreenShakeManager()
+
   const soldiers = HUMAN_LANDS_SOLDIER_SPAWNS.map(
     (spawn) =>
       new SoldierEnemy(scene, {
         spawn,
         getPlayerPos: () => controller.mesh.position,
-        onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
+        onAttackPlayer: (dmg) => {
+          onPlayerDamaged?.(dmg)
+          screenShake.trigger()
+          emitShake()
+        },
       }),
   )
 
@@ -214,7 +226,33 @@ export function createHumanLandsScene(
       const targets: Damageable[] = soldiers.filter((s) => !s.isDead())
       targets.push(...caravans.filter((c) => !c.isDead()))
       const hits = getMeleeHits(meleeState, playerPos as unknown as Vec3, forward as unknown as Vec3, targets)
-      hits.forEach((h) => h.takeDamage(25))
+      hits.forEach((h) => {
+        const wasDead = (h as SoldierEnemy | CaravanEnemy).isDead?.()
+        h.takeDamage(25)
+        const nowDead = (h as SoldierEnemy | CaravanEnemy).isDead?.()
+        // Flash the hit mesh (only enemies backed by a Babylon mesh).
+        const mesh = (h as SoldierEnemy | CaravanEnemy).mesh
+        if (mesh) hitFlash.flash(mesh)
+        // Emit damage number at approximate screen-centre for now (MPG.3 full 3D→2D projection
+        // requires a live camera reference; a centred position is a safe default here).
+        emitDamage(25, 50, 40)
+        // Death emphasis on kill.
+        if (!wasDead && nowDead) {
+          deathEmphasis.trigger()
+          emitKill()
+        }
+        // Screen shake on landing a hit.
+        screenShake.trigger()
+      })
+    }
+
+    hitFlash.update(dt)
+    deathEmphasis.update(dt)
+    const [shakeX, shakeY] = screenShake.update(dt)
+    if (shakeX !== 0 || shakeY !== 0) {
+      // Offset the camera target slightly to produce the shake.
+      rig.camera.target.x += shakeX
+      rig.camera.target.y += shakeY
     }
 
     loop.advance(dt)

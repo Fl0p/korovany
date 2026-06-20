@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
 import { InventoryPanel } from './InventoryPanel'
+import { DamageNumbers, type DamageNumberEntry } from './DamageNumber'
+import { onDamage } from '../game/combat/damageEvents'
 import { WorldMap } from '../components/WorldMap'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
@@ -77,6 +79,16 @@ export function App() {
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
   const endgamePrimaryActionRef = useRef<HTMLButtonElement>(null)
+
+  const [damageNumbers, setDamageNumbers] = useState<DamageNumberEntry[]>([])
+  const nextDmgId = useRef(0)
+
+  useEffect(() => {
+    return onDamage((amount, screenX, screenY) => {
+      const id = nextDmgId.current++
+      setDamageNumbers((prev) => [...prev, { id, amount, x: screenX, y: screenY }])
+    })
+  }, [])
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
   // Main menu sub-view: the landing actions, or the New-Game faction picker.
@@ -266,6 +278,10 @@ export function App() {
   return (
     <div className="app-shell">
       <GameCanvas />
+      <DamageNumbers
+        entries={damageNumbers}
+        onExpire={(id) => setDamageNumbers((prev) => prev.filter((e) => e.id !== id))}
+      />
       {phase !== 'menu' && hasHalfScreenBlackout ? (
         <div className="injury-vignette" aria-hidden="true" />
       ) : null}
