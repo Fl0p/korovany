@@ -170,16 +170,78 @@ Epic: **[FLO-307](/FLO/issues/FLO-307)** — opened 2026-06-20, decomposed by Da
 
 > **Decomposition note (concurrent-run collision, 2026-06-20):** Two Daedalus runs decomposed FLO-307 within the same window. The earlier run created the canonical E2.1/E2.2 (**FLO-308/FLO-309**); a later run created duplicates **FLO-310** (dup E2.1) and **FLO-312** (dup E2.2) plus the unique tickets FLO-311/313/314/315. Canonical = FLO-308/FLO-309 (lower IDs, already in this committed plan). **FLO-312 cancelled; FLO-310's stale duplicate PR #31 closed (superseded by FLO-308 + the HUD salvage in #38)** — recommend marking FLO-310 `cancelled` to mirror FLO-312 (cross-run PATCH blocked by the per-run authorization boundary). Tracked on [FLO-307](/FLO/issues/FLO-307).
 
-### Phase 3 — World, caravans & loot loop `[~]`
+### Phase 3 — World, caravans & loot loop `[x]`
 
 Epic: **[FLO-329](/FLO/issues/FLO-329)** — opened 2026-06-20 by Daedalus (CTO).
 Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (inventory) can parallelize with E3.2/3.3.
 
-- **E3.1 World map & 4 zones** `[~]` — **FLO-332** (Wayland, in_progress) — zone definitions, fast-travel/world map UI, per-zone streaming.
-  - **E3.1-UX World-map wireframes** `[~]` — **FLO-331** (Iris, in_progress) — overlay wireframes for fast-travel map UI.
-- **E3.2 Zone streaming** `[~]` — **FLO-333** (Wayland, in_progress) — load/unload zone content as the player crosses borders; budget memory.
-- **E3.3 Caravans ("грабить корованы")** `[~]` — **FLO-334** (Wayland, in_progress) — wandering caravan entities, ambush, loot tables, reward.
-- **E3.4 Inventory & loot** `[~]` — **FLO-335** (Wayland, in_progress) — pick up, carry, equip; HUD inventory panel.
+- **E3.1 World map & 4 zones** `[x]` — **FLO-332** ✅ merged (PR #46) — zone registry, fast-travel/world map UI (M key), per-zone streaming.
+  - **E3.1-UX World-map wireframes** `[x]` — **FLO-331** (Iris) — overlay wireframes consumed by the shipped map UI.
+- **E3.2 Zone streaming** `[x]` — **FLO-333** ✅ merged (PR #42) — load/unload zone content on travel; budgeted memory.
+- **E3.3 Caravans ("грабить корованы")** `[x]` — **FLO-334** ✅ merged (PR #43) — wandering caravan entity, ambush, loot tables, reward.
+- **E3.4 Inventory & loot** `[x]` — **FLO-335** ✅ merged — pick up loot on caravan defeat; HUD inventory panel.
+
+> **Phase 3 systems are merged, but only the forest zone has content.** The
+> caravan/loot loop is live and playable *in the forest*. Human-lands renders as
+> an empty zone (ground + landmark boxes, no caravans/soldiers); Empire and
+> Mountains have no scene yet (locked in the map UI). Populating the world is
+> pulled into the **Minimum Playable Game** milestone below (MPG.5).
+
+### Phase 3.5 — Minimum Playable Game (MPG) `[ ]` ⭐ NEXT PRIORITY
+
+> **Why this phase exists (board feedback FLO-355, 2026-06-21: "она всё ещё не
+> играбельная").** A code audit of the deployed build confirmed the gap: every
+> system we built bottom-up *works* (controller, combat, corpses, injuries,
+> streaming, world map, caravans, inventory, save), but there is **no game on top
+> of them.** A player who clicks New Game is dropped into an empty clearing with
+> one soldier and one crate, no objective, no onboarding, no audio, no animation,
+> no hit feedback, and no reason to do anything. Several finished systems
+> (injuries, score, leg-loss locomotion) are never surfaced to the player at all.
+>
+> The original plan deferred *everything that makes it a game* — goals, juice,
+> audio, quests — to Phase 6, while Phases 4–5 deepen RPG plumbing the player
+> can't yet feel. **That is the prioritization error behind "not playable."** This
+> milestone reorders the work: build the *thinnest playable game* — a goal, the
+> feedback that you're progressing toward it, moment-to-moment feel, and
+> onboarding so the player knows what to do — wired into the **live** scene,
+> **before** we deepen the RPG systems.
+
+Epic: **FLO-356** *(to open on board approval of this revision)* — child of FLO-273.
+Design thesis: a game needs (1) a goal, (2) visible progress toward it, (3) a
+satisfying moment-to-moment loop, (4) onboarding. Build the thinnest version of
+each, wired into the live forest/world loop. Ownership split Aldric/Wayland per
+FLO-348; visual feel & onboarding UI are **Iris-gated**; animation assets →
+Pygmalion via Iris.
+
+- **MPG.1 Objective & win/lose loop** `[ ]` — the single biggest gap. A concrete,
+  HUD-surfaced goal (e.g. "Raid 3 caravans" / "Clear the soldier camp"), score
+  wired to kills+loot, and explicit **win** and **lose** screens with restart.
+  Turns directionless sandbox into a game with a point. *(engineer)*
+- **MPG.2 Onboarding & objective intro** `[ ]` — on New Game, a dismissible
+  controls card (WASD/sprint/jump/F-attack/M-map) and the current objective, so
+  the player is never a tabula rasa. *(Iris-gated UI → engineer)*
+- **MPG.3 Combat juice / hit feedback** `[ ]` — screen shake, hit flash,
+  floating damage/feedback, knockback, death emphasis. Make attacks feel like
+  they connect. *(Iris-gated → engineer)*
+- **MPG.4 Audio system + core SFX** `[ ]` — streamed audio module: footsteps,
+  attack, hit, loot pickup, death, ambient bed. Biggest feel-per-effort uplift.
+  *(engineer; asset sourcing TBD)*
+- **MPG.5 Populate the world** `[ ]` — make zones non-empty: spawn caravans +
+  soldiers in human-lands; raise encounter density in the forest beyond one of
+  each; make the loop repeatable across the two open zones. *(engineer)*
+- **MPG.6 Surface built-but-invisible systems** `[ ]` — render injury state in the
+  HUD (bleeding indicator, eye-loss vignette via `selectHasHalfScreenBlackout`),
+  apply leg-loss locomotion multiplier to the controller, and display
+  score/loot-count. Wire the selectors that already exist but nothing consumes.
+  *(engineer)*
+- **MPG.7 Basic character animation** `[ ]` — idle / walk / attack / death clips
+  for hero + soldier via the meshy rig/animate pipeline (FLO-330). Static meshes
+  read as broken; even minimal animation reads as "alive." *(Pygmalion via Iris)*
+
+Acceptance for the milestone: a first-time player who clicks New Game **knows what
+to do, has a goal they can complete or fail, gets audible+visible feedback for
+every action, and reaches a win or lose screen** — demonstrated in the deployed
+build (rendered/screenshotted), not just in tests.
 
 ### Phase 4 — Factions & economy (the RPG layer) `[~]`
 
@@ -187,6 +249,15 @@ Epic: **[FLO-349](/FLO/issues/FLO-349)** — opened 2026-06-21 by Daedalus (CTO)
 decomposed into oneshot children. Sequence: E4.1 unlocks E4.2/E4.3/E4.5; E4.4
 follows Phase 3 (inventory). Ownership split across **Aldric** and **Wayland**
 (per board directive FLO-348 — balance load, not all on one engineer).
+
+> **Reprioritized (r14, FLO-355).** The **Minimum Playable Game** milestone
+> (Phase 3.5) now takes priority over *deepening* Phase 4. In-flight E4.1
+> (FLO-350, faction data model) continues — it's foundational and player-relevant
+> — but the player-facing faction picker + asymmetric goals (E4.2/FLO-351) is the
+> natural carrier of MPG.1's "objective" framing and should be sequenced with the
+> MPG epic. The deeper plumbing (commander/orders E4.3, economy E4.4, progression
+> E4.5) stays parked behind MPG: a player must *feel* a game before those systems
+> have anything to attach to.
 
 - **E4.1 Faction system** `[~]` — **FLO-350** (Aldric, in_progress) — pure
   `src/game/faction/` data + reputation + `resolveStance` friend/foe, `factionSlice`;
@@ -255,6 +326,19 @@ speculative batches (FLO-270).
 
 *Revision history*
 
+- **r14** (2026-06-21) — **playability reprioritization** (board feedback FLO-355:
+  "она всё ещё не играбельная — подумай чего не хватает, создай ещё фаз и тасок").
+  A code audit of the deployed build found every bottom-up system works but there
+  is no *game* on top: New Game drops the player into an empty clearing with one
+  soldier + one crate, no objective, onboarding, audio, animation, or hit
+  feedback, and finished systems (injuries, score, leg-loss locomotion) are never
+  surfaced. Marked **Phase 3 done** (E3.1–E3.4 merged: PR #46/#42/#43 + inventory;
+  forest is the only zone with content). Inserted **Phase 3.5 — Minimum Playable
+  Game (MPG)** as the next priority *ahead of* deepening Phase 4/5: MPG.1 objective
+  & win/lose loop, MPG.2 onboarding, MPG.3 combat juice, MPG.4 audio, MPG.5
+  populate the world, MPG.6 surface built-but-invisible systems, MPG.7 basic
+  animation. Phase 4 reprioritized behind MPG (in-flight E4.1 continues). Epic
+  FLO-356 to open on board approval of this revision. (Daedalus)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
