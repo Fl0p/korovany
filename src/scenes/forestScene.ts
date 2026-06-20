@@ -20,6 +20,8 @@ import {
   spawnStreamedInstance,
   type StreamedInstance,
 } from '../game/streaming'
+import { createMeleeAttack, getMeleeHits, stepMeleeAttack } from '../game/combat'
+import { SoldierEnemy } from './soldierEnemy'
 
 // ---------------------------------------------------------------------------
 // Asset ids — canonical string keys used throughout the streaming system.
@@ -78,6 +80,8 @@ export interface ForestSceneOptions {
   createEngine?: (canvas: HTMLCanvasElement) => AbstractEngine
   /** Hero GLB to mount on the capsule; `null` skips it. */
   heroUrl?: string | null
+  /** Called when an enemy hits the player. Caller dispatches damagePlayer. */
+  onPlayerDamaged?: (amount: number) => void
 }
 
 export interface ForestScene {
@@ -106,7 +110,7 @@ export function createForestScene(
   canvas: HTMLCanvasElement,
   options: ForestSceneOptions = {},
 ): ForestScene {
-  const { createEngine = defaultEngineFactory, heroUrl = DEFAULT_HERO_URL } = options
+  const { createEngine = defaultEngineFactory, heroUrl = DEFAULT_HERO_URL, onPlayerDamaged } = options
 
   const engine = createEngine(canvas)
   const scene = new Scene(engine)
@@ -181,12 +185,44 @@ export function createForestScene(
     )
   }
 
+  // ------------------------------------------------------------------
+  // Enemy soldiers — E2.3 fight loop.
+  // ------------------------------------------------------------------
+  const soldiers: SoldierEnemy[] = [
+    new SoldierEnemy(scene, {
+      spawn: new Vector3(6, 0, 6),
+      getPlayerPos: () => controller.mesh.position,
+      onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
+    }),
+  ]
+
+  // Melee attack state for the player (edge-triggered on intent.attack).
+  let meleeState = createMeleeAttack()
+  let prevAttack = false
+
   const loop = new FixedStepLoop({ world: undefined, dt: 1 / 60 })
   loop.scheduler.register(controller)
+  for (const s of soldiers) loop.scheduler.register(s)
 
   engine.runRenderLoop(() => {
     frameIntent = input.sample()
-    loop.advance(engine.getDeltaTime() / 1000)
+    const dt = engine.getDeltaTime() / 1000
+
+    // Advance the player melee state machine (edge-triggered on F key).
+    const attackPressed = frameIntent.attack && !prevAttack
+    prevAttack = frameIntent.attack
+    meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
+
+    // During the active hit window, check all living soldiers.
+    if (meleeState.hitWindowOpen) {
+      const playerPos = controller.mesh.position
+      const forward = controller.mesh.forward
+      const liveSoldiers = soldiers.filter((s) => !s.isDead())
+      const hits = getMeleeHits(meleeState, playerPos as unknown as import('../game/combat').Vec3, forward as unknown as import('../game/combat').Vec3, liveSoldiers)
+      hits.forEach((h) => h.takeDamage(25))
+    }
+
+    loop.advance(dt)
     rig.update(frameIntent.lookDX, frameIntent.lookDY)
     scene.render()
   })
@@ -209,6 +245,7 @@ export function createForestScene(
       void Promise.all(spawnedInstances).then((instances) => {
         for (const inst of instances) inst.release()
       })
+      for (const s of soldiers) s.dispose()
       scene.dispose()
       engine.dispose()
     },

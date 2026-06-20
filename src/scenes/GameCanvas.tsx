@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
-import { useAppDispatch, useAppSelector } from '../store'
+import { damagePlayer, useAppDispatch, useAppSelector } from '../store'
 import { setAssetPhase } from '../store/streamingSlice'
 import { createControllerPlayground } from './controllerPlayground'
 import { createForestScene } from './forestScene'
@@ -35,7 +35,9 @@ export function GameCanvas() {
         : dev === 'forest'
           ? createForestScene(canvas)
           : inGame
-            ? createForestScene(canvas)
+            ? createForestScene(canvas, {
+                onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
+              })
             : createGameEngine(canvas, {
                 onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
               })
