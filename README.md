@@ -58,7 +58,9 @@ and there is no `max-width` container (`src/styles/global.css` resets
 `html/body/#root` and hides overflow). React overlays sit above the canvas for
 the HUD, main menu, and pause screen. The app boots into the main menu; **New
 Game** enters play, **Continue** resumes the latest save (see
-[Saving progress](#saving-progress)), and `ESC` toggles `playing ⇄ paused`.
+[Saving progress](#saving-progress)), `ESC` toggles `playing ⇄ paused`, and `M`
+(or the HUD **Travel** button) opens the world map (see
+[World map & fast-travel](#world-map--fast-travel)).
 
 The Babylon `Engine`/`Scene` lifecycle lives in **[`src/engine/`](src/engine/index.ts)**,
 not inline in a component. `createGameEngine(canvas)` owns engine + scene
@@ -85,6 +87,21 @@ playing (E3.4).
 - **Persistence:** the inventory is part of the save snapshot (see
   [Saving progress](#saving-progress)) and is restored on **Continue** / cleared on
   **New Game**.
+
+## World map & fast-travel
+
+The world has **four zones** (Human lands, Empire, Forest, Mountains). During
+play, press `M` or click the HUD **Travel** button to open the world-map overlay
+and **fast-travel** between the zones that have a playable scene. Selecting a
+zone shows a Travel/Cancel confirm; on confirm the player is teleported to that
+zone's spawn and its scene is mounted.
+
+E3.1 ships **Forest** (the vertical slice) and a **Human-lands** stub as
+available; **Empire** and **Mountains** are listed but locked until their scenes
+exist. The zone registry lives in [`src/game/world/`](src/game/world/) and the
+current zone id is persisted in saves. Full details:
+[`docs/guide/world-map.md`](docs/guide/world-map.md) (lore/layout targets in
+[`docs/guide/world-specs.md`](docs/guide/world-specs.md)).
 
 ## 3D assets
 

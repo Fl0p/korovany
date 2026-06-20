@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
 import { InventoryPanel } from './InventoryPanel'
+import { WorldMap } from '../components/WorldMap'
 import { hasSave, loadLatest, saveGame } from '../game/save'
+import { listZones, planTravel, type ZoneId } from '../game/world'
 import {
   applyPlayerTransform,
   readPlayerTransform,
@@ -19,12 +21,16 @@ import {
   returnToMenu,
   selectIsBleeding,
   selectIsStreamingLoading,
+  setZone,
   startNewGame,
   tickInjuries,
   togglePause,
   useAppDispatch,
   useAppSelector,
 } from '../store'
+
+/** Static zone list for the world map (registry order). */
+const ZONES = listZones()
 
 /**
  * App shell: a full-viewport stage holding the 3D canvas with React overlays
@@ -52,6 +58,10 @@ export function App() {
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
+  // World-map / fast-travel overlay (E3.1). `traveling` keeps the overlay in its
+  // "Travelling…" state until the destination scene has streamed in.
+  const [worldMapOpen, setWorldMapOpen] = useState(false)
+  const [traveling, setTraveling] = useState(false)
 
   // Return to menu on player death; reset HP and injuries so a subsequent New
   // Game starts fresh. Death is a consequence of the live sim, so it is only
@@ -113,14 +123,61 @@ export function App() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.code !== 'Escape') return
-      event.preventDefault()
-      dispatch(togglePause())
+      // Escape closes the world map first (if open), otherwise toggles pause.
+      if (event.code === 'Escape') {
+        event.preventDefault()
+        if (worldMapOpen) {
+          if (!traveling) setWorldMapOpen(false)
+          return
+        }
+        dispatch(togglePause())
+        return
+      }
+      // M opens/closes the world map, but only during live play.
+      if (event.code === 'KeyM' && phase === 'playing') {
+        event.preventDefault()
+        if (!traveling) setWorldMapOpen((open) => !open)
+      }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [dispatch])
+  }, [dispatch, phase, worldMapOpen, traveling])
+
+  // Fast-travel: validate the destination, stage its spawn on the playerRuntime
+  // bridge, then switch zones. Changing `zoneId` remounts the GameCanvas with the
+  // destination scene, which consumes the staged spawn on boot (`takeSpawn`).
+  const onTravel = useCallback(
+    (target: ZoneId) => {
+      const result = planTravel(snapshotRef.current.zoneId, target)
+      if (!result.ok) return // locked/current are already disabled in the UI
+      setTraveling(true)
+      stageSpawn(result.plan.spawn)
+      dispatch(setZone(target))
+    },
+    [dispatch],
+  )
+
+  // A committed travel completes once the destination scene has streamed in.
+  // Wait one frame after streaming settles so the new scene is mounted, then
+  // dismiss the overlay. (Stub zones stream nothing, so this is near-instant.)
+  useEffect(() => {
+    if (!traveling) return
+    if (isLoadingAssets) return
+    const id = window.requestAnimationFrame(() => {
+      setTraveling(false)
+      setWorldMapOpen(false)
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [traveling, isLoadingAssets])
+
+  // Leaving play (death, quit-to-menu) tears the overlay down with the session.
+  useEffect(() => {
+    if (phase === 'menu') {
+      setWorldMapOpen(false)
+      setTraveling(false)
+    }
+  }, [phase])
 
   const onNewGame = useCallback(() => {
     dispatch(resetPlayer())
@@ -165,7 +222,27 @@ export function App() {
             </span>
           </div>
           <InventoryPanel inventory={inventory} />
+          {phase === 'playing' ? (
+            <button
+              type="button"
+              className="hud-travel"
+              onClick={() => setWorldMapOpen(true)}
+            >
+              Travel <kbd>M</kbd>
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {worldMapOpen ? (
+        <WorldMap
+          zones={ZONES}
+          currentZoneId={zoneId}
+          status={traveling ? 'loading' : 'idle'}
+          onTravel={onTravel}
+          onClose={() => {
+            if (!traveling) setWorldMapOpen(false)
+          }}
+        />
       ) : null}
       {phase === 'menu' ? (
         <main className="menu-overlay" aria-labelledby="main-menu-title">

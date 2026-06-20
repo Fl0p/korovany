@@ -5,6 +5,7 @@ import { setAssetPhase } from '../store/streamingSlice'
 import { createCaravanPlayground } from './caravanPlayground'
 import { createControllerPlayground } from './controllerPlayground'
 import { createForestScene } from './forestScene'
+import { createZoneScene } from './zoneScenes'
 
 /**
  * Thin React wrapper around the Babylon engine. It owns nothing but the canvas
@@ -15,15 +16,19 @@ import { createForestScene } from './forestScene'
  * - `?dev=forest`     — forest zone standalone (E1.3 QA)
  * - `?dev=caravan`    — caravan ambush playground (E3.3 QA)
  * - `phase === menu`  — engine smoke scene (hero preview, streaming HUD)
- * - `phase === playing | paused` — forest zone (E1.5 integration)
+ * - `phase === playing | paused` — the active zone's scene, keyed by
+ *   `playerSlice.zoneId` (E3.1). Fast-travel changes `zoneId`, which remounts
+ *   the canvas with the new zone's scene; the staged spawn lands the player.
  *
- * Pause does NOT remount the scene — it keeps `inGame` true so the ForestScene
- * survives ESC toggles. Only the menu↔playing boundary causes a scene swap.
+ * Pause does NOT remount the scene — it keeps `inGame` true and `zoneId` stable
+ * so the scene survives ESC toggles. Only the menu↔playing boundary and a
+ * zone change cause a scene swap.
  */
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dispatch = useAppDispatch()
   const phase = useAppSelector((state) => state.app.phase)
+  const zoneId = useAppSelector((state) => state.player.zoneId)
   const inGame = phase !== 'menu'
 
   // Mirror the live phase into a ref so the forest render loop can read "is
@@ -46,15 +51,15 @@ export function GameCanvas() {
           : dev === 'forest'
             ? createForestScene(canvas)
             : inGame
-            ? createForestScene(canvas, {
-                onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
-                isPaused: () => phaseRef.current === 'paused',
-              })
-            : createGameEngine(canvas, {
-                onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
-              })
+              ? createZoneScene(zoneId, canvas, {
+                  onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
+                  isPaused: () => phaseRef.current === 'paused',
+                })
+              : createGameEngine(canvas, {
+                  onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
+                })
     return () => game.dispose()
-  }, [inGame, dispatch])
+  }, [inGame, zoneId, dispatch])
 
   return <canvas ref={canvasRef} className="render-canvas" />
 }
