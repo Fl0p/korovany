@@ -136,10 +136,11 @@ E1.2→E1.3, E1.1→E1.4, and {E1.0,E1.1,E1.3,E1.4}→E1.5.
   - [x] 12 trees + 3 huts scattered via streaming system (placeholder → GLB swap).
   - [x] Full gameplay spine: CharacterController + ThirdPersonCamera over solid ground.
   - [x] `?dev=forest` browser-QA flag; 6 new tests → 120 total.
-- **E1.4 Save/load (IndexedDB)** `[x]` — FLO-296 ✅ merged c2b761c (PR #20)
-  - [x] writeSave/readSave/deleteSave/hasSave over IndexedDB (no backend, AUTOSAVE_SLOT).
-  - [x] Autosave triggered on every pause transition; Continue button shown when slot exists.
-  - [x] continueGame dispatches setSaveLoaded → phase → playing; 12 new tests → 132 total.
+- **E1.4 Save/load (IndexedDB)** `[x]` — FLO-296 ✅ merged 43718a6 (PR #19)
+  - [x] Versioned save schema (`version` field + forward `migrate`); record = `{ version, transform{position, rotationY}, health: HealthState{current,max}, zoneId, savedAt }` over IndexedDB with an injectable `IDBFactory` (saveGame/loadLatest/hasSave/clearSave). One autosave slot; slot model grows without a format change.
+  - [x] Autosave on the `playing→paused` transition; Continue loads the latest slot (disabled empty-state when none).
+  - [x] Single health authority = `healthSlice` (restorePlayerHealth); `playerSlice` zone-only; live capsule moved via the `playerRuntime` teleport bridge. 188 tests total.
+  - Note: a concurrent run direct-pushed a second, non-compliant save system (PR #20, c2b761c — no per-record version, position-only, `score`) to main; PR #19 reconciled to ONE compliant system and removed those modules. PR #20 closed as superseded.
 - **E1.5 Deploy the slice** `[x]` — FLO-297 ✅ merged e8ccf9a (PR #21)
   - [x] GameCanvas routes to ForestScene when `phase !== 'menu'`; pause survives ESC.
   - [x] Phase 1 vertical slice live on korovany.aimost.pl.
@@ -249,9 +250,11 @@ speculative batches (FLO-270).
 - **r10** (2026-06-20) — Phase 2 epic **FLO-307** opened (combat/health/injuries), delegated to Daedalus (CTO). Phase 2 marked `[~]` in plan tree. (Prospero)
 - **r9** (2026-06-20) — **Phase 1 DONE** 🎉 E1.5 merged e8ccf9a (PR #21): ForestScene wired
   into playing state, pause survives ESC, slice live at korovany.aimost.pl. All E1.x done.
-- **r8** (2026-06-20) — E1.4 save/load merged c2b761c (PR #20): IndexedDB writeSave/readSave/
-  hasSave, AUTOSAVE_SLOT on pause, Continue button, continueGame→playing, 132 tests.
-  FLO-296 done; FLO-297 all blockers clear → ready to implement.
+- **r8** (2026-06-20) — E1.4 save/load merged 43718a6 (PR #19): versioned IndexedDB schema
+  (`version`+`migrate`, transform{position,rotationY}, health=HealthState, zoneId), injectable
+  IDBFactory, autosave on `playing→paused`, Continue loads latest slot, playerRuntime teleport
+  bridge, single health authority (healthSlice), 188 tests. A concurrent non-compliant save
+  (PR #20, c2b761c) was reconciled out and PR #20 closed. FLO-296 done; FLO-297 blockers clear.
 - **r7** (2026-06-20) — E1.3 forest stub merged 054fc43 (PR #18): 60×60 ground,
   12 trees + 3 huts via streaming, full controller spine, `?dev=forest` QA flag, 120 tests.
   FLO-295 done; FLO-297 now blocked only by FLO-296 (save/load).
