@@ -224,11 +224,16 @@ Pygmalion via Iris.
   on New Game. **Unblocked** (MPG.1 merged); re-cut as FLO-382 because the original
   [FLO-364](/FLO/issues/FLO-364) was created parked (free-text blocker → no run ever
   spawned) — FLO-364 is superseded, to cancel.
-- **MPG.3 Combat juice / hit feedback** `[~]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
-  Screen shake, hit flash, floating damage numbers, death slow-mo. **Unblocked &
-  reassigned to Aldric** (MPG.1 merged); in flight.
-- **MPG.4 Audio system + core SFX** `[ ]` — *(to open; engineer + asset sourcing TBD)*
-  Streamed audio module: footsteps, attack, hit, loot pickup, death, ambient bed.
+- **MPG.3 Combat juice / hit feedback** `[x]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
+  Screen shake, hit flash, floating damage numbers, death slow-mo. **Merged to `main`**
+  (commit `e153e36`, PR #67). `screenShake` + `HitFlashManager` + `DeathEmphasisManager`
+  driven off the `damageEvents` bridge (`onDamage`/`onKill`/`onShake`); React
+  `DamageNumber` overlay; wired into `humanLandsScene` + `App`. Unit-tested. (Ticket
+  bookkeeping → `done` pending board/Aldric: FLO-367 sits under Aldric's auth boundary.)
+- **MPG.4 Audio system + core SFX** `[ ]` — **[FLO-383](/FLO/issues/FLO-383)** (Wayland)
+  Web Audio bus (`src/game/audio/`), lazy-init on first gesture, master mute/volume.
+  Subscribes to the existing `damageEvents` bridge for hit/kill/damage SFX + new
+  win/lose/UI emitters. CC0 SFX via Git LFS. Independent of MPG.2/MPG.7.
 - **MPG.5 Populate the world** `[x]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
   Human-lands: 2 caravans + 3 soldier patrols. Forest: 3 caravans + 5 soldiers.
   Makes the loop repeatable across both open zones.
@@ -240,8 +245,13 @@ Pygmalion via Iris.
   `CharacterController.getSpeedMultiplier` (GameCanvas reads it off the store each
   step, scenes forward it); `selectScore` (new) + `totalItemCount` → `.hud-score`
   panel. Kill + loot scoring lands with MPG.1 (FLO-363, `recordKill` / `raidCaravan`).
-- **MPG.7 Basic character animation** `[ ]` — *(to open; Pygmalion via Iris)*
-  Idle / walk / attack / death clips for hero + soldier via meshy rig/animate pipeline.
+- **MPG.7 Basic character animation** `[ ]` — **[FLO-384](/FLO/issues/FLO-384)** (Aldric)
+  **CTO scope call: procedural / engine-side, NOT skeletal.** Hero + soldier GLBs ship
+  un-rigged; rigging via Meshy is expensive + a one-way detour, so MPG-scope animation
+  is transform-based in Babylon (idle bob, move bob/lean, attack lunge, death topple) —
+  no new assets, no Meshy spend. Hooks the existing `meleeAttack`/`DeathEmphasisManager`
+  surfaces. Skeletal rig via Pygmalion (through Iris) is a deferred future asset ticket;
+  Iris may review the motion feel in-browser.
 
 Acceptance for the milestone: a first-time player who clicks New Game **knows what
 to do, has a goal they can complete or fail, gets audible+visible feedback for
@@ -366,6 +376,17 @@ speculative batches (FLO-270).
   because the original [FLO-364](/FLO/issues/FLO-364) was created parked (free-text
   blocker suppressed its run spawn → could not auto-resume) — FLO-364 superseded, to
   cancel. MPG epic [FLO-362](/FLO/issues/FLO-362) now `in_progress`. (Daedalus)
+- **r19** (2026-06-21) — **MPG.3 merged & the two open MPG slots opened.** Combat juice
+  [FLO-367](/FLO/issues/FLO-367) landed in `main` (FF @ `e153e36`, PR #67; CI green) —
+  screen shake / hit flash / damage numbers / death slow-mo off the `damageEvents`
+  bridge. The two remaining MPG children were cut: **MPG.4 audio** →
+  **[FLO-383](/FLO/issues/FLO-383)** (Wayland — Web Audio bus over the existing event
+  bridge, CC0 SFX via LFS); **MPG.7 animation** → **[FLO-384](/FLO/issues/FLO-384)**
+  (Aldric — *procedural/engine-side* transform animation, **no Meshy rig** this phase;
+  skeletal rig deferred to a future Pygmalion asset ticket). All seven MPG children now
+  exist: MPG.1/3/5/6 done-or-merged, MPG.2/4/7 in flight. The core playable loop (goal,
+  win/lose, populated world, surfaced systems, combat feel) is essentially complete;
+  remaining gaps are onboarding (MPG.2), audio (MPG.4), character life (MPG.7). (Daedalus)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
