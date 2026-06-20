@@ -72,9 +72,10 @@ On death the mesh topples (rotates 90°) and stays in place for E2.4 to take ove
 
 ## Spawn
 
-One soldier is spawned at `(6, 0.9, 6)` in ForestScene (Y is the capsule
-half-height so it rests on the ground). To spawn more, push additional
-`SoldierEnemy` instances into the scene and register them with the scheduler.
+Zone scenes spawn soldiers from local placement tables and register each
+`SoldierEnemy` with the fixed-step scheduler. MPG.5 guarantees the Forest boots
+with at least 5 soldier patrols and Human Lands boots with at least 3; Y is the
+capsule half-height (`0.9`) so each patrol rests on the ground.
 
 ## Tests
 

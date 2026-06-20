@@ -181,11 +181,9 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 - **E3.3 Caravans ("грабить корованы")** `[x]` — **FLO-334** ✅ merged (PR #43) — wandering caravan entity, ambush, loot tables, reward.
 - **E3.4 Inventory & loot** `[x]` — **FLO-335** ✅ merged — pick up loot on caravan defeat; HUD inventory panel.
 
-> **Phase 3 systems are merged, but only the forest zone has content.** The
-> caravan/loot loop is live and playable *in the forest*. Human-lands renders as
-> an empty zone (ground + landmark boxes, no caravans/soldiers); Empire and
-> Mountains have no scene yet (locked in the map UI). Populating the world is
-> pulled into the **Minimum Playable Game** milestone below (MPG.5).
+> **Phase 3 systems are merged, and MPG.5 now populates both open zones.** The
+> caravan/loot loop is live in Forest and Human Lands; Empire and Mountains have
+> no scene yet (locked in the map UI).
 
 ### Phase 3.5 — Minimum Playable Game (MPG) `[~]` ⭐ NEXT PRIORITY
 
@@ -193,9 +191,9 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 > играбельная").** A code audit of the deployed build confirmed the gap: every
 > system we built bottom-up *works* (controller, combat, corpses, injuries,
 > streaming, world map, caravans, inventory, save), but there is **no game on top
-> of them.** A player who clicks New Game is dropped into an empty clearing with
-> one soldier and one crate, no objective, no onboarding, no audio, no animation,
-> no hit feedback, and no reason to do anything. Several finished systems
+> of them.** Before MPG.5, a player who clicked New Game was dropped into a sparse
+> clearing with one soldier and one crate, no objective, no onboarding, no audio,
+> no animation, no hit feedback, and no reason to do anything. Several finished systems
 > (injuries, score, leg-loss locomotion) are never surfaced to the player at all.
 >
 > The original plan deferred *everything that makes it a game* — goals, juice,
@@ -223,7 +221,7 @@ Pygmalion via Iris.
   Screen shake, hit flash, floating damage numbers, death slow-mo. Blocked by MPG.1.
 - **MPG.4 Audio system + core SFX** `[ ]` — *(to open; engineer + asset sourcing TBD)*
   Streamed audio module: footsteps, attack, hit, loot pickup, death, ambient bed.
-- **MPG.5 Populate the world** `[ ]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
+- **MPG.5 Populate the world** `[x]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
   Human-lands: 2 caravans + 3 soldier patrols. Forest: 3 caravans + 5 soldiers.
   Makes the loop repeatable across both open zones.
 - **MPG.6 Surface built-but-invisible systems** `[ ]` — **[FLO-366](/FLO/issues/FLO-366)** (Wayland)
@@ -338,6 +336,10 @@ speculative batches (FLO-270).
   [FLO-364 Iris, blk MPG.1], MPG.3 combat juice [FLO-367 Aldric, blk MPG.1], MPG.5 populate
   world [FLO-365 Aldric], MPG.6 surface invisible systems [FLO-366 Wayland]. MPG.4 audio and
   MPG.7 animation remain to open once MPG.1 lands. FLO-355 closed done. (Daedalus)
+- **r16** (2026-06-21) — **MPG.5** completed in **[FLO-365](/FLO/issues/FLO-365)**:
+  Human Lands now enters with 2 caravans + 3 soldier patrols; Forest enters with
+  3 caravans + 5 soldier patrols. Zone-scene tests assert the minimum spawn
+  counts so the two available zones are never empty on entry. (Aldric)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its

@@ -43,6 +43,15 @@ describe('createHumanLandsScene', () => {
     game.dispose()
   })
 
+  it('meets the MPG.5 minimum population on zone enter', () => {
+    const game = boot()
+    expect(game.caravans.length).toBeGreaterThanOrEqual(2)
+    expect(game.soldiers.length).toBeGreaterThanOrEqual(3)
+    expect(game.caravans.every((caravan) => !caravan.isDead())).toBe(true)
+    expect(game.soldiers.every((soldier) => !soldier.isDead())).toBe(true)
+    game.dispose()
+  })
+
   it('freezes the sim while paused but keeps the scene alive', () => {
     let paused = true
     const game = boot({ isPaused: () => paused })

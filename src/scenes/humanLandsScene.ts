@@ -16,6 +16,16 @@ import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
 import { registerPlayer, takeSpawn } from '../game/save/playerRuntime'
 import type { PlayerTransform } from '../game/save'
+import type { LootDrop } from '../game/loot'
+import {
+  createMeleeAttack,
+  getMeleeHits,
+  stepMeleeAttack,
+  type Damageable,
+  type Vec3,
+} from '../game/combat'
+import { SoldierEnemy } from './soldierEnemy'
+import { CaravanEnemy } from './caravanEnemy'
 
 /** Zone id used for the human-lands scene's save/corpse persistence. */
 export const HUMAN_LANDS_ZONE_ID = 'human-lands'
@@ -35,20 +45,35 @@ export interface HumanLandsSceneOptions {
    * frozen but the scene keeps rendering under the React pause overlay.
    */
   isPaused?: () => boolean
-  /** Combat is not modelled in this stub; accepted for a uniform zone-scene API. */
+  /** Called when an enemy hits the player. Caller dispatches damagePlayer. */
   onPlayerDamaged?: (amount: number) => void
+  /** Fired once when the player defeats a caravan; caller dispatches loot pickup. */
+  onCaravanLooted?: (drop: LootDrop) => void
 }
 
 export interface HumanLandsScene {
   readonly engine: AbstractEngine
   readonly scene: Scene
   readonly controller: CharacterController
+  /** All caravans spawned into the zone on enter (MPG.5). */
+  readonly caravans: readonly CaravanEnemy[]
+  /** All soldier patrols spawned into the zone on enter (MPG.5). */
+  readonly soldiers: readonly SoldierEnemy[]
   /** Advance one frame by `dt` seconds (tests drive this directly). */
   step(dt: number): void
   dispose(): void
 }
 
 const DEFAULT_HERO_URL = '/models/korovany_hero_player-default.glb'
+const HUMAN_LANDS_SOLDIER_SPAWNS = [
+  new Vector3(6, 0.9, 8),
+  new Vector3(-10, 0.9, 5),
+  new Vector3(14, 0.9, -10),
+] as const
+const HUMAN_LANDS_CARAVAN_SPAWNS = [
+  new Vector3(-8, 1, -6),
+  new Vector3(12, 1, -12),
+] as const
 
 function defaultEngineFactory(canvas: HTMLCanvasElement): Engine {
   return new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true)
@@ -65,10 +90,8 @@ const LANDMARKS: [number, number, number, number, number, number][] = [
 
 /**
  * Phase-3 Human-lands ("Salt Road of Velya") stub zone (E3.1). A flat dusty road
- * plane with a few landmark blocks and the full third-person controller rig —
- * just enough to prove fast-travel lands the player in a different, navigable
- * scene. Streamed road props and the caravan loop arrive in later tickets
- * (see `docs/guide/world-specs.md` §1).
+ * plane with a few landmark blocks, the full third-person controller rig, and
+ * the MPG.5 minimum encounter population (see `docs/guide/world-specs.md` §1).
  */
 export function createHumanLandsScene(
   canvas: HTMLCanvasElement,
@@ -79,6 +102,8 @@ export function createHumanLandsScene(
     heroUrl = DEFAULT_HERO_URL,
     initialSpawn = takeSpawn(),
     isPaused,
+    onPlayerDamaged,
+    onCaravanLooted,
   } = options
 
   const engine = createEngine(canvas)
@@ -140,8 +165,31 @@ export function createHumanLandsScene(
     )
   }
 
+  const soldiers = HUMAN_LANDS_SOLDIER_SPAWNS.map(
+    (spawn) =>
+      new SoldierEnemy(scene, {
+        spawn,
+        getPlayerPos: () => controller.mesh.position,
+        onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
+      }),
+  )
+
+  const caravans = HUMAN_LANDS_CARAVAN_SPAWNS.map(
+    (spawn) =>
+      new CaravanEnemy(scene, {
+        spawn,
+        getPlayerPos: () => controller.mesh.position,
+        onLooted: onCaravanLooted,
+      }),
+  )
+
   const loop = new FixedStepLoop({ world: undefined, dt: 1 / 60 })
   loop.scheduler.register(controller)
+  for (const s of soldiers) loop.scheduler.register(s)
+  for (const c of caravans) loop.scheduler.register(c)
+
+  let meleeState = createMeleeAttack()
+  let prevAttack = false
 
   const frame = (dt: number) => {
     if (isPaused?.()) {
@@ -149,6 +197,19 @@ export function createHumanLandsScene(
       return
     }
     frameIntent = input.sample()
+    const attackPressed = frameIntent.attack && !prevAttack
+    prevAttack = frameIntent.attack
+    meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
+
+    if (meleeState.hitWindowOpen) {
+      const playerPos = controller.mesh.position
+      const forward = controller.mesh.forward
+      const targets: Damageable[] = soldiers.filter((s) => !s.isDead())
+      targets.push(...caravans.filter((c) => !c.isDead()))
+      const hits = getMeleeHits(meleeState, playerPos as unknown as Vec3, forward as unknown as Vec3, targets)
+      hits.forEach((h) => h.takeDamage(25))
+    }
+
     loop.advance(dt)
     clampToWorld(controller.mesh.position) // contain the player within the world bounds
     rig.update(frameIntent.lookDX, frameIntent.lookDY)
@@ -166,6 +227,8 @@ export function createHumanLandsScene(
     engine,
     scene,
     controller,
+    caravans,
+    soldiers,
     step: frame,
     dispose() {
       if (disposed) return
@@ -175,6 +238,8 @@ export function createHumanLandsScene(
       input.dispose()
       engine.stopRenderLoop()
       for (const mesh of landmarkMeshes) mesh.dispose()
+      for (const s of soldiers) s.dispose()
+      for (const c of caravans) c.dispose()
       scene.dispose()
       engine.dispose()
     },
