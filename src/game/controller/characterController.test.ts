@@ -158,3 +158,47 @@ describe('ThirdPersonCamera (NullEngine)', () => {
     expect(rig.camera.radius).toBeLessThan(openRadius)
   })
 })
+
+describe('CharacterController save bridge', () => {
+  let world: ReturnType<typeof makeWorld>
+
+  beforeEach(() => {
+    world = makeWorld()
+  })
+  afterEach(() => {
+    world.scene.dispose()
+    world.engine.dispose()
+  })
+
+  it('spawns at a given pose and snapshots it back', () => {
+    const controller = new CharacterController({
+      scene: world.scene,
+      getIntent: () => NEUTRAL,
+      spawn: new Vector3(3, 2, -1),
+      spawnRotationY: 0.75,
+    })
+    expect(controller.snapshot()).toEqual({
+      position: { x: 3, y: 2, z: -1 },
+      rotationY: 0.75,
+    })
+  })
+
+  it('teleports to a restored pose and holds it across a sim step', () => {
+    const controller = new CharacterController({
+      scene: world.scene,
+      getIntent: () => NEUTRAL,
+      spawn: new Vector3(0, 5, 0),
+    })
+    controller.teleport({ position: { x: 8, y: 10, z: 4 }, rotationY: -1.5 })
+
+    const snap = controller.snapshot()
+    expect(snap.position).toEqual({ x: 8, y: 10, z: 4 })
+    expect(snap.rotationY).toBeCloseTo(-1.5, 5)
+
+    // A neutral step must not snap the authoritative position back to spawn; it
+    // should only fall from the teleported height (no ground within reach here).
+    controller.update(DT)
+    expect(controller.snapshot().position.x).toBeCloseTo(8, 5)
+    expect(controller.snapshot().position.z).toBeCloseTo(4, 5)
+  })
+})

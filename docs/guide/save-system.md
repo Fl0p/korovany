@@ -1,0 +1,73 @@
+# Save system
+
+Korovany persists player progress locally so a game survives a browser reload.
+The system is small and deliberately scoped: a versioned snapshot of the player,
+stored in **IndexedDB**, restored on **Continue**.
+
+Source lives in [`src/game/save/`](https://github.com/Flopsstuff/korovany/tree/main/src/game/save).
+
+## What is saved
+
+A save record is a single small JSON-shaped object:
+
+| Field       | Meaning                                                        |
+| ----------- | ------------------------------------------------------------- |
+| `version`   | Schema version the record was written with (currently `1`).   |
+| `transform` | Player capsule pose: `position` (`x,y,z`) + `rotationY` (yaw). |
+| `health`    | Player health.                                                |
+| `zoneId`    | Identifier of the zone the player was in.                     |
+| `savedAt`   | Epoch milliseconds the snapshot was taken (picks the latest). |
+
+Only this compact state is persisted. **Assets are never saved** — meshes,
+textures and audio always stream from their own pipeline. This mirrors the
+"one small volume" lens: the save store holds a tiny payload, never bulk data.
+
+The transform comes from the live Babylon capsule; `health` and `zoneId` come
+from the Redux `player` slice. (Health and zones are placeholders today — E1.1 is
+movement + camera only — so the slice seeds sensible defaults: `health: 100`,
+`zoneId: "forest"`.)
+
+## Where it is stored
+
+In the browser's **IndexedDB**, database `korovany-save`, object store `slots`
+keyed by a numeric slot id. There is currently **one slot** — slot `0`, the
+autosave slot. The slot model is built to grow: `saveGame`/`loadLatest` already
+take a `slot` option and `latest()` selects by `savedAt`, so additional slots are
+a UI concern, not a format change.
+
+The data lives only on the user's device. It is not uploaded anywhere and is not
+shared between browsers or machines.
+
+## When it saves and loads
+
+- **Autosave on pause.** Entering the paused state (Escape from play, the E1.0
+  pause transition) writes the current player snapshot to the autosave slot.
+- **Continue.** The main-menu **Continue** button loads the most recent slot,
+  restores health + zone into the store, and teleports the player to the saved
+  transform. It is **disabled with an empty-state hint when no save exists**.
+- **New Game** resets the player to defaults; it does not erase the autosave, so
+  a later Continue still resumes the last paused session until it is overwritten.
+
+## Retention and clearing
+
+Saves persist until overwritten by the next autosave or cleared. There is no
+expiry. Programmatic clearing is available via `clearSave()`. Because the data
+lives in IndexedDB, a user can also remove it by clearing site data for the app's
+origin in their browser. Corrupt or unreadable records are ignored on load (the
+game falls back to the empty-save state) rather than crashing.
+
+## Schema is forever
+
+Once a field ships it is **never renamed or silently repurposed**. Evolving the
+format means bumping `SAVE_VERSION` in
+[`src/game/save/types.ts`](https://github.com/Flopsstuff/korovany/blob/main/src/game/save/types.ts)
+and adding a forward-migration step in `schema.ts` that maps the old shape onto
+the new one. `parseSaveData()` validates and migrates every record on read, so a
+save written by an old build still loads in a newer one.
+
+## Testing
+
+The whole layer runs headless under jsdom by injecting an `IDBFactory`
+(`fake-indexeddb`) into `openSaveStore(factory)` / the convenience helpers — no
+globals required. See `src/game/save/save.test.ts` for the round-trip,
+version-field, empty-store and corrupt-record cases.

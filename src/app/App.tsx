@@ -1,6 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
+import { hasSave, loadLatest, saveGame } from '../game/save'
 import {
+  applyPlayerTransform,
+  readPlayerTransform,
+  stageSpawn,
+} from '../game/save/playerRuntime'
+import {
+  continueGame,
+  resetPlayer,
+  restorePlayer,
   returnToMenu,
   selectIsStreamingLoading,
   startNewGame,
@@ -14,19 +23,59 @@ import {
  * above it. The app state machine owns coarse flow while Babylon remains
  * isolated behind GameCanvas.
  *
+ * It also owns the save/load wiring (E1.4): autosave whenever the game enters
+ * `paused`, and a **Continue** button that restores the latest save. The live
+ * capsule transform crosses the React↔Babylon boundary only through the save
+ * `playerRuntime` bridge — never a direct mesh reference.
+ *
  * See `src/styles/global.css` for the no-scroll, full-page reset and the
  * `.app-shell` / overlay layering.
  */
 export function App() {
   const dispatch = useAppDispatch()
   const phase = useAppSelector((state) => state.app.phase)
+  const player = useAppSelector((state) => state.player)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
+  const [hasSaveSlot, setHasSaveSlot] = useState(false)
+
+  // Latest player scalars, read at autosave time without re-arming the pause
+  // effect every time health/zone change.
+  const playerRef = useRef(player)
+  playerRef.current = player
+
+  // Probe whether a save exists so the Continue button can render enabled/empty.
+  useEffect(() => {
+    let active = true
+    void hasSave()
+      .then((exists) => {
+        if (active) setHasSaveSlot(exists)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
   useEffect(() => {
     if (phase === 'menu') menuPrimaryActionRef.current?.focus()
     else if (phase === 'paused') pausePrimaryActionRef.current?.focus()
+  }, [phase])
+
+  // Autosave on the transition into `paused`. The transform comes from the live
+  // scene via the bridge; health/zone from the store. No scene mounted → skip.
+  useEffect(() => {
+    if (phase !== 'paused') return
+    const transform = readPlayerTransform()
+    if (!transform) return
+    void saveGame(
+      { transform, health: playerRef.current.health, zoneId: playerRef.current.zoneId },
+      Date.now(),
+    )
+      .then(() => setHasSaveSlot(true))
+      .catch(() => {})
   }, [phase])
 
   useEffect(() => {
@@ -38,6 +87,21 @@ export function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  }, [dispatch])
+
+  const onNewGame = useCallback(() => {
+    dispatch(resetPlayer())
+    dispatch(startNewGame())
+  }, [dispatch])
+
+  const onContinue = useCallback(async () => {
+    const data = await loadLatest()
+    if (!data) return
+    // Stage for a scene that boots later; teleport the one already running.
+    stageSpawn(data.transform)
+    applyPlayerTransform(data.transform)
+    dispatch(restorePlayer({ health: data.health, zoneId: data.zoneId }))
+    dispatch(continueGame())
   }, [dispatch])
 
   return (
@@ -59,11 +123,22 @@ export function App() {
                 ref={menuPrimaryActionRef}
                 type="button"
                 className="primary-action"
-                onClick={() => dispatch(startNewGame())}
+                onClick={onNewGame}
               >
                 New Game
               </button>
+              <button
+                type="button"
+                onClick={() => void onContinue()}
+                disabled={!hasSaveSlot}
+                aria-disabled={!hasSaveSlot}
+              >
+                Continue
+              </button>
             </div>
+            {!hasSaveSlot ? (
+              <p className="menu-hint">No saved game yet — start a new game.</p>
+            ) : null}
           </div>
         </main>
       ) : null}

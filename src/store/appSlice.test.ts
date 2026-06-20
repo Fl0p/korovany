@@ -19,9 +19,9 @@ describe('appSlice', () => {
     expect(appReducer(state, startNewGame()).phase).toBe('playing')
   })
 
-  it('keeps continue as a menu stub for this phase', () => {
+  it('continues into the game from the menu (resume a save)', () => {
     const state: AppState = { phase: 'menu' }
-    expect(appReducer(state, continueGame()).phase).toBe('menu')
+    expect(appReducer(state, continueGame()).phase).toBe('playing')
   })
 
   it('toggles pause only between playing and paused', () => {
