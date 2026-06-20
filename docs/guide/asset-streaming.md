@@ -16,6 +16,7 @@ are mirrored into Redux so the HUD can show “Loading…”.
 | `loadGlb.ts`            | Default `LoadGlbFn` delegating to `loadModel` (normalization).       |
 | `placeholder.ts`        | `createPlaceholderBox` — 1×1 box until the GLB arrives.              |
 | `streamedInstance.ts`   | `spawnStreamedInstance` — placeholder → model swap (error-safe).     |
+| `zoneStreaming.ts`      | `ZoneStreamingManager` — load a zone's content on entry, dispose the zone left behind (FLO-333). |
 | `index.ts`              | `createAssetStreaming` factory + public barrel.                      |
 
 Babylon imports are isolated to the loader glue and placeholder helpers; the
@@ -64,13 +65,41 @@ const instance = await spawnStreamedInstance(loader, scene, HERO_PLAYER_ASSET_ID
 - **`release(id)`** — decrements ref-count; at zero meshes/materials dispose.
 - **Load error** — phase becomes `error`; the placeholder stays (no crash).
 
-## Placement and pivots
+## Zone streaming (load/unload on travel)
 
-`loadModel` returns a clean placement root. Scene code may set
-`instance.root.position`, parent it to a gameplay capsule, or rotate it without
-erasing the GLB's import-time normalization. The scale/recenter/grounding offset
-is kept on an internal child node so off-origin assets — characters, trees, huts,
-and similar props — still rest on the intended ground plane after placement.
+`ZoneStreamingManager` keeps resident memory bounded as the player travels. A
+zone's environment is a `ZoneManifest` — a list of placed assets — and the
+manager loads the entered zone's content while **disposing the zone left
+behind**, so memory never grows with travel distance.
+
+```ts
+import { ZoneStreamingManager } from '../game/streaming'
+
+const zones = new ZoneStreamingManager(scene, loader)
+
+await zones.enterZone({
+  id: 'forest',
+  placements: [
+    { assetId: 'forest.tree', position: { x: 3, y: 0, z: -5 }, rotationY: 1.5 },
+    { assetId: 'forest.hut' },
+  ],
+})
+
+await zones.enterZone({ id: 'village', placements: [/* … */] })
+// 'forest' content is disposed; only 'village' stays resident.
+```
+
+- **Lifecycle, not a new cache** — each placement is a `spawnStreamedInstance`
+  (acquire → ref-count++); eviction calls `release()` (ref-count-- → dispose at
+  zero). The `loader` cache stays the single authority on which GLBs are in
+  memory, so assets shared between zones are not re-fetched on travel and not
+  disposed while any resident zone still holds them.
+- **Memory budget** — `maxResidentZones` (default `1`) caps how many zones stay
+  loaded; crossing a border evicts the least-recently-used zone beyond the
+  budget. Raise it to keep neighbours warm at the cost of memory.
+- **Serialised transitions** — overlapping `enterZone` calls (rapid travel) run
+  in order, so an in-flight load can never leak past its own eviction.
+- **`dispose()`** releases every resident zone (scene teardown / return to menu).
 
 ## HUD wiring
 
@@ -84,3 +113,6 @@ dispatches `setAssetPhase` into the `streaming` Redux slice. `App` reads
 Vitest stubs `LoadGlbFn` in `loader.test.ts` (cache hit, dispose, error phase).
 Registry resolution is covered in `registry.test.ts`. Engine bootstrap skips
 streaming when `streamAssetId: null` (jsdom / `NullEngine`).
+`zoneStreaming.test.ts` drives the manager over a real loader on a `NullEngine`
+and asserts dispose-on-cross, no leak across repeated A↔B round-trips, LRU
+eviction, and ref-counted asset sharing between zones.
