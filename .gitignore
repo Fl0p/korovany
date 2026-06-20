@@ -38,6 +38,10 @@ bower_components
 build/Release
 
 # Dependency directories
+# Match both a real directory and a stray `node_modules` *symlink* — a sibling
+# worktree once committed a self-referential symlink (mode 120000) that the
+# trailing-slash pattern did not catch, breaking every fresh checkout.
+node_modules
 node_modules/
 jspm_packages/
 
