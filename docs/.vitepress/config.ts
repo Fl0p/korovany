@@ -25,6 +25,7 @@ export default defineConfig({
           { text: 'Game loop', link: '/guide/game-loop' },
           { text: 'Input system', link: '/guide/input-system' },
           { text: 'Asset streaming', link: '/guide/asset-streaming' },
+          { text: 'Generated assets', link: '/guide/assets' },
           { text: 'Character controller', link: '/guide/character-controller' },
           { text: 'Forest zone', link: '/guide/forest-zone' },
           { text: 'Save system', link: '/guide/save-system' },
