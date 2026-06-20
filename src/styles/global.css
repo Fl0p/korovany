@@ -1,0 +1,53 @@
+/* Global reset + full-page app shell. The game canvas owns the whole viewport
+   ("игра на всю страницу"), so the document must not scroll or add margins. */
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow: hidden; /* full-page canvas — never show document scrollbars */
+  background: #000;
+}
+
+/* Full-viewport stage that the Babylon canvas and HUD share. */
+.app-shell {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* The Babylon render target fills the stage. `touch-action: none` keeps
+   pointer/touch drags going to the camera instead of scrolling the page. */
+.render-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+/* HUD overlays the canvas. It is click-through by default so camera drags pass
+   to the canvas; interactive children opt back in with `pointer-events: auto`. */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1rem 1.25rem;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.hud h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}

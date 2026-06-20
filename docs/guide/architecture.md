@@ -14,7 +14,8 @@ korovany/
 ├── src/
 │   ├── app/               # app shell & top-level composition (App.tsx)
 │   ├── components/        # reusable React UI components
-│   ├── scenes/            # Babylon.js scenes (MainScene.tsx)
+│   ├── engine/            # framework-agnostic Babylon Engine/Scene bootstrap (no React)
+│   ├── scenes/            # Babylon scene wiring & GLB loaders (GameCanvas.tsx)
 │   ├── game/              # engine-agnostic game logic (systems, entities, rules)
 │   ├── store/             # Redux Toolkit store + slices, typed hooks
 │   ├── hooks/             # shared React hooks
@@ -30,6 +31,7 @@ korovany/
 
 | You are adding…                | Put it in…                          |
 | ------------------------------ | ----------------------------------- |
+| Engine/Scene lifecycle, render | `src/engine/` (no React imports)    |
 | A Babylon scene/world          | `src/scenes/`                       |
 | Reusable UI (buttons, HUD)     | `src/components/`                    |
 | Game logic (no React/Babylon)  | `src/game/`                         |
@@ -39,8 +41,14 @@ korovany/
 
 ## Data flow
 
-`main.tsx` mounts React inside a Redux `<Provider>`. UI in `src/app` and
-`src/components` reads state via the typed `useAppSelector` hook and dispatches
-actions via `useAppDispatch` (both from `src/store`). Babylon scenes in
-`src/scenes` own their render loop and can read/dispatch to the same store, so
-game systems and UI stay in sync through Redux.
+`main.tsx` mounts React inside a Redux `<Provider>`. The full-page app shell in
+`src/app` renders the `GameCanvas` (a thin React wrapper in `src/scenes/`) that
+hands its `<canvas>` to `createGameEngine` in `src/engine/`. The engine module is
+the single owner of the Babylon `Engine`/`Scene` lifecycle — create, render loop,
+DPR-aware resize, and dispose — and imports no React, so it stays unit-testable
+against Babylon's headless `NullEngine`.
+
+UI in `src/app` and `src/components` reads state via the typed `useAppSelector`
+hook and dispatches via `useAppDispatch` (both from `src/store`). The engine and
+game systems can read/dispatch to the same store, so rendering and UI stay in
+sync through Redux.

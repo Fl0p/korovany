@@ -1,32 +1,21 @@
-import { MainScene } from '../scenes/MainScene'
-import { addScore, useAppDispatch, useAppSelector } from '../store'
+import { GameCanvas } from '../scenes/GameCanvas'
 
+/**
+ * App shell: a full-viewport stage holding the 3D canvas with a minimal HUD
+ * title overlaid on top. The game canvas *is* the app now — the hello-world
+ * chrome is gone. The Redux store stays wired in `main.tsx` for later phases
+ * (HUD, score, menus) even though this shell does not read it yet.
+ *
+ * See `src/styles/global.css` for the no-scroll, full-page reset and the
+ * `.app-shell` / `.hud` layering.
+ */
 export function App() {
-  const score = useAppSelector((state) => state.game.score)
-  const dispatch = useAppDispatch()
-
   return (
-    <main
-      style={{
-        fontFamily: 'system-ui, sans-serif',
-        maxWidth: 720,
-        margin: '0 auto',
-        padding: '2rem 1rem',
-      }}
-    >
-      <h1>Korovany</h1>
-      <p>3D action game / browser SPA — hello world.</p>
-      <p>
-        Stack: TypeScript · React · Babylon.js · Redux Toolkit. Deployed to Cloudflare Pages via
-        GitHub Actions.
-      </p>
-
-      <MainScene />
-
-      <p style={{ marginTop: '1rem' }}>
-        Score (Redux): <strong>{score}</strong>{' '}
-        <button onClick={() => dispatch(addScore(1))}>+1</button>
-      </p>
-    </main>
+    <div className="app-shell">
+      <GameCanvas />
+      <div className="hud">
+        <h1>Korovany</h1>
+      </div>
+    </div>
   )
 }

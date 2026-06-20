@@ -1,36 +1,21 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { Provider } from 'react-redux'
 import { describe, expect, it, vi } from 'vitest'
-import { store } from '../store'
 import { App } from './App'
 
-// Babylon.js needs a real WebGL context, which jsdom does not provide.
-// Stub the scene so the App can render in tests without a GPU.
-vi.mock('../scenes/MainScene', () => ({
-  MainScene: () => <div data-testid="main-scene" />,
+// The game canvas boots Babylon, which needs a real WebGL context jsdom does
+// not provide. Stub it so the shell renders without a GPU; the engine bootstrap
+// itself is covered by src/engine/index.test.ts.
+vi.mock('../scenes/GameCanvas', () => ({
+  GameCanvas: () => <div data-testid="game-canvas" />,
 }))
 
-function renderApp() {
-  return render(
-    <Provider store={store}>
-      <App />
-    </Provider>,
-  )
-}
-
 describe('<App />', () => {
-  it('renders the title and the stubbed scene', () => {
-    renderApp()
+  it('renders the full-page shell with the HUD title and the canvas', () => {
+    const { container } = render(<App />)
     expect(screen.getByRole('heading', { name: 'Korovany' })).toBeInTheDocument()
-    expect(screen.getByTestId('main-scene')).toBeInTheDocument()
-  })
-
-  it('increments the Redux score when +1 is clicked', async () => {
-    renderApp()
-    const user = userEvent.setup()
-    const before = store.getState().game.score
-    await user.click(screen.getByRole('button', { name: '+1' }))
-    expect(store.getState().game.score).toBe(before + 1)
+    expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
+    // The shell is the canvas now — no hello-world chrome or score button.
+    expect(container.querySelector('.app-shell')).not.toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })
