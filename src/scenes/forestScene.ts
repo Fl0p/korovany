@@ -114,6 +114,12 @@ export interface ForestSceneOptions {
    * Defaults to never paused.
    */
   isPaused?: () => boolean
+  /**
+   * Per-step locomotion speed multiplier (1 = normal). Surfaces the leg-loss
+   * crawl outcome (`selectLocomotionSpeedMultiplier`) to the capsule controller
+   * (MPG.6) so a severed leg slows movement. Defaults to full speed.
+   */
+  getSpeedMultiplier?: () => number
 }
 
 export interface ForestScene {
@@ -158,6 +164,7 @@ export function createForestScene(
     corpseGlbUrl,
     onCaravanLooted,
     isPaused,
+    getSpeedMultiplier,
   } = options
 
   const engine = createEngine(canvas)
@@ -200,6 +207,7 @@ export function createForestScene(
   const controller = new CharacterController({
     scene,
     getIntent: () => frameIntent,
+    getSpeedMultiplier,
     spawn: spawnPos,
     spawnRotationY: initialSpawn?.rotationY ?? 0,
   })

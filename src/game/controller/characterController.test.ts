@@ -77,6 +77,35 @@ describe('CharacterController (NullEngine)', () => {
     expect(controller.grounded).toBe(true)
   })
 
+  it('scales horizontal travel by the locomotion speed multiplier (leg-loss crawl)', () => {
+    // A crawling player (one leg severed → 0.35×) must cover proportionally less
+    // ground than a fully-mobile player over the same number of steps (MPG.6).
+    function walkDistance(multiplier: number): number {
+      const controller = new CharacterController({
+        scene: world.scene,
+        camera: world.camera,
+        getIntent: () => intent,
+        getSpeedMultiplier: () => multiplier,
+        spawn: new Vector3(0, 0.9, 0),
+        capsuleHeight: 1.8,
+      })
+      controller.update(DT) // settle grounded
+      const startZ = controller.mesh.position.z
+      intent = { ...NEUTRAL, moveY: 1 }
+      for (let i = 0; i < 30; i++) controller.update(DT)
+      const distance = Math.abs(controller.mesh.position.z - startZ)
+      controller.dispose()
+      intent = { ...NEUTRAL }
+      return distance
+    }
+
+    const full = walkDistance(1)
+    const crawl = walkDistance(0.35)
+    expect(crawl).toBeGreaterThan(0)
+    expect(crawl).toBeLessThan(full)
+    expect(crawl / full).toBeCloseTo(0.35, 1)
+  })
+
   it('jumps off the ground and leaves it', () => {
     const controller = makeController(0.9)
     controller.update(DT)

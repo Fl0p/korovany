@@ -42,7 +42,7 @@ export {
   setPlayerFaction,
 } from './factionSlice'
 export type { FactionReputationChange, FactionReputationSet, FactionState } from './factionSlice'
-export { addScore, resetScore } from './gameSlice'
+export { addScore, resetScore, selectScore } from './gameSlice'
 export type { GameState } from './gameSlice'
 export {
   damagePlayer,

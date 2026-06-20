@@ -1,6 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
-import { damagePlayer, pickUpLoot, useAppDispatch, useAppSelector } from '../store'
+import {
+  damagePlayer,
+  pickUpLoot,
+  selectLocomotionSpeedMultiplier,
+  store,
+  useAppDispatch,
+  useAppSelector,
+} from '../store'
 import { caravanLootToPickups } from '../store/caravanLootAdapter'
 import { setAssetPhase } from '../store/streamingSlice'
 import { createCaravanPlayground } from './caravanPlayground'
@@ -60,6 +67,11 @@ export function GameCanvas() {
                   for (const pickup of caravanLootToPickups(drop)) dispatch(pickUpLoot(pickup))
                 },
                 isPaused: () => phaseRef.current === 'paused',
+                // Leg-loss locomotion (MPG.6): the controller pulls this each
+                // step so a severed leg (crawl) actually slows the capsule. Read
+                // straight off the store singleton — a per-frame getter, not a
+                // React-reactive value.
+                getSpeedMultiplier: () => selectLocomotionSpeedMultiplier(store.getState()),
               })
             : createGameEngine(canvas, {
                 onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),

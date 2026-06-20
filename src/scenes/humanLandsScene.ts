@@ -37,6 +37,11 @@ export interface HumanLandsSceneOptions {
   isPaused?: () => boolean
   /** Combat is not modelled in this stub; accepted for a uniform zone-scene API. */
   onPlayerDamaged?: (amount: number) => void
+  /**
+   * Per-step locomotion speed multiplier (1 = normal). Surfaces the leg-loss
+   * crawl outcome to the capsule controller (MPG.6). Defaults to full speed.
+   */
+  getSpeedMultiplier?: () => number
 }
 
 export interface HumanLandsScene {
@@ -79,6 +84,7 @@ export function createHumanLandsScene(
     heroUrl = DEFAULT_HERO_URL,
     initialSpawn = takeSpawn(),
     isPaused,
+    getSpeedMultiplier,
   } = options
 
   const engine = createEngine(canvas)
@@ -112,6 +118,7 @@ export function createHumanLandsScene(
   const controller = new CharacterController({
     scene,
     getIntent: () => frameIntent,
+    getSpeedMultiplier,
     spawn: spawnPos,
     spawnRotationY: initialSpawn?.rotationY ?? 0,
   })
