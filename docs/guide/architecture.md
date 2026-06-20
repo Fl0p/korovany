@@ -52,3 +52,50 @@ the `Engine`/`Scene`, the render loop, the high-DPI resize handler, and
 the engine against a ref'd canvas and disposes it on unmount. Engine code can
 read/dispatch to the same store, so game systems and UI stay in sync through
 Redux.
+
+## Game loop & system scheduler
+
+Simulation is **decoupled from render FPS**. The render loop (Babylon's
+`engine.runRenderLoop`) draws every frame; simulation advances in fixed,
+constant-size steps owned by `src/game/loop/` (`FixedStepLoop`). Each rendered
+frame calls `loop.tick()`, which reads an injectable clock, measures the elapsed
+time, and runs as many fixed steps as that time covers — so the number of
+simulation steps depends only on elapsed wall-clock time, never on how fast or
+jittery the frames arrive. `src/game/loop/` imports neither Babylon nor React,
+so the whole loop is unit-tested headlessly.
+
+**Fixed timestep.** Every step runs with the same `dt` (default `1/60`s, 60 Hz).
+Real elapsed time is accumulated; whole `dt` chunks are drained one at a time
+and the sub-`dt` remainder is carried to the next frame. This keeps physics and
+gameplay deterministic: the same sequence of frame times always produces the
+same number of steps in the same order.
+
+**Spiral-of-death clamp.** A single `tick()` runs at most `maxSubSteps` steps
+(default 5). After a long stall (debugger pause, backgrounded tab, GC hitch) the
+backlog beyond the clamp is discarded rather than replayed, so the loop recovers
+instead of falling permanently further behind. A backwards or non-finite clock
+delta is treated as zero; `loop.reset()` re-seeds the clock baseline after an
+intentional pause so the gap is not replayed as one huge frame.
+
+**System contract.** Game logic is split into *systems* registered with the
+scheduler:
+
+```ts
+engine.loop.registerSystem({
+  name: 'movement',   // unique id; also used for unregister and ordering ties
+  order: 10,          // optional; lower runs first, default 0
+  update(dt, world) { /* advance one fixed step */ },
+})
+```
+
+- `update(dt, world)` is called once per fixed step. `dt` is always the fixed
+  timestep (never the variable frame time). `world` is the shared context
+  threaded through the loop — currently a minimal `{ scene }` (`GameWorld`); a
+  richer ECS world arrives in a later phase.
+- Systems run in a **stable, explicit order** each tick: ascending `order`, ties
+  broken by registration order. The order is deterministic across runs.
+- Registering a duplicate `name` throws. (Un)registering a system during a tick
+  takes effect on the *next* tick — the running set is snapshotted per tick.
+
+Tests inject a fake clock (`{ clock }`) or call `loop.advance(seconds)` directly
+to replay exact frame-time sequences without touching `performance.now()`.

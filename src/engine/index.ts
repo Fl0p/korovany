@@ -6,7 +6,17 @@ import {
   Scene,
   Vector3,
 } from '@babylonjs/core'
+import { FixedStepLoop } from '../game/loop'
 import { loadModel } from '../scenes/modelLoader'
+
+/**
+ * Minimal simulation context threaded through every game system each fixed
+ * step. Deliberately tiny — it exposes the live `scene` so systems can read or
+ * mutate render state; a richer ECS world arrives in a later phase.
+ */
+export interface GameWorld {
+  readonly scene: Scene
+}
 
 /**
  * Korovany rendering engine — the single owner of the Babylon `Engine`/`Scene`
@@ -45,6 +55,12 @@ export function resizeEngineToDisplay(engine: ResizableEngine, devicePixelRatio:
 export interface GameEngine {
   readonly engine: AbstractEngine
   readonly scene: Scene
+  /**
+   * The fixed-step simulation loop driven from the render loop. Register
+   * gameplay systems with `loop.registerSystem({ name, order, update })`; they
+   * run at a constant `dt` independent of render FPS. See `src/game/loop/`.
+   */
+  readonly loop: FixedStepLoop<GameWorld>
   /** Stop the render loop, drop the resize listener, and dispose GPU resources. Idempotent. */
   dispose(): void
 }
@@ -95,7 +111,16 @@ export function createGameEngine(
   // loop draws it as soon as it resolves.
   if (modelUrl) void loadModel(scene, modelUrl)
 
-  engine.runRenderLoop(() => scene.render())
+  // The fixed-step loop owns simulation; the render loop owns drawing. Each
+  // rendered frame, `loop.tick()` reads the clock and runs as many constant-dt
+  // simulation steps as the elapsed time covers (capped to avoid a spiral of
+  // death). Rendering proceeds every frame regardless of the step count, so
+  // render FPS and simulation rate stay decoupled.
+  const loop = new FixedStepLoop<GameWorld>({ world: { scene } })
+  engine.runRenderLoop(() => {
+    loop.tick()
+    scene.render()
+  })
 
   // Fill the viewport and stay crisp on retina; re-run whenever the window
   // (and thus the full-page canvas) changes size or moves across displays.
@@ -107,6 +132,7 @@ export function createGameEngine(
   return {
     engine,
     scene,
+    loop,
     dispose() {
       if (disposed) return
       disposed = true

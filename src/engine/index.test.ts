@@ -65,4 +65,21 @@ describe('createGameEngine', () => {
     expect(game.scene.isDisposed).toBe(true)
     expect(() => game.dispose()).not.toThrow()
   })
+
+  it('exposes a fixed-step loop wired to the scene world that accepts systems', () => {
+    const game = boot()
+    let ran = false
+    game.loop.registerSystem({
+      name: 'probe',
+      update: (_dt, world) => {
+        ran = true
+        expect(world.scene).toBe(game.scene)
+      },
+    })
+    // The render loop drives `loop.tick()`; drive one step directly here so the
+    // assertion does not depend on NullEngine's frame timing.
+    game.loop.step()
+    expect(ran).toBe(true)
+    game.dispose()
+  })
 })
