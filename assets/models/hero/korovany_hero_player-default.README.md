@@ -1,9 +1,36 @@
 # korovany_hero_player-default — hero asset #1
 
-## v12 — natural arms-down idle (FLO-434, reposes v11)
+## v13 — flat-albedo faceted re-author (FLO-440, reskins v12 geometry) — CURRENT
 
 - Role: Hero (player avatar). Spec: visual language v1.2 (low-poly).
-- Final GLB: `public/models/korovany_hero_player-default.glb` — 2,884 tris, 455 KB, 4× 1024 PBR maps.
+- Final GLB: `public/models/korovany_hero_player-default.glb` — **2,884 tris, 298 KB, 1× 1024 flat base-color map (no PBR maps)**.
+- Budget check (v1.2 §5 Hero): tris 2,884 / 3,000 cap OK; size 0.30 / 1.0 MB OK; tex tier 1024 OK.
+- **Why:** v12's Meshy PBR-refine surface read semi-realistic (soft gradients, specular
+  sheen) — off-spec for the CEO-locked faceted v1.2 language (known PBR-refine drift,
+  see `tools/meshy-3d/API-FITNESS.md`). v13 keeps the **exact v12 geometry** (same
+  arms-down survivor, same character identity) and re-paints it with a **flat, matte,
+  unlit base-color** via `retexture` (no `--enable-pbr`, `--keep-lighting` off → albedo
+  baked flat). This removes the semi-realism while preserving the survivor read.
+- Pipeline: retexture the v12 refine task id (geometry-preserving) -> resize textures to 1024.
+- Meshy tasks: source geometry preview `019ee92c-e565-7b9c-b7e5-cad74053e786`; flat
+  retexture `019ee94d-b328-7308-a8fa-d5274bcc1a99` (10cr). Total 10cr.
+- Sign-off renders: geometry/silhouette = preview id `019ee92c…` render; palette =
+  retex id `019ee94d…` render (`korovany_hero_player-default.idle.png`).
+- **Geometry note:** retexture normalizes height (bbox 1.909 → 2.0, **uniform** scale,
+  proportions identical), so `loadModel(targetSize: 1.8)` — which fits by longest extent
+  — stays a drop-in. 2,884 tris unchanged.
+- **Faceting is engine-side:** the GLB carries v12's smooth vertex normals (Meshy does
+  not export hard-edged normals, and the Pi has no GLB serializer to re-bake them). The
+  faceted hard-edge read is applied at load time, app-consistently, via
+  `mesh.convertToFlatShadedMesh()` + a matte near-zero-specular material — the same
+  mechanism `src/scenes/worldBounds.ts` uses for the ground and `playerAvatar.ts` for
+  the box-fighter. This is part of the engine-wiring follow-up (Daedalus). The flat
+  *albedo* (this asset's job) + flat *shading* (wiring) together give the v1.2 look.
+
+## v12 — natural arms-down idle (FLO-434, reposes v11) — superseded by v13's reskin
+
+- Role: Hero (player avatar). Spec: visual language v1.2 (low-poly).
+- GLB (superseded): 2,884 tris, 455 KB, 4× 1024 PBR maps.
 - Budget check (v1.2 §5 Hero): tris 2,884 / 3,000 cap OK; size 0.46 / 1.0 MB OK; tex tier 1024 OK.
 - Pipeline: text preview (target_polycount=2800) -> refine (enable_pbr) -> resize textures to 1024.
 - Meshy tasks: preview `019ee92c-e565-7b9c-b7e5-cad74053e786` (20cr); refine `019ee92e-c84f-74ba-9053-6798430a6e6a` (10cr). Total 30cr.

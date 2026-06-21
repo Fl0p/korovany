@@ -24,20 +24,22 @@ any Community/showcase page.
 
 ## Characters & props
 
-> **Player avatar — procedural, not a GLB (P7.4 / FLO-422).** The shipped hero
-> GLB is a single merged, **rig-less** mesh baked in a wide arms-out "scarecrow"
-> T-pose; it read as a surrendering bystander, not a fighter, and its
-> semi-realistic surface was off-spec for the v1.2 low-poly language. Since arms
-> can't be re-posed without a skeleton (Meshy spend + board gate), the live
-> player visual is now built procedurally from flat-shaded box primitives in a
-> boxer's guard — see `src/scenes/playerAvatar.ts` (`buildPlayerAvatar`). It is a
-> two-way door: zero asset cost, and a future **rigged** hero can drop back in
-> behind the same `root` + animator contract. The GLB stays in `public/models/`
-> for reference but is no longer mounted.
+> **Player avatar — procedural is live; v1.2-compliant GLB now exists (FLO-422 → FLO-440).**
+> The live player visual is built procedurally from flat-shaded box primitives in a
+> boxer's guard — see `src/scenes/playerAvatar.ts` (`buildPlayerAvatar`). It was adopted
+> (FLO-422) because the then-shipped hero GLB read as a wide arms-out "scarecrow" T-pose
+> with a semi-realistic, off-spec surface. **Both defects are now fixed in the GLB:**
+> FLO-434 reposed it to a natural arms-down survivor idle, and FLO-440 re-textured it to
+> a flat, matte, unlit base-color (v1.2-compliant — see hero README v13). The GLB is
+> still **rig-less / static** and is **not yet mounted** — swapping `buildPlayerAvatar`
+> → GLB load across forest/human-lands/controllerPlayground is the engine-wiring
+> follow-up (Daedalus). When wired, apply `mesh.convertToFlatShadedMesh()` + a matte
+> material at load (as `worldBounds.ts` does for the ground) so the faceted hard-edge
+> read lands. It remains a two-way door behind the same `root` + animator contract.
 
 | Asset | File | Tris | Size | Rig | Meshy task id |
 |-------|------|------|------|-----|---------------|
-| ~~Player hero (elf)~~ *(retired — see note above; reference-only)* | `public/models/korovany_hero_player-default.glb` | 2884 | 455 KiB | static (no skeleton); arms-down idle reposed FLO-434, then superseded by the procedural avatar (FLO-422) | `019ee92c-e565-7b9c-b7e5-cad74053e786` (preview) / `019ee92e-c84f-74ba-9053-6798430a6e6a` (refine) |
+| **Player hero (survivor)** *(v1.2-compliant; pending engine-wiring — see note above)* | `public/models/korovany_hero_player-default.glb` | 2884 | 298 KiB | static (no skeleton); arms-down idle (FLO-434) + flat-albedo re-author (FLO-440, v13) | `019ee92c-e565-7b9c-b7e5-cad74053e786` (geometry preview) / `019ee94d-b328-7308-a8fa-d5274bcc1a99` (flat retexture) |
 | Conifer tree | `public/models/forest-tree.glb` | 1357 | — | static | — |
 | Wooden hut | `public/models/wooden-hut.glb` | 1893 | — | static | — |
 | Chest | `public/models/chest.glb` | — | — | static | — |
