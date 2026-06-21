@@ -76,3 +76,16 @@ splits a pure, NullEngine-tested math core (gravity, ground clamp, jump,
 coyote-time, camera boom) from a thin Babylon binding that runs as a loop
 `System`. A self-contained dev scene is reachable at `?dev=controller`. See
 [Character controller](./character-controller.md).
+
+## Tree impostors (distance LOD)
+
+The dense forest (Phase 5) cannot afford to draw every tree's full GLB
+(~1357 tris) hundreds of times. `src/game/streaming/treeImpostor.ts` collapses
+distant trees to a single camera-facing **billboard impostor** (2 tris) using
+Babylon's native per-mesh LOD (`mesh.addLODLevel`), so the engine swaps full mesh
+↔ billboard by camera distance with no per-frame loop. A mesh used as an LOD
+level is "linked" and never drawn independently, so there is no double-draw, and
+instances inherit their source's LOD levels — keeping the layer compatible with
+the future thin-instanced forest (E5.3). A dense-forest benchmark scene is
+reachable at `?dev=impostor`. See
+[Asset streaming › Tree impostors](./asset-streaming.md#tree-impostors-distance-lod).
