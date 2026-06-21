@@ -77,6 +77,7 @@ export {
   selectInjury,
   selectIsBleeding,
   selectIsCrawling,
+  selectLocomotionMode,
   selectLocomotionSpeedMultiplier,
   severPlayerLimb,
   tickInjuries,

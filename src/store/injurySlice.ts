@@ -1,5 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import * as injuryModel from '../game/health/injuryModel'
+import {
+  resolveLocomotionMode,
+  resolveLocomotionSpeedMultiplier,
+  type LocomotionMode,
+} from '../game/health/locomotion'
 import type { InjuryState, Limb } from '../game/health/injuryModel'
 import {
   BANDAGE_ITEM_ID,
@@ -96,5 +101,7 @@ export const selectHasHalfScreenBlackout = (state: RootState): boolean =>
   injuryModel.hasHalfScreenBlackout(state.injury)
 export const selectIsCrawling = (state: RootState): boolean =>
   injuryModel.isCrawling(state.injury)
+export const selectLocomotionMode = (state: RootState): LocomotionMode =>
+  resolveLocomotionMode(state.injury, state.inventory)
 export const selectLocomotionSpeedMultiplier = (state: RootState): number =>
-  injuryModel.locomotionSpeedMultiplier(state.injury)
+  resolveLocomotionSpeedMultiplier(state.injury, state.inventory)

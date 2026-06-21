@@ -6,6 +6,34 @@ import {
   type AnimatableNode,
 } from './proceduralAnimator'
 
+describe('stepAnimator — locomotion modes (E6.1.5)', () => {
+  it('lowers the visual and leans forward while crawling', () => {
+    const state = createAnimatorState()
+    const { output } = stepAnimator(state, {
+      dt: 0.016,
+      speed: 2,
+      attackPhase: 'idle',
+      isDead: false,
+      locomotionMode: 'crawl',
+    })
+    expect(output.offsetY).toBeLessThan(0)
+    expect(output.leanX).toBeGreaterThan(0.3)
+  })
+
+  it('uses a seated offset while in a wheelchair', () => {
+    const state = createAnimatorState()
+    const { output } = stepAnimator(state, {
+      dt: 0.016,
+      speed: 2,
+      attackPhase: 'idle',
+      isDead: false,
+      locomotionMode: 'wheelchair',
+    })
+    expect(output.offsetY).toBeLessThan(0)
+    expect(output.leanX).toBeLessThan(0)
+  })
+})
+
 describe('stepAnimator — idle', () => {
   it('produces zero bob at t=0', () => {
     const state = createAnimatorState()

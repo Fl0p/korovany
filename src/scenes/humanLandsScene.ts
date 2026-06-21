@@ -12,6 +12,7 @@ import { createWorldBounds } from './worldBounds'
 import { buildPlayerAvatar } from './playerAvatar'
 import { resizeEngineToDisplay } from '../engine'
 import { ThirdPersonCamera } from '../game/camera'
+import type { LocomotionMode } from '../game/health/locomotion'
 import { CharacterController } from '../game/controller'
 import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
@@ -64,6 +65,7 @@ export interface HumanLandsSceneOptions {
    * crawl outcome to the capsule controller (MPG.6). Defaults to full speed.
    */
   getSpeedMultiplier?: () => number
+  getLocomotionMode?: () => LocomotionMode
 }
 
 export interface HumanLandsScene {
@@ -116,6 +118,7 @@ export function createHumanLandsScene(
     onPlayerDamaged,
     onCaravanLooted,
     getSpeedMultiplier,
+    getLocomotionMode,
   } = options
 
   const engine = createEngine(canvas)
@@ -155,6 +158,7 @@ export function createHumanLandsScene(
     scene,
     getIntent: () => frameIntent,
     getSpeedMultiplier,
+    getLocomotionMode,
     spawn: spawnPos,
     spawnRotationY: initialSpawn?.rotationY ?? 0,
   })

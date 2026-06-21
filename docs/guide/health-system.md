@@ -96,11 +96,27 @@ Tracked slots (`Limb`): `leftHand`, `rightHand`, `leftEye`, `rightEye`,
 |---|---|---|
 | **Bleed-out** | lose a hand | `bleeding` flag → `tickInjuries` drains HP each second until treated; reaching 0 HP triggers the death → menu transition |
 | **Half-screen** | lose an eye | `hasHalfScreenBlackout` / `selectHasHalfScreenBlackout` — true while an eye is severed |
-| **Crawl** | lose a leg | `isCrawling` / `selectLocomotionSpeedMultiplier` — speed drops to `CRAWL_SPEED_MULTIPLIER` (0.35) |
+| **Crawl** | lose a leg | `isCrawling` / `selectLocomotionMode` → `'crawl'` — speed drops to `CRAWL_SPEED_MULTIPLIER` (0.35) |
+| **Wheelchair** | lose a leg + equipped wheelchair | `selectLocomotionMode` → `'wheelchair'` — speed rises to `WHEELCHAIR_SPEED_MULTIPLIER` (0.6), still below normal gait |
 
 Bleed drains `BLEED_DAMAGE_PER_INTERVAL` (3) HP every `BLEED_INTERVAL_SECONDS`
 (1). A prosthetic/patch (`fitProsthetic`) restores a slot to intact (clearing
-the half-screen); `treatBleeding` stops a bleed without restoring the hand.
+the half-screen and crawl penalties when no severed legs remain); `treatBleeding`
+stops a bleed without restoring the hand.
+
+### Leg-loss locomotion (E6.1.5)
+
+When at least one leg is severed the player defaults to **crawl** mode. Carrying
+and equipping a **wheelchair** from the HUD inventory upgrades movement to the
+faster impaired roll without restoring a full walk. A **leg prosthetic** from the
+prosthetics shop (or any `fitPlayerProsthetic` call) clears the severed slot and
+returns `selectLocomotionSpeedMultiplier` to `1`.
+
+Resolution lives in `src/game/health/locomotion.ts` and is wired through
+`selectLocomotionSpeedMultiplier` / `selectLocomotionMode` so
+`CharacterController.getSpeedMultiplier` and the procedural animator stay on one
+path. The animator lowers the visual root and adds a forward lean in crawl, and
+a seated offset in wheelchair mode.
 
 ### Prosthetics shop (E6.1.6)
 
@@ -114,6 +130,10 @@ the selected prosthetic against the current `injurySlice`, then calls
 | Hand | 80 gold pieces | Restores one severed hand slot for hand-gated actions |
 | Leg | 120 gold pieces | Removes crawl slowdown once no severed legs remain |
 | Eye | 60 gold pieces | Removes the half-screen blackout once no severed eyes remain |
+
+**Wheelchair** (45 gold pieces at merchants, id `wheelchair`) is equippable
+mobility gear: when a leg is lost, equip it from the HUD inventory to switch from
+crawl (`0.35×`) to wheelchair (`0.6×`) until a leg prosthetic restores normal gait.
 
 Insufficient funds disables the fitting button and leaves the `gold` stack
 unchanged. See [Economy › Prosthetics shop](./economy.md#prosthetics-shop) for
@@ -132,14 +152,15 @@ the purchase rules and UI states.
 | `purchaseProsthetic(kind)` *(thunk)* | `'hand' \| 'leg' \| 'eye'` | Spend gold and fit the matching severed slot |
 
 Selectors: `selectInjury`, `selectIsBleeding`, `selectHasHalfScreenBlackout`,
-`selectIsCrawling`, `selectLocomotionSpeedMultiplier` — all importable from
-`'../store'`. As of MPG.6 (FLO-366) these are fully surfaced: the HUD renders the
-bleeding indicator and eye-loss vignette (see [HUD](#hud) above), and the
-locomotion multiplier reaches movement via
-`CharacterController.getSpeedMultiplier`. `GameCanvas` reads
-`selectLocomotionSpeedMultiplier(store.getState())` each step and passes it
-(through `ZoneSceneOptions`) to the controller, which scales the per-step move
-direction — so a severed leg drops the capsule to 35% speed (`CRAWL_SPEED_MULTIPLIER`).
+`selectIsCrawling`, `selectLocomotionMode`, `selectLocomotionSpeedMultiplier` — all
+importable from `'../store'`. As of MPG.6 (FLO-366) these are fully surfaced: the
+HUD renders the bleeding indicator and eye-loss vignette (see [HUD](#hud) above), and
+the locomotion multiplier reaches movement via `CharacterController.getSpeedMultiplier`.
+`GameCanvas` reads `selectLocomotionSpeedMultiplier(store.getState())` and
+`selectLocomotionMode(store.getState())` each step and passes them (through
+`ZoneSceneOptions`) to the controller and procedural animator — so a severed leg
+drops the capsule to 35% speed (`CRAWL_SPEED_MULTIPLIER`) or 60% with a fitted
+wheelchair (`WHEELCHAIR_SPEED_MULTIPLIER`).
 
 `App.tsx` ticks `tickInjuries(1)` once a second while the player is bleeding and
 the game is `playing`, and resets both health and injuries on death.

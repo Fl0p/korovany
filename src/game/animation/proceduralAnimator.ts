@@ -9,6 +9,7 @@
  */
 
 import type { AttackPhase } from '../combat/meleeAttack'
+import type { LocomotionMode } from '../health/locomotion'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ export interface AnimatorInput {
   attackPhase: AttackPhase
   /** Character has died (HP ≤ 0). */
   isDead: boolean
+  /** Leg-loss locomotion pose (E6.1.5). Default `normal`. */
+  locomotionMode?: LocomotionMode
 }
 
 export interface AnimatorOutput {
@@ -41,6 +44,8 @@ export interface AnimatorOutput {
   lungeZ: number
   /** Death topple — set as visual root's local Z rotation (radians, 0→π/2). */
   toppleZ: number
+  /** Extra Y offset for crawl / seated poses (metres). */
+  offsetY: number
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -53,6 +58,16 @@ const IDLE_BOB_FREQ = 1.1   // Hz
 const MOVE_BOB_AMP = 0.055
 const MOVE_BOB_FREQ = 2.4   // Hz (run cadence)
 const MOVE_LEAN_MAX = 0.12  // radians
+
+/** Crawl: prone lean and a lower visual anchor. */
+const CRAWL_LEAN = 0.42
+const CRAWL_OFFSET_Y = -0.55
+const CRAWL_BOB_SCALE = 0.35
+
+/** Wheelchair: seated, shallow bob. */
+const WHEELCHAIR_LEAN = -0.08
+const WHEELCHAIR_OFFSET_Y = -0.35
+const WHEELCHAIR_BOB_SCALE = 0.5
 
 /** Attack lunge: max forward displacement at active window midpoint. */
 const LUNGE_MAX = 0.18      // metres
@@ -77,7 +92,7 @@ export function stepAnimator(
   state: AnimatorState,
   input: AnimatorInput,
 ): { state: AnimatorState; output: AnimatorOutput } {
-  const { dt, speed, attackPhase, isDead } = input
+  const { dt, speed, attackPhase, isDead, locomotionMode = 'normal' } = input
 
   // ── Death topple ─────────────────────────────────────────────────────────
   if (isDead) {
@@ -91,6 +106,7 @@ export function stepAnimator(
         leanX: 0,
         lungeZ: 0,
         toppleZ: (Math.PI / 2) * t,
+        offsetY: 0,
       },
     }
   }
@@ -100,13 +116,27 @@ export function stepAnimator(
 
   // ── Bob ──────────────────────────────────────────────────────────────────
   const isMoving = speed > 0.05
-  const bobAmp = isMoving ? MOVE_BOB_AMP : IDLE_BOB_AMP
-  const bobFreq = isMoving ? MOVE_BOB_FREQ : IDLE_BOB_FREQ
+  let bobAmp = isMoving ? MOVE_BOB_AMP : IDLE_BOB_AMP
+  let bobFreq = isMoving ? MOVE_BOB_FREQ : IDLE_BOB_FREQ
+  if (locomotionMode === 'crawl') {
+    bobAmp *= CRAWL_BOB_SCALE
+    bobFreq *= 0.75
+  } else if (locomotionMode === 'wheelchair') {
+    bobAmp *= WHEELCHAIR_BOB_SCALE
+    bobFreq *= 0.85
+  }
   const bobY = bobAmp * Math.sin(2 * Math.PI * bobFreq * time)
 
-  // ── Lean ─────────────────────────────────────────────────────────────────
-  // Lean proportional to speed, max at sprint (speed ~5+ m/s).
-  const leanX = isMoving ? MOVE_LEAN_MAX * Math.min(speed / 4, 1) : 0
+  // ── Lean / pose offset ───────────────────────────────────────────────────
+  let leanX = isMoving ? MOVE_LEAN_MAX * Math.min(speed / 4, 1) : 0
+  let offsetY = 0
+  if (locomotionMode === 'crawl') {
+    leanX = CRAWL_LEAN
+    offsetY = CRAWL_OFFSET_Y
+  } else if (locomotionMode === 'wheelchair') {
+    leanX = WHEELCHAIR_LEAN
+    offsetY = WHEELCHAIR_OFFSET_Y
+  }
 
   // ── Lunge ────────────────────────────────────────────────────────────────
   // Windup: small pullback; active: full lunge; recovery: fade out
@@ -121,7 +151,7 @@ export function stepAnimator(
 
   return {
     state: { time, dead: false, toppleProgress: 0 },
-    output: { bobY, leanX, lungeZ, toppleZ: 0 },
+    output: { bobY, leanX, lungeZ, toppleZ: 0, offsetY },
   }
 }
 
@@ -161,7 +191,7 @@ export class CharacterAnimator {
     const { state, output } = stepAnimator(this.state, input)
     this.state = state
     if (!this.node) return
-    this.node.position.y = this.baseY + output.bobY
+    this.node.position.y = this.baseY + output.offsetY + output.bobY
     this.node.position.z = this.baseZ + output.lungeZ
     this.node.rotation.x = output.leanX
     this.node.rotation.z = output.toppleZ

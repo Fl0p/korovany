@@ -14,6 +14,7 @@ import { createWorldBounds } from './worldBounds'
 import { buildPlayerAvatar } from './playerAvatar'
 import { resizeEngineToDisplay } from '../engine'
 import { ThirdPersonCamera } from '../game/camera'
+import type { LocomotionMode } from '../game/health/locomotion'
 import { CharacterController } from '../game/controller'
 import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
@@ -264,6 +265,8 @@ export interface ForestSceneOptions {
    * (MPG.6) so a severed leg slows movement. Defaults to full speed.
    */
   getSpeedMultiplier?: () => number
+  /** Leg-loss locomotion pose for the procedural animator (E6.1.5). */
+  getLocomotionMode?: () => LocomotionMode
 }
 
 export interface ForestScene {
@@ -369,6 +372,7 @@ export function createForestScene(
     onEnemyKilled,
     isPaused,
     getSpeedMultiplier,
+    getLocomotionMode,
   } = options
 
   const engine = createEngine(canvas)
@@ -415,6 +419,7 @@ export function createForestScene(
     scene,
     getIntent: () => frameIntent,
     getSpeedMultiplier,
+    getLocomotionMode,
     spawn: spawnPos,
     spawnRotationY: initialSpawn?.rotationY ?? 0,
   })

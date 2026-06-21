@@ -6,7 +6,7 @@ import { gameReducer } from './gameSlice'
 import { streamingReducer } from './streamingSlice'
 import { playerReducer } from './playerSlice'
 import { healthReducer, damagePlayer } from './healthSlice'
-import { inventoryReducer, pickUpLoot } from './inventorySlice'
+import { inventoryReducer, pickUpLoot, equip } from './inventorySlice'
 import { progressionReducer } from './progressionSlice'
 import {
   advanceBleed,
@@ -17,12 +17,15 @@ import {
   selectHasHalfScreenBlackout,
   selectIsBleeding,
   selectIsCrawling,
+  selectLocomotionMode,
   selectLocomotionSpeedMultiplier,
   severPlayerLimb,
   tickInjuries,
   treatPlayerBleeding,
   useBandage,
 } from './injurySlice'
+import { CRAWL_SPEED_MULTIPLIER } from '../game/health/injuryModel'
+import { WHEELCHAIR_SPEED_MULTIPLIER } from '../game/health/locomotion'
 
 // Mirror the real store's reducer map so dispatch is typed like AppDispatch
 // (the `tickInjuries` thunk reads the full RootState).
@@ -97,7 +100,16 @@ describe('injury selectors', () => {
     expect(selectLocomotionSpeedMultiplier(store.getState())).toBe(1)
     store.dispatch(severPlayerLimb('rightLeg'))
     expect(selectIsCrawling(store.getState())).toBe(true)
-    expect(selectLocomotionSpeedMultiplier(store.getState())).toBeLessThan(1)
+    expect(selectLocomotionSpeedMultiplier(store.getState())).toBe(CRAWL_SPEED_MULTIPLIER)
+  })
+
+  it('upgrades crawl to wheelchair when the item is equipped', () => {
+    const store = makeStore()
+    store.dispatch(severPlayerLimb('leftLeg'))
+    store.dispatch(pickUpLoot({ itemId: 'wheelchair', count: 1 }))
+    store.dispatch(equip('wheelchair'))
+    expect(selectLocomotionMode(store.getState())).toBe('wheelchair')
+    expect(selectLocomotionSpeedMultiplier(store.getState())).toBe(WHEELCHAIR_SPEED_MULTIPLIER)
   })
 })
 

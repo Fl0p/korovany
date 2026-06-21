@@ -1,4 +1,5 @@
 import type { LootDrop } from '../game/loot'
+import type { LocomotionMode } from '../game/health/locomotion'
 import type { CombatKillTarget } from '../game/progression'
 import { getZone } from '../game/world'
 import { createForestScene } from './forestScene'
@@ -23,6 +24,8 @@ export interface ZoneSceneOptions {
    * crawl outcome to the capsule controller (MPG.6). Defaults to full speed.
    */
   getSpeedMultiplier?: () => number
+  /** Leg-loss locomotion pose for the procedural animator (E6.1.5). */
+  getLocomotionMode?: () => LocomotionMode
 }
 
 /** The minimal handle the GameCanvas needs to tear a zone scene down. */

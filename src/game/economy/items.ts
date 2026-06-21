@@ -74,6 +74,13 @@ export const ITEMS = {
     equippable: false,
     value: 15,
   },
+  wheelchair: {
+    id: 'wheelchair',
+    name: 'Wheelchair',
+    description: 'A folding chair on wheels — faster than crawling when a leg is lost.',
+    equippable: true,
+    value: 45,
+  },
 } as const satisfies Record<string, ItemDef>
 
 /**
@@ -83,6 +90,9 @@ export const ITEMS = {
  * canonical id rather than a stray string literal.
  */
 export const BANDAGE_ITEM_ID = 'bandage'
+
+/** Mobility item fitted from inventory when a leg is lost (E6.1.5). */
+export const WHEELCHAIR_ITEM_ID = 'wheelchair'
 
 /** Ids that exist in the catalog. Foreign/legacy ids are still valid strings. */
 export type KnownItemId = keyof typeof ITEMS
