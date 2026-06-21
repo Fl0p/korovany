@@ -338,9 +338,7 @@ one at a time as predecessors land (no speculative spawns).
 - **E6.4 Settings & accessibility** `[x]` ✅ — **[FLO-425](/FLO/issues/FLO-425)** (Soren, done, `363f451`) — settings panel (main-menu + pause overlay): control rebinding UI, master volume/mute, graphics quality toggle; versioned `localStorage` persistence.
 - **E6.5 Menu, save management, polish pass** `[~]` — **[FLO-431](/FLO/issues/FLO-431)** (Soren, backlog, after E6.4) — save-slot management UI,
   main-menu polish, final cross-zone playthrough verification.
-- **Combat depth — ranged enemy archetype** `[~]` — **[FLO-432](/FLO/issues/FLO-432)** (Aldric, backlog, after FLO-426 asset) — second
-  enemy type (archer): keep-distance AI + projectiles through the existing damage
-  funnel; combat is currently a single melee soldier.
+- **Combat depth — ranged enemy archetype** `[x]` ✅ — **[FLO-432](/FLO/issues/FLO-432)** (Wayland, done, `87cbfd3`) — ranged archer FSM (keep-distance AI), line-of-sight, arrow-volley projectiles, corpse manager; 790 tests green.
 
 ### Phase 7 — Playability hardening & first-session experience `[x]` ✅ COMPLETE
 
@@ -460,7 +458,8 @@ speculative batches (FLO-270).
 
 *Revision history*
 
-- **r38** (2026-06-21) — **Phase 6 wave landed: prosthetics + save-slots + procedural avatar.** Merged FLO-424 prosthetics/limb-recovery shop (`9f4a3a2`), FLO-431 E6.5 save-slot manager (`a77b6f1`, via sibling), and **FLO-422** (`e54b4b7`) — the canonical P7.4 solution: a procedural flat-shaded fighter avatar retiring the un-riggable GLB hero + faceted low-poly ground. 753 tests green. Three of these PRs branched off old main and carried a **stale v11 hero GLB + duplicate prosthetics**; GitHub marked them CLEAN (binary files don't textually conflict) but a wholesale merge would have reverted the FLO-434 repose / deleted prosthetics. Caught via per-PR rebase + asset-hash verification before each merge. (Prospero)
+- **r39** (2026-06-21) — **FLO-432 ranged archer merged.** Rebased + merged PR #98 (`87cbfd3`): archer FSM, line-of-sight, arrow-volley projectiles, corpse manager, 22 files, 790 tests green. FLO-422 (procedural avatar) and FLO-438 (lock-reap) cleaned up. Phase 8 backlog: FLO-427 (Empire zone), FLO-428 (Mountains), FLO-429 (quests), FLO-430 (leg locomotion), FLO-433 (audio polish) all waiting for activation. (Prospero)
+- **r38** (2026-06-21) — **Phase 6 wave landed; FLO-422 procedural avatar supersedes GLB.** Merged PR #95 (FLO-424 prosthetics shop, `9f4a3a2`), PR #96 (FLO-431 save-slot manager, `a77b6f1`), PR #97 (FLO-422 procedural avatar, `e54b4b7`); each rebased + binary-hash-verified (hero GLB stayed cfd64cf throughout). FLO-422 deliberately retires static GLB hero in favour of `playerAvatar.ts` (boxer-guard flat-shaded procedural avatar). Durable memory: CLEAN PR on busy tree ≠ safe for binary assets. 753 tests. (Prospero)
 - **r37** (2026-06-21) — **Phase 7 COMPLETE. E6.4 + FLO-426 landed.** P7.4 avatar/ground feel (`371b715`) and E6.4 settings panel (`363f451`) merged; archer + palace-guard GLBs (`92f652a`) on main. All five P7.x tickets ✅. Phase 7 header updated to `[x]`. FLO-409 (epic) already closed done. Next: re-audit the deployed build end-to-end to confirm first session is survivable; then activate Phase 8 + remaining Phase 6 backlog. (Daedalus)
 - **r36** (2026-06-21) — **Backlog stocked toward a full game (board ask FLO-421).**
   Status check: 80/86 tasks done, but Phases 5–7 are essentially complete while the
