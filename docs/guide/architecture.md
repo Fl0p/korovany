@@ -42,6 +42,7 @@ korovany/
 | Asset streaming (GLB on demand)| `src/game/streaming/`               |
 | Persistent enemy corpses       | `src/game/corpses/` + `src/scenes/corpseManager.ts` — see [Corpses](./corpses) |
 | Save/load (IndexedDB)          | `src/game/save/`                    |
+| User settings (rebind, quality)| `src/game/settings/` — see [Settings](./settings) |
 | Shared state                   | `src/store/` (a new slice) — see [State management](./state-management) |
 | A 3D model / texture / sound   | `assets/` (tracked by Git LFS)      |
 | Documentation                  | `docs/` (same change as the code)   |

@@ -53,8 +53,10 @@ Bindings are plain data. `rebind(bindings, action, code)` returns a **new** map
 with the action pointed at a new key; if that key was already bound to another
 action, the old binding is cleared so one physical key never drives two actions.
 Cleared bindings are unbound and never match during reverse lookup.
-At runtime, `controller.setBinding(action, code)` does the same on the live
-controller. A future settings UI can drive this directly.
+At runtime, `controller.setBinding(action, code)` delegates to the
+[settings store](../../src/game/settings/settingsStore.ts) so changes persist and
+sync across live controllers. The [Settings panel](./settings.md) drives the same
+path.
 
 ## Pointer lock and mouselook
 

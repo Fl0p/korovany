@@ -169,6 +169,36 @@ describe('<App />', () => {
     expect(screen.getByRole('button', { name: 'New Game' })).toBeInTheDocument()
   })
 
+  it('opens settings from the main menu and closes with Done', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.queryByRole('heading', { name: 'Settings' })).not.toBeInTheDocument()
+  })
+
+  it('opens settings from the pause overlay', async () => {
+    const user = userEvent.setup()
+    renderApp('paused')
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Paused' })).toBeInTheDocument()
+  })
+
+  it('closes settings with Escape before toggling pause', async () => {
+    const user = userEvent.setup()
+    renderApp('paused')
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('heading', { name: 'Settings' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Paused' })).toBeInTheDocument()
+  })
+
   it('shows and hides the pause overlay with Escape while playing', async () => {
     const user = userEvent.setup()
     renderApp('playing')

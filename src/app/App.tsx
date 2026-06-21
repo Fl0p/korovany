@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { GameCanvas } from '../scenes/GameCanvas'
 import { InventoryPanel } from './InventoryPanel'
 import { DamageNumbers, type DamageNumberEntry } from './DamageNumber'
-import { AudioControls } from './AudioControls'
 import { useGameAudio } from './useGameAudio'
 import { onDamage } from '../game/combat/damageEvents'
 import { audioBus } from '../game/audio'
 import { WorldMap } from '../components/WorldMap'
 import { OnboardingIntroCard } from '../components/OnboardingIntroCard'
+import { SettingsPanel } from '../components/SettingsPanel'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
 import { BANDAGE_ITEM_ID, totalItemCount } from '../game/economy'
@@ -87,6 +87,7 @@ export function App() {
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const onboardingPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
+  const settingsPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const endgamePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
   const [damageNumbers, setDamageNumbers] = useState<DamageNumberEntry[]>([])
@@ -159,6 +160,7 @@ export function App() {
   // "Travelling…" state until the destination scene has streamed in.
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [traveling, setTraveling] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Win/lose loop (MPG.1). Each frame the live progress — caravans raided + the
   // player's death — flows through the pure `evaluateOutcome` machine, which
@@ -206,11 +208,12 @@ export function App() {
   }, [])
 
   useEffect(() => {
-    if (phase === 'menu') menuPrimaryActionRef.current?.focus()
+    if (settingsOpen) settingsPrimaryActionRef.current?.focus()
+    else if (phase === 'menu') menuPrimaryActionRef.current?.focus()
     else if (showOnboardingIntro) onboardingPrimaryActionRef.current?.focus()
     else if (phase === 'paused') pausePrimaryActionRef.current?.focus()
     else if (phase === 'won' || phase === 'lost') endgamePrimaryActionRef.current?.focus()
-  }, [phase, showOnboardingIntro])
+  }, [phase, showOnboardingIntro, settingsOpen])
 
   // Autosave on the transition into `paused`. The transform comes from the live
   // scene via the bridge; health from `healthSlice`, zone from `playerSlice`. No
@@ -231,6 +234,13 @@ export function App() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (settingsOpen) {
+        if (event.code === 'Escape') {
+          event.preventDefault()
+          setSettingsOpen(false)
+        }
+        return
+      }
       if (showOnboardingIntro) {
         if (event.code === 'Escape') {
           event.preventDefault()
@@ -264,7 +274,7 @@ export function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [dispatch, phase, worldMapOpen, traveling, showOnboardingIntro])
+  }, [dispatch, phase, worldMapOpen, traveling, showOnboardingIntro, settingsOpen])
 
   // Fast-travel: validate the destination, stage its spawn on the playerRuntime
   // bridge, then switch zones. Changing `zoneId` remounts the GameCanvas with the
@@ -299,6 +309,9 @@ export function App() {
       setWorldMapOpen(false)
       setTraveling(false)
       setMenuView('main')
+    }
+    if (phase !== 'menu' && phase !== 'paused') {
+      setSettingsOpen(false)
     }
   }, [phase])
 
@@ -480,6 +493,15 @@ export function App() {
               >
                 Continue
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  audioBus.play('uiClick')
+                  setSettingsOpen(true)
+                }}
+              >
+                Settings
+              </button>
             </div>
             {!hasSaveSlot ? (
               <p className="menu-hint">No saved game yet — start a new game.</p>
@@ -511,10 +533,27 @@ export function App() {
               <button type="button" onClick={() => dispatch(returnToMenu())}>
                 Quit to Main Menu
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  audioBus.play('uiClick')
+                  setSettingsOpen(true)
+                }}
+              >
+                Settings
+              </button>
             </div>
-            <AudioControls />
           </div>
         </div>
+      ) : null}
+      {settingsOpen ? (
+        <SettingsPanel
+          closeButtonRef={settingsPrimaryActionRef}
+          onClose={() => {
+            audioBus.play('uiClick')
+            setSettingsOpen(false)
+          }}
+        />
       ) : null}
       {phase === 'won' || phase === 'lost' ? (
         <div

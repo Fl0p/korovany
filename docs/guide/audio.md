@@ -27,7 +27,7 @@ Source: [`src/game/audio/`](../../src/game/audio/).
 | [`sfx.ts`](../../src/game/audio/sfx.ts) | The named-sound recipe registry (`SfxName` → voices) and `renderSfx`. |
 | [`audioBus.ts`](../../src/game/audio/audioBus.ts) | The `AudioBus`: lazy context, master gain, `play`, `unlock`, mute/volume + persistence, plus locomotion/ambience (`checkFootstep`, `startAmbience`, `stopAmbience`). Exports the shared `audioBus` singleton. |
 | [`../../src/app/useGameAudio.ts`](../../src/app/useGameAudio.ts) | React hook that wires events → `play()`, unlocks on first gesture, and rides win/lose stings off the app phase. |
-| [`../../src/app/AudioControls.tsx`](../../src/app/AudioControls.tsx) | Mute toggle + volume slider rendered in the pause menu. |
+| [`../../src/app/AudioControls.tsx`](../../src/app/AudioControls.tsx) | Mute toggle + volume slider embedded in the Settings panel. |
 
 ## Event → sound map
 

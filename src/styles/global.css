@@ -249,7 +249,8 @@ body {
 
 .menu-overlay,
 .pause-overlay,
-.onboarding-overlay {
+.onboarding-overlay,
+.settings-overlay {
   position: absolute;
   inset: 0;
   display: grid;
@@ -388,6 +389,126 @@ body {
 
 .pause-overlay {
   background: rgba(6, 10, 14, 0.38);
+}
+
+.settings-panel {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+}
+
+.settings-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.settings-section h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #c7d2a2;
+}
+
+.settings-section .audio-controls {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.settings-bindings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.settings-bindings li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.settings-binding-label {
+  color: #d1d9e0;
+}
+
+.settings-binding-key {
+  min-width: 2.5rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.settings-rebind-btn,
+.settings-reset-btn {
+  min-height: 2rem;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 6px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-rebind-btn:hover,
+.settings-rebind-btn:focus-visible,
+.settings-reset-btn:hover,
+.settings-reset-btn:focus-visible {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.18);
+  outline: none;
+}
+
+.settings-rebind-btn[aria-pressed='true'] {
+  border-color: #f7d774;
+  color: #f7d774;
+}
+
+.settings-reset-btn {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.settings-quality {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.settings-quality-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: #d1d9e0;
+  cursor: pointer;
+}
+
+.settings-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  color: #aeb9c4;
+}
+
+.settings-error {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: #f7a774;
 }
 
 /* MPG.2 onboarding intro — reuses menu panel chrome; slightly wider for controls. */

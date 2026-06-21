@@ -335,9 +335,15 @@ one at a time as predecessors land (no speculative spawns).
 - **E6.3 Quests / objectives** `[~]` — **[FLO-429](/FLO/issues/FLO-429)** (Wayland, backlog) — per-faction objective chains (elf raids,
   palace-guard commander orders, villain free-command). Builds on the objective
   machine + commander/order system (E4.3).
+<<<<<<< HEAD
 - **E6.4 Settings & accessibility** `[~]` — **[FLO-425](/FLO/issues/FLO-425)** (Soren, active) — control rebinding UI, master
   volume/mute (audio bus), graphics quality toggle (hook E5.4 perf budgets).
 - **E6.5 Menu, save management, polish pass** `[~]` — **[FLO-431](/FLO/issues/FLO-431)** (Soren, backlog, after E6.4) — save-slot management UI,
+=======
+- **E6.4 Settings & accessibility** `[x]` — [FLO-425](/FLO/issues/FLO-425): settings
+  panel (rebind + volume + graphics quality), versioned `localStorage` persistence.
+- **E6.5 Menu, save management, polish pass** `[ ]` — save slot management UI,
+>>>>>>> 5bac266 (feat(settings): E6.4 panel — rebind, volume, graphics quality (FLO-425))
   main-menu polish, final cross-zone playthrough verification.
 - **Combat depth — ranged enemy archetype** `[~]` — **[FLO-432](/FLO/issues/FLO-432)** (Aldric, backlog, after FLO-426 asset) — second
   enemy type (archer): keep-distance AI + projectiles through the existing damage

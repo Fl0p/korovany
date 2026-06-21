@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { settingsStore } from '../settings'
 import { createInputController, type InputController } from './domAdapter'
 
 // jsdom does not implement the Pointer Lock API, so we stub the few surfaces the
@@ -10,6 +11,7 @@ let controller: InputController
 let lockElement: Element | null = null
 
 beforeEach(() => {
+  settingsStore.resetAll()
   canvas = document.createElement('canvas')
   document.body.appendChild(canvas)
   canvas.requestPointerLock = vi.fn(() => {
@@ -80,6 +82,12 @@ describe('createInputController', () => {
     document.exitPointerLock() // ESC equivalent
     expect(controller.isPointerLocked()).toBe(false)
     expect(controller.sample().moveY).toBe(0)
+  })
+
+  it('syncs bindings when the settings store changes externally', () => {
+    settingsStore.setKeyBinding('moveForward', 'ArrowUp')
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp' }))
+    expect(controller.sample().moveY).toBe(1)
   })
 
   it('rebinds keys through setBinding', () => {

@@ -5,6 +5,7 @@
 // controller the game loop samples each frame. It still imports nothing from
 // Babylon — it only needs an `HTMLCanvasElement` to request pointer lock on.
 
+import { settingsStore } from '../settings'
 import { defaultBindings, rebind, type KeyBindings } from './bindings'
 import {
   createInputState,
@@ -57,9 +58,15 @@ export function createInputController(
 ): InputController {
   const target = options.target ?? window
   const doc = canvas.ownerDocument
-  let bindings = options.bindings ?? defaultBindings
+  let bindings = options.bindings ?? settingsStore.getKeyBindings()
   let state: InputState = createInputState()
   let locked = false
+  const unsubscribeBindings =
+    options.bindings === undefined
+      ? settingsStore.subscribeBindings((next) => {
+          bindings = next
+        })
+      : () => {}
 
   const dispatch = (event: Parameters<typeof inputReducer>[1]): void => {
     state = inputReducer(state, event, bindings)
@@ -113,12 +120,17 @@ export function createInputController(
       return bindings
     },
     setBinding(action: InputAction, code: string): void {
-      bindings = rebind(bindings, action, code)
+      if (options.bindings === undefined) {
+        settingsStore.setKeyBinding(action, code)
+      } else {
+        bindings = rebind(bindings, action, code)
+      }
     },
     isPointerLocked(): boolean {
       return locked
     },
     dispose(): void {
+      unsubscribeBindings()
       target.removeEventListener('keydown', onKeyDown)
       target.removeEventListener('keyup', onKeyUp)
       target.removeEventListener('blur', onBlur)
