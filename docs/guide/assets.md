@@ -34,6 +34,7 @@ any Community/showcase page.
 | **Roadside shrine (Salt Road)** | `public/models/roadside-shrine.glb` | **1984** | 394 KiB | static | `019ee73a-c8a6-73bd-a2ec-e21137a6dba2` (preview) / `019ee747-ae35-786a-a8c7-490e65d0cddd` (retexture) |
 | **Empire toll gate** | `public/models/toll-gate.glb` | **1947** | 4.1 MiB | static | preview `019ee748-205e-763a-a883-bdda11e91c7e` · retexture `019ee749-ae59-7680-aa94-e6a8842c7bd5` |
 | **Caravan wagon (Salt Road)** | `public/models/caravan-wagon.glb` | **2827** | 394 KiB | static | `019ee749-d4cf-79b9-b813-d98be2201197` (preview) / `019ee74d-2300-772c-8a22-612c27dd99dc` (retexture) |
+| **Cargo crate (Salt Road)** | `public/models/cargo-crate.glb` | **1022** | 296 KiB | static | `019ee743-a02c-7878-a22e-7b67cdfbafa6` (preview) |
 | **Ruined watchtower (Salt Road)** | `public/models/watchtower.glb` | **2564** | 379 KiB | static | `019ee749-6051-7990-b286-98be4ecf82b4` (retexture) |
 
 ### Empire toll gate — Phase 3.5 (Salt Road pack)
@@ -176,3 +177,29 @@ Generated for [FLO-371](/plan/game-plan).
   no errors.
 - **Handoff:** wiring this GLB into the scene (replacing the procedural box in
   `caravanEnemy.ts`) is engineering's job — handed to Daedalus/CTO.
+
+### Cargo crate (Salt Road) — Phase 3.5 (MPG)
+
+Instanceable static loot prop for caravan cargo clusters and roadside scatter
+(Salt Road pack). Small weathered wooden crate with iron corner bands — a
+readable, stackable silhouette for loot piles beside the caravan wagon.
+Generated for [FLO-372](/FLO/issues/FLO-372).
+
+- **Budget:** 1022 tris ≤ 1200 (ticket budget), **296 KiB** web payload.
+  Bounding box ≈ 2.00 × 1.35 × 1.34 units (real-world scale).
+- **Textured** (board mandate — never grey): single 1024² base-color map,
+  flat/unlit albedo (weathered brown planks + iron corner bands).
+- **Provenance:** Meshy text-to-3D **preview** (`019ee743-a02c-7878-a22e-7b67cdfbafa6`,
+  `--art-style realistic`, 1022 tris, 20 cr) → geometry-preserving **local**
+  retexture via data-URI (server retexture `019ee8d6-…` produced a 28k-tri blob
+  and was rejected to preserve the faceted silhouette) →
+  `resize_glb_textures.py --max 1024 --quality 85` (mesh bytes untouched).
+  Preview prompt: *"low-poly stylized wooden cargo crate, rough rectangular
+  planks, iron corner bands, weathered wood, faceted flat-shaded, neutral brown,
+  small stackable game prop"*.
+- **Rig:** static prop — no skeleton.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
+  public/models/cargo-crate.glb` → 2 meshes, 1022 tris, 1 embedded texture,
+  no errors.
+- **Handoff:** wiring crate clusters into the scene is engineering scope — separate
+  from this asset-only ticket.
