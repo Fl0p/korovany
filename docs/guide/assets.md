@@ -36,14 +36,32 @@ any Community/showcase page.
 > follow-up (Daedalus). When wired, apply `mesh.convertToFlatShadedMesh()` + a matte
 > material at load (as `worldBounds.ts` does for the ground) so the faceted hard-edge
 > read lands. It remains a two-way door behind the same `root` + animator contract.
+>
+> **Menu / defeat backdrop (FLO-452).** The title screen and the won/lost overlay
+> render over the menu backdrop scene (`src/scenes/menuScene.ts`), which now shows
+> the same `buildPlayerAvatar` figure on a slow turntable instead of streaming the
+> hero GLB. So the "defeat-screen hero" is the procedural v1.2 avatar — the menu,
+> the defeat screen and live play read as one coherent style. The hero GLB stays
+> registered for asset-streaming reference but is no longer rendered.
+
+> **Empire soldier — now procedural (FLO-452).** For art coherence with the
+> procedural player, the live enemy soldier is built from flat-shaded boxes —
+> `src/scenes/soldierAvatar.ts` (`buildSoldierAvatar`): straight "at attention"
+> stance, tall peaked shako, greatcoat, musket at port arms, the established Empire
+> grey-green palette. It replaces the 2794-tri semi-realistic `empire-soldier.glb`
+> as the rendered visual in `soldierEnemy.ts` **and** as the default body in
+> `corpseManager.ts`, so a soldier and its corpse share the faceted look. The GLB
+> is retired to **reference-only** (kept as the non-null default sentinel the
+> corpse-visibility gate keys off). Archer enemies/corpses still mount
+> `ranged-archer.glb` — conforming that archetype is a separate follow-up.
 
 | Asset | File | Tris | Size | Rig | Meshy task id |
 |-------|------|------|------|-----|---------------|
-| **Player hero (survivor)** *(v1.2-compliant; pending engine-wiring — see note above)* | `public/models/korovany_hero_player-default.glb` | 2884 | 298 KiB | static (no skeleton); arms-down idle (FLO-434) + flat-albedo re-author (FLO-440, v13) | `019ee92c-e565-7b9c-b7e5-cad74053e786` (geometry preview) / `019ee94d-b328-7308-a8fa-d5274bcc1a99` (flat retexture) |
+| **Player hero (survivor)** *(reference-only — live visual is procedural `buildPlayerAvatar`; menu/defeat backdrop too, FLO-452)* | `public/models/korovany_hero_player-default.glb` | 2884 | 298 KiB | static (no skeleton); arms-down idle (FLO-434) + flat-albedo re-author (FLO-440, v13) | `019ee92c-e565-7b9c-b7e5-cad74053e786` (geometry preview) / `019ee94d-b328-7308-a8fa-d5274bcc1a99` (flat retexture) |
 | Conifer tree | `public/models/forest-tree.glb` | 1357 | — | static | — |
 | Wooden hut | `public/models/wooden-hut.glb` | 1893 | — | static | — |
 | Chest | `public/models/chest.glb` | — | — | static | — |
-| **Empire soldier (enemy)** | `public/models/empire-soldier.glb` | **2794** | 130 KiB | static (no skeleton) | `019ee601-93f0-7988-86f8-e35ce1067881` |
+| **Empire soldier (enemy)** *(reference-only — live visual is procedural `buildSoldierAvatar`, FLO-452)* | `public/models/empire-soldier.glb` | **2794** | 130 KiB | static (no skeleton) | `019ee601-93f0-7988-86f8-e35ce1067881` |
 | **Roadside shrine (Salt Road)** | `public/models/roadside-shrine.glb` | **1984** | 394 KiB | static | `019ee73a-c8a6-73bd-a2ec-e21137a6dba2` (preview) / `019ee747-ae35-786a-a8c7-490e65d0cddd` (retexture) |
 | **Empire toll gate** | `public/models/toll-gate.glb` | **1947** | 4.1 MiB | static | preview `019ee748-205e-763a-a883-bdda11e91c7e` · retexture `019ee749-ae59-7680-aa94-e6a8842c7bd5` |
 | **Caravan wagon (Salt Road)** | `public/models/caravan-wagon.glb` | **2827** | 394 KiB | static | `019ee749-d4cf-79b9-b813-d98be2201197` (preview) / `019ee74d-2300-772c-8a22-612c27dd99dc` (retexture) |
@@ -101,6 +119,11 @@ in `src/scenes/humanLandsScene.ts`.
   Daedalus/CTO, not done here.
 
 ### Empire soldier (enemy) — Phase 2
+
+> **Retired as the live visual (FLO-452).** The soldier now renders as the
+> procedural faceted `buildSoldierAvatar` (`src/scenes/soldierAvatar.ts`) for art
+> coherence with the procedural player. The GLB below is kept reference-only; the
+> provenance is preserved for the record.
 
 Napoleonic-era Empire infantryman: bicorne hat, greatcoat, boots, musket held
 across the body. Generated for [FLO-311](/plan/game-plan) (feeds the enemy-NPC

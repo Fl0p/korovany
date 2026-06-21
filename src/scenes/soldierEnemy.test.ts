@@ -80,6 +80,23 @@ describe('SoldierEnemy (scene integration)', () => {
     expect(damageDealt.length).toBeGreaterThan(0)
   })
 
+  it('builds the procedural soldier avatar and hides the capsule when visuals are on', () => {
+    // Omit `glbUrl` → the default (non-null) sentinel → procedural avatar (FLO-452).
+    const soldier = new SoldierEnemy(scene, {
+      spawn: new Vector3(0, 0.9, 0),
+      getPlayerPos: () => player,
+      onAttackPlayer: (dmg) => damageDealt.push(dmg),
+    })
+    expect(scene.getTransformNodeByName('soldierAvatar')).not.toBeNull()
+    expect(soldier.mesh.isVisible).toBe(false) // the placeholder capsule is hidden
+  })
+
+  it('keeps the bare capsule (no avatar) when glbUrl is null — headless path', () => {
+    const soldier = spawn()
+    expect(scene.getTransformNodeByName('soldierAvatar')).toBeNull()
+    expect(soldier.mesh.isVisible).toBe(true)
+  })
+
   it('follows a trusted commander order instead of default patrol', () => {
     const soldier = new SoldierEnemy(scene, {
       spawn: new Vector3(0, 0.9, 0),

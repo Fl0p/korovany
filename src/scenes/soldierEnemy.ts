@@ -15,6 +15,7 @@ import {
 } from '@babylonjs/core'
 import type { Damageable, Vec3 } from '../game/combat'
 import { CharacterAnimator } from '../game/animation/proceduralAnimator'
+import { buildSoldierAvatar } from './soldierAvatar'
 import {
   applyDamageToSoldier,
   createSoldierFSM,
@@ -26,7 +27,12 @@ import {
 } from '../game/ai'
 import type { System } from '../game/loop'
 
-/** FLO-311 Empire soldier mesh — web-ready GLB shipped in /public/models. */
+/**
+ * FLO-311 Empire soldier GLB. Retired as the live visual by FLO-452 (the soldier
+ * now renders as a procedural faceted avatar, see {@link buildSoldierAvatar}); it
+ * survives as a reference asset and as the non-null default sentinel the corpse
+ * manager's visibility gate keys off.
+ */
 export const DEFAULT_SOLDIER_GLB = '/models/empire-soldier.glb'
 
 type SoldierMaterialRole = 'coat' | 'leather' | 'metal'
@@ -132,25 +138,23 @@ export class SoldierEnemy implements System, Damageable {
 
     this.animator = new CharacterAnimator(-0.9, 0)
 
-    // Mount the FLO-311 GLB onto the capsule (best-effort: the bare capsule
-    // stays as a fallback if the model can't be fetched, e.g. in headless tests).
-    const glbUrl = options.glbUrl === undefined ? DEFAULT_SOLDIER_GLB : options.glbUrl
-    if (glbUrl) {
-      void import('./modelLoader')
-        .then(({ loadModel }) =>
-          loadModel(scene, glbUrl, { targetSize: 1.8, groundIt: true }).then((model) => {
-            applyEmpireSoldierTexture(scene, model.meshes)
-            model.root.parent = this.mesh
-            model.root.position = new Vector3(0, -0.9, 0)
-            for (const m of model.meshes) m.isPickable = false
-            this.mesh.isVisible = false // hide the placeholder capsule
-            // Wire animator to the visual root after async load.
-            this.animator.node = model.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
-          }),
-        )
-        .catch(() => {
-          /* keep the capsule placeholder visible */
-        })
+    // Visual: a procedural low-poly Empire soldier built from flat-shaded boxes
+    // (FLO-452), conforming the enemy to the v1.2 visual language the player
+    // avatar established (FLO-422) and retiring the off-spec, semi-realistic
+    // empire-soldier.glb. Built synchronously (no async fetch), so the animator
+    // wires immediately. `glbUrl: null` (headless tests) keeps the bare capsule;
+    // any other value — including the default sentinel — builds the avatar. The
+    // option name is kept for back-compat with existing call sites + to mirror
+    // the corpse manager's matching null-gate.
+    const showVisual =
+      (options.glbUrl === undefined ? DEFAULT_SOLDIER_GLB : options.glbUrl) !== null
+    if (showVisual) {
+      const avatar = buildSoldierAvatar(scene)
+      avatar.root.parent = this.mesh
+      avatar.root.position = new Vector3(0, -0.9, 0)
+      this.mesh.isVisible = false // hide the placeholder capsule
+      this.animator.node =
+        avatar.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
     }
   }
 

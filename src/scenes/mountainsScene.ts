@@ -236,6 +236,9 @@ export function createMountainsScene(
     (spawn) =>
       new SoldierEnemy(scene, {
         spawn,
+        // Skip the procedural avatar in headless tests, mirroring the player
+        // visual gate (`heroUrl: null`) — keeps the NullEngine scene lean (FLO-452).
+        glbUrl: heroUrl === null ? null : undefined,
         getPlayerPos: () => controller.mesh.position,
         onAttackPlayer: (dmg) => {
           onPlayerDamaged?.(dmg)

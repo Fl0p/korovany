@@ -36,6 +36,14 @@ describe('CorpseManager', () => {
     expect(mesh!.position.z).toBeCloseTo(6)
   })
 
+  it('builds a procedural soldier body for default corpses (FLO-452)', () => {
+    // Default (non-null) soldier visual → procedural faceted body, not the GLB.
+    const mgr = new CorpseManager(scene, { zoneId: 'forest', store })
+    const rec = mgr.registerDeath({ x: 6, y: 0.9, z: 6 }, 0)
+    expect(scene.getTransformNodeByName('soldierAvatar')).not.toBeNull()
+    expect(scene.getMeshByName(`corpse:${rec.id}`)!.isVisible).toBe(false)
+  })
+
   it('evicts the oldest corpse mesh when the cap is exceeded', () => {
     const mgr = new CorpseManager(scene, { zoneId: 'forest', store, glbUrl: null })
     const r0 = mgr.registerDeath({ x: 0, y: 0, z: 0 }, 0)

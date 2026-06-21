@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { createGameEngine } from '../engine'
 import {
   damagePlayer,
   pickUpLoot,
@@ -15,7 +14,7 @@ import {
 import { emitDismember } from '../game/combat'
 import { resolveDismemberment } from '../game/health'
 import { caravanLootToPickups } from '../store/caravanLootAdapter'
-import { setAssetPhase } from '../store/streamingSlice'
+import { createMenuScene } from './menuScene'
 import { createCaravanPlayground } from './caravanPlayground'
 import { createControllerPlayground } from './controllerPlayground'
 import { createForestScene } from './forestScene'
@@ -39,7 +38,7 @@ import { createZoneScene } from './zoneScenes'
  * - `?dev=impostor`   — dense-forest tree-impostor benchmark (E5.1 QA)
  * - `?dev=vegetation` — dense-forest thin-instance benchmark (E5.3 QA)
  * - `?dev=perf`       — performance-budget profiler over a dense forest (E5.4 QA)
- * - `phase === menu`  — engine smoke scene (hero preview, streaming HUD)
+ * - `phase === menu`  — menu backdrop scene (procedural v1.2 hero turntable)
  * - `phase === playing | paused` — the active zone's scene, keyed by
  *   `playerSlice.zoneId` (E3.1). Fast-travel changes `zoneId`, which remounts
  *   the canvas with the new zone's scene; the staged spawn lands the player.
@@ -54,7 +53,7 @@ export function GameCanvas() {
   const phase = useAppSelector((state) => state.app.phase)
   const zoneId = useAppSelector((state) => state.player.zoneId)
   // Only the live run owns a zone scene. won/lost unmount it (the win/lose
-  // overlay takes over above the menu smoke scene), so Restart boots a fresh one.
+  // overlay takes over above the menu backdrop scene), so Restart boots a fresh one.
   const inGame = phase === 'playing' || phase === 'paused'
 
   // Mirror the live phase into a ref so the forest render loop can read "is
@@ -126,9 +125,7 @@ export function GameCanvas() {
                 // React-reactive value.
                 getSpeedMultiplier: () => selectLocomotionSpeedMultiplier(store.getState()),
               })
-            : createGameEngine(canvas, {
-                onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),
-              })
+            : createMenuScene(canvas)
     return () => game.dispose()
   }, [inGame, zoneId, dispatch])
 

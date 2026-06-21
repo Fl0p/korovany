@@ -28,6 +28,7 @@ import {
   sessionCorpseStore,
 } from '../game/corpses'
 import { DEFAULT_SOLDIER_GLB } from './soldierEnemy'
+import { buildSoldierAvatar } from './soldierAvatar'
 
 export interface CorpseManagerOptions {
   /** Zone these corpses belong to; gates re-spawn on re-enter. */
@@ -101,14 +102,19 @@ export class CorpseManager {
     mat.diffuseColor = CORPSE_COLOR
     mesh.material = mat
 
-    // Mount the body GLB as a child (best-effort — the toppled capsule is the
-    // fallback if the fetch fails, e.g. in headless tests). A per-corpse override
-    // (FLO-432) lets an archer fall as a ranger; otherwise the manager default.
-    const glbUrl = rec.glbUrl ?? this.glbUrl
-    if (glbUrl) {
+    // Mount the body visual as a child of the toppled capsule (the capsule is the
+    // fallback in headless tests, where `glbUrl: null` skips visuals).
+    //
+    // A per-corpse override (FLO-432) — an explicit `rec.glbUrl`, e.g. the archer
+    // — still falls as its GLB so the corpse silhouette matches the enemy that
+    // died. The default soldier corpse instead builds the procedural faceted
+    // avatar (FLO-452), so a procedural live soldier dies into a matching
+    // procedural body rather than the retired, off-spec GLB.
+    const overrideGlb = rec.glbUrl
+    if (overrideGlb) {
       void import('./modelLoader')
         .then(({ loadModel }) =>
-          loadModel(this.scene, glbUrl, { targetSize: 1.8, groundIt: true }).then(
+          loadModel(this.scene, overrideGlb, { targetSize: 1.8, groundIt: true }).then(
             (model) => {
               if (mesh.isDisposed()) {
                 model.root.dispose()
@@ -124,6 +130,11 @@ export class CorpseManager {
         .catch(() => {
           /* keep the toppled capsule placeholder visible */
         })
+    } else if (this.glbUrl !== null) {
+      const avatar = buildSoldierAvatar(this.scene)
+      avatar.root.parent = mesh
+      avatar.root.position = new Vector3(0, -0.9, 0)
+      mesh.isVisible = false // hide the placeholder capsule
     }
 
     this.meshes.set(rec.id, mesh)
