@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { PROSTHETIC_OFFERS } from '../economy/prostheticsShop'
 import { createSeededRng } from '../util/seededRandom'
 import { DEFAULT_CARAVAN_LOOT, rollLoot, type LootTable } from './lootTable'
 
@@ -30,6 +31,36 @@ describe('default caravan loot — bandage counterplay (P7.2)', () => {
       rollLoot(DEFAULT_CARAVAN_LOOT, createSeededRng(seed)),
     ).some((drop) => drop.items.some((s) => s.id === 'bandage'))
     expect(dropped).toBe(true)
+  })
+})
+
+describe('caravan economy balance — prosthetics are reachable (FLO-459)', () => {
+  // The full prosthetics set (260 gold) must be affordable from caravan loot so
+  // a player who loses limbs can actually buy the recovery path — the board
+  // complaint that loot was "слишком скудно" (too stingy) to ever try them.
+  //
+  // CARAVAN_KILLS is a target number of caravan defeats, not a simultaneous
+  // spawn count. The two available zones spawn 5 caravans at once (forest 3 +
+  // human-lands 2, per ZONE_CONTENT), and each anchor re-arms on a 60 s cooldown
+  // (FLO-456), so 8 kills is comfortably reachable within a single session.
+  const CARAVAN_KILLS = 8
+  const PROSTHETICS_TOTAL = PROSTHETIC_OFFERS.reduce((sum, o) => sum + o.price, 0)
+
+  const goldFromDrop = (drop: ReturnType<typeof rollLoot>) =>
+    drop.items.find((s) => s.id === 'gold')?.qty ?? 0
+
+  it('expected caravan gold over the kill target funds every prosthetic', () => {
+    // Sample many seeds to estimate expected gold per caravan, then scale by the
+    // kill target. Deterministic: a fixed seed sweep, no Math.random.
+    const SAMPLES = 5000
+    let totalGold = 0
+    for (let seed = 0; seed < SAMPLES; seed++) {
+      totalGold += goldFromDrop(rollLoot(DEFAULT_CARAVAN_LOOT, createSeededRng(seed)))
+    }
+    const expectedPerCaravan = totalGold / SAMPLES
+    const expectedOverKills = expectedPerCaravan * CARAVAN_KILLS
+
+    expect(expectedOverKills).toBeGreaterThanOrEqual(PROSTHETICS_TOTAL)
   })
 })
 

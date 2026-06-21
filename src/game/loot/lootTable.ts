@@ -45,11 +45,17 @@ export interface LootDrop {
  * player who loses a hand can find what the "find a bandage" prompt asks for.
  * Weights are relative; quantities vary so each ambush feels different while
  * staying reproducible per seed.
+ *
+ * Gold is tuned so ~8 caravan kills fund all three prosthetics (260 gold total)
+ * — expected ≈ 35 gold/caravan, ≈ 277 over 8 kills. The two available zones
+ * spawn 5 caravans at once (forest 3 + human-lands 2) and each anchor re-arms on
+ * a 60 s cooldown (FLO-456), so 8 kills is reachable in a session. See the
+ * {@link rollLoot} balance test and docs/guide/caravans.md.
  */
 export const DEFAULT_CARAVAN_LOOT: LootTable = {
   rolls: 3,
   entries: [
-    { id: 'gold', label: 'Gold coins', weight: 50, minQty: 5, maxQty: 25 },
+    { id: 'gold', label: 'Gold coins', weight: 60, minQty: 10, maxQty: 40 },
     { id: 'grain', label: 'Sack of grain', weight: 30, minQty: 1, maxQty: 3 },
     { id: 'bandage', label: 'Bandage', weight: 20, minQty: 1, maxQty: 2 },
     { id: 'cloth', label: 'Bolt of cloth', weight: 15, minQty: 1, maxQty: 2 },
