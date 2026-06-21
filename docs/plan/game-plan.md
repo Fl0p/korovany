@@ -339,6 +339,82 @@ one at a time as predecessors land (no speculative spawns).
 - **E6.5 Menu, save management, polish pass** `[ ]` — save slot management UI,
   main-menu polish, final cross-zone playthrough verification.
 
+### Phase 7 — Playability hardening & first-session experience `[~]` ⭐ HIGHEST PRIORITY
+
+Epic: **[FLO-409](/FLO/issues/FLO-409)** — opened 2026-06-21 by Daedalus (CTO),
+child of FLO-273. Direct response to the standing board mandate **FLO-355**
+(«она всё ещё не играбельная»).
+
+> **Why this phase exists — a live playability audit of the deployed build
+> (korovany.aimost.pl, 2026-06-21).** I drove the deployed game end-to-end as a
+> first-time player would (headless Chromium, scripted New Game → faction → onboarding
+> → combat; HUD/IndexedDB sampled; screenshots captured). The *plumbing* all works —
+> menu, 3-faction picker with distinct objectives, a clear onboarding card, HUD with
+> objective/score/health, combat, win/lose. **But the game is unwinnable in the first
+> session, and that is the whole of "not playable":**
+>
+> - **Unsurvivable spawn (P0).** Player spawns at the forest origin `(0,2,0)` with
+>   soldiers (`detectionRadius 10m`, `attackDamage 15`, `cooldown 1.5s`,
+>   `chaseSpeed 3.0`) seeded as close as ~8.5 m — *inside* their aggro radius. They
+>   converge instantly; two soldiers = ~20 HP/s. **Measured: 100→55 HP within ~5 s of
+>   walking forward, 55→7 after a brief exchange, dead in ~15 s — 0/3 caravans raided,
+>   never reaching a single caravan.** A new player cannot experience the core loop, let
+>   alone win.
+> - **Dismemberment shipped its punishment without its counterplay (P0).** E6.1.2
+>   (FLO-403) wired the combat→dismemberment hook to `main`, but its recovery subtasks
+>   E6.1.3 (bandage), E6.1.4 (eye prosthetic), E6.1.5 (leg/wheelchair), E6.1.6
+>   (prosthetics shop) are all unbuilt. Result observed live: within the first fight the
+>   player is **bleeding** (3 HP/s, lethal) with a HUD prompt **"Bleeding — find a
+>   bandage"** for a bandage item **that does not exist**, plus an eye-loss vignette with
+>   no prosthetic to clear it. The injury system is pure punishment with no escape — a
+>   sequencing error that compounds the difficulty.
+> - **Barren, untextured world presence.** The spawn area is a flat green plane with no
+>   visible trees/props; soldiers render **untextured grey** (the texture-every-model
+>   mandate FLO-330 never reached the live soldier). First impression reads unfinished.
+> - **Player character feel.** The procedural idle/attack pose reads as "arms raised /
+>   surrender," not a fighter; ground is flat and untextured.
+> - **HUD polish.** Score panel renders `Score0Loot0` (label/value spacing); the bleeding
+>   prompt should not instruct the player toward an item that isn't in the game.
+>
+> Phases 5–6 deepen LOD and RPG systems the player can't reach because they die at
+> spawn. **This phase is sequenced AHEAD of finishing 5/6:** make the first session
+> survivable, winnable, and legible before adding more depth.
+
+Design thesis: a first-time player who clicks New Game must (1) **survive** long enough
+to act, (2) **reach and complete** the raid-3-caravans goal at least once, (3) face
+injury mechanics that have a **counterplay**, and (4) see a world that reads as
+*finished*. Build the thinnest version of each, wired into the live forest loop, and
+**re-verify in the deployed build** (rendered, not just unit-tested).
+
+- **P7.1 Safe spawn & difficulty curve** `[ ]` ⭐ P0 — **FLO-411** (Wayland) — guarantee a
+  soldier-free spawn buffer (no patrol seeded within aggro of the player spawn; first
+  encounter ramps 1→many as the player advances toward caravans); tune
+  `attackDamage`/`cooldown`/count or add brief spawn-grace so two soldiers can't delete a
+  fresh player. **Acceptance: a new player survives ≥30 s, can reach a caravan, and a
+  careful player can complete a full 3-caravan run — demonstrated in the deployed build.**
+- **P7.2 Dismemberment counterplay** `[ ]` P0 — soften/gate the E6.1.2 hook until recovery
+  exists **and/or** pull forward a minimal **bandage pickup** (E6.1.3) that stops bleeding;
+  the "find a bandage" prompt must reference a real item. Decision: reduce dismember chance
+  + ship a bandage item this pass. (Sequenced with P7.1; assigned on board approval.)
+- **P7.3 World presence: texture the soldier + populate the spawn area** `[ ]` — apply the
+  soldier texture (FLO-330 mandate) to the live enemy; ensure forest props (trees/huts)
+  render in the visible play space so spawn doesn't read as an empty plane. (Asset texture
+  via Pygmalion/Iris if regeneration is needed.)
+- **P7.4 Player-character & ground feel** `[ ]` (Iris-gated) — fix the "arms-raised" idle/
+  attack read so the avatar looks like a fighter; give the ground a low-poly material so it
+  doesn't read as a flat green gradient. Iris owns the feel review.
+- **P7.5 HUD legibility pass** `[ ]` — score panel spacing/units (`Score 0 · Loot 0`),
+  conditional bleeding prompt, empty/loading states audit. Folds in **FLO-346** (inventory
+  HUD visual review — Iris, in flight on `flo-410`).
+
+> **Loose ends absorbed (FLO-409 ask):** **FLO-359** (zone-content data layer, now
+> Daedalus) is the data foundation under P7.3 and is **in flight** (`flo-zone-content`
+> worktree); **FLO-346** (inventory HUD review, Iris) → **P7.5**, in flight (`flo-410`);
+> **FLO-331** (world-map wireframes, Iris) is being delivered now as a retro-doc on
+> `flo-331-worldmap-ux-spec` — **keep** (not drop), no action needed. Superseded MPG.2
+> onboarding dups **FLO-364**/**FLO-382** (real work landed under FLO-386=done) remain
+> board-cancel-only (cross-agent 403 boundary) — flagged to the board to close.
+
 ## 4. Asset roadmap (gated, per-character only)
 
 Models are generated **only** on concrete tickets, via the `tools/meshy-3d`
@@ -379,6 +455,18 @@ speculative batches (FLO-270).
 
 *Revision history*
 
+- **r30** (2026-06-21) — **Phase 7 — Playability hardening opened (FLO-409)** after a
+  live audit of the deployed build. Drove korovany.aimost.pl end-to-end as a first-time
+  player: plumbing all works (menu, 3-faction picker, onboarding, HUD, combat, win/lose)
+  but the first session is **unwinnable** — player spawns inside soldier aggro (~8.5 m;
+  `detectionRadius 10`, `attackDamage 15`) and dies in ~15 s at 0/3 caravans, and the
+  E6.1.2 dismemberment hook inflicts bleeding ("find a bandage" for an item that doesn't
+  exist) + eye vignette with **no recovery built** (E6.1.3–6 unstarted). Added Phase 7 ahead
+  of finishing 5/6: P7.1 safe spawn & difficulty (FLO-411 → Wayland, cut now), P7.2
+  dismemberment counterplay, P7.3 texture soldier + populate spawn area, P7.4 character/
+  ground feel (Iris), P7.5 HUD legibility. Loose ends triaged: FLO-359/346/331 already in
+  flight (folded into P7.3/P7.5/kept); FLO-364/382 flagged to board to close. P7.2–P7.5
+  gated on board confirmation before spawn (high_churn watch). (Daedalus)
 - **r14** (2026-06-21) — **playability reprioritization** (board feedback FLO-355:
   "она всё ещё не играбельная — подумай чего не хватает, создай ещё фаз и тасок").
   A code audit of the deployed build found every bottom-up system works but there
