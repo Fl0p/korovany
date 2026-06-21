@@ -392,7 +392,7 @@ injury mechanics that have a **counterplay**, and (4) see a world that reads as
   `attackDamage`/`cooldown`/count or add brief spawn-grace so two soldiers can't delete a
   fresh player. **Acceptance: a new player survives ≥30 s, can reach a caravan, and a
   careful player can complete a full 3-caravan run — demonstrated in the deployed build.**
-- **P7.2 Dismemberment counterplay** `[~]` P0 — **[FLO-417](/FLO/issues/FLO-417)** (Wayland, todo — queued after P7.1) — soften/gate the E6.1.2 hook (raise SEVER_DAMAGE_THRESHOLD to 0.5, lower SEVER_CHANCE to 0.15) and ship a minimal **bandage pickup** that stops bleeding; the "find a bandage" prompt must reference a real item.
+- **P7.2 Dismemberment counterplay** `[x]` P0 — **[FLO-417](/FLO/issues/FLO-417)** (Wayland, in_review) — softened the E6.1.2 hook (threshold 15→20 HP, cap 0.6→0.15, base/ramp halved) and shipped a real **bandage** item (`BANDAGE_ITEM_ID`): it drops from caravans and the `useBandage()` thunk (bound to **B**) spends one to stop bleeding, so the "find a bandage" prompt now points at an item that exists. Docs in health-system.md / economy.md / README.
 - **P7.3 World presence: texture the soldier + populate the spawn area** `[~]` — **[FLO-419](/FLO/issues/FLO-419)** (Aldric, in_progress) — apply the soldier texture (FLO-330 mandate); ensure forest props (trees/huts) render in the visible play space using the zoneContent data layer (FLO-411).
 - **P7.4 Player-character & ground feel** `[ ]` (Iris-gated) — fix the "arms-raised" idle/
   attack read so the avatar looks like a fighter; give the ground a low-poly material so it

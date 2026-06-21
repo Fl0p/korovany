@@ -10,7 +10,7 @@ import { WorldMap } from '../components/WorldMap'
 import { OnboardingIntroCard } from '../components/OnboardingIntroCard'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
-import { totalItemCount } from '../game/economy'
+import { BANDAGE_ITEM_ID, totalItemCount } from '../game/economy'
 import { hasSave, loadLatest, saveGame } from '../game/save'
 import { listZones, planTravel, type ZoneId } from '../game/world'
 import {
@@ -45,6 +45,7 @@ import {
   togglePause,
   useAppDispatch,
   useAppSelector,
+  useBandage,
   winGame,
 } from '../store'
 import { evaluateOutcome } from '../game/objective/objectiveMachine'
@@ -82,6 +83,7 @@ export function App() {
   const hasHalfScreenBlackout = useAppSelector(selectHasHalfScreenBlackout)
   const score = useAppSelector(selectScore)
   const lootCount = totalItemCount(inventory)
+  const bandageCount = inventory.counts[BANDAGE_ITEM_ID] ?? 0
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const onboardingPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
@@ -251,6 +253,13 @@ export function App() {
         event.preventDefault()
         if (!traveling) setWorldMapOpen((open) => !open)
       }
+      // B spends a carried bandage to stop bleeding (P7.2 counterplay). The
+      // thunk is a no-op when not bleeding or out of bandages, so it's safe to
+      // fire unconditionally during play.
+      if (event.code === 'KeyB' && phase === 'playing') {
+        event.preventDefault()
+        dispatch(useBandage())
+      }
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -397,7 +406,13 @@ export function App() {
           {isBleeding ? (
             <div className="hud-bleeding" role="status">
               <span className="hud-bleeding-dot" aria-hidden="true" />
-              Bleeding — find a bandage
+              {bandageCount > 0 ? (
+                <>
+                  Bleeding — press <kbd>B</kbd> to bandage ({bandageCount})
+                </>
+              ) : (
+                'Bleeding — find a bandage'
+              )}
             </div>
           ) : null}
           <div className="hud-score" role="group" aria-label="Score">
