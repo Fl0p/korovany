@@ -326,9 +326,9 @@ one at a time as predecessors land (no speculative spawns).
     crawl (slow) or wheelchair (item); leg prosthetic restores normal gait. Wires
     into the movement controller.
   - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[x]` ✅ — **[FLO-424](/FLO/issues/FLO-424)** (Aldric, done) — buy/fit hand·leg·eye prosthetics through the existing economy/transactions system; fitting clears the injury penalty. Closes the dismemberment counterplay loop and subsumes E6.1.4.
-- **E6.2 Audio** `[~ partial]` — footsteps + forest ambience shipped (FLO-401) and
-  combat SFX via the `damageEvents` bridge (MPG.4/FLO-383). Remaining: **E6.2.x UI
-  click cues + ambient music bed** — **[FLO-433](/FLO/issues/FLO-433)** (Soren, backlog).
+- **E6.2 Audio** `[x]` ✅ — footsteps + forest ambience (FLO-401), combat SFX via
+  the `damageEvents` bridge (MPG.4/FLO-383), UI click/hover cues + per-zone
+  ambience beds — **[FLO-433](/FLO/issues/FLO-433)** (Soren, done).
 - **E6.3 Quests / objectives** `[~]` — **[FLO-429](/FLO/issues/FLO-429)** (Wayland, backlog) — per-faction objective chains (elf raids,
   palace-guard commander orders, villain free-command). Builds on the objective
   machine + commander/order system (E4.3).
@@ -454,6 +454,9 @@ speculative batches (FLO-270).
 
 *Revision history*
 
+- **r41** (2026-06-21) — **E6.2 audio polish landed (FLO-433).** UI click/hover cue API
+  (`uiCues.ts`), per-zone looped ambience beds, menu/faction/shop/settings wiring.
+  E6.2 now fully ✅. (Soren, merged by Daedalus)
 - **r40** (2026-06-21) — **Phase 6 completion wave + Phase 8 activation.** Marked done: E6.1.6 prosthetics shop ([FLO-424](/FLO/issues/FLO-424) Aldric), E6.5 save-slot UI ([FLO-431](/FLO/issues/FLO-431) Soren `a77b6f1`). Activated: [FLO-428](/FLO/issues/FLO-428) (E8.2 Mountains zone → Aldric, Aldric freed from FLO-424). Remaining backlog: FLO-429 (quests, after FLO-427), FLO-430 (leg locomotion, after FLO-424 ✅), FLO-433 (audio, Soren active). (Daedalus)
 - **r39** (2026-06-21) — **FLO-432 ranged archer merged.** Rebased + merged PR #98 (`87cbfd3`): archer FSM, line-of-sight, arrow-volley projectiles, corpse manager, 22 files, 790 tests green. FLO-422 (procedural avatar) and FLO-438 (lock-reap) cleaned up. Phase 8 backlog: FLO-427 (Empire zone), FLO-428 (Mountains), FLO-429 (quests), FLO-430 (leg locomotion), FLO-433 (audio polish) all waiting for activation. (Prospero)
 - **r38** (2026-06-21) — **Phase 6 wave landed; FLO-422 procedural avatar supersedes GLB.** Merged PR #95 (FLO-424 prosthetics shop, `9f4a3a2`), PR #96 (FLO-431 save-slot manager, `a77b6f1`), PR #97 (FLO-422 procedural avatar, `e54b4b7`); each rebased + binary-hash-verified (hero GLB stayed cfd64cf throughout). FLO-422 deliberately retires static GLB hero in favour of `playerAvatar.ts` (boxer-guard flat-shaded procedural avatar). Durable memory: CLEAN PR on busy tree ≠ safe for binary assets. 753 tests. (Prospero)
