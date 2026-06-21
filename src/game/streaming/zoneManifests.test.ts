@@ -5,6 +5,7 @@ import {
   FOREST_CARGO_CRATE_ASSET_ID,
   FOREST_CARAVAN_WAGON_ASSET_ID,
   FOREST_CHEST_ASSET_ID,
+  FOREST_HEALING_CHEST_PLACEMENTS,
   FOREST_STATIC_ELF_ASSET_ID,
   WOODEN_HUT_ASSET_ID,
   FOREST_WATCHTOWER_ASSET_ID,
@@ -20,7 +21,7 @@ describe('zone manifests', () => {
     }
   })
 
-  it('streams the forest props plus leftover decor (12 trees, 3 huts, 6 leftovers)', () => {
+  it('streams the forest props plus healing chests and leftover decor', () => {
     const forest = getZoneManifest('forest')
     const trees = forest.placements.filter((p) => p.assetId === FOREST_TREE_ASSET_ID)
     const huts = forest.placements.filter((p) => p.assetId === WOODEN_HUT_ASSET_ID)
@@ -29,7 +30,8 @@ describe('zone manifests', () => {
     const watchtower = forest.placements.find((p) => p.assetId === FOREST_WATCHTOWER_ASSET_ID)
     expect(watchtower?.position).toEqual({ x: 12.5, y: 0, z: -13.5 })
     expect(watchtower?.rotationY).toBeCloseTo(-0.55)
-    expect(forest.placements.filter((p) => p.assetId === FOREST_CHEST_ASSET_ID)).toHaveLength(1)
+    expect(forest.placements.filter((p) => p.assetId === FOREST_CHEST_ASSET_ID)).toHaveLength(4)
+    expect(FOREST_HEALING_CHEST_PLACEMENTS).toHaveLength(4)
     expect(forest.placements.filter((p) => p.assetId === FOREST_CARGO_CRATE_ASSET_ID)).toHaveLength(1)
     expect(forest.placements.filter((p) => p.assetId === FOREST_CARAVAN_WAGON_ASSET_ID)).toHaveLength(1)
     expect(forest.placements.filter((p) => p.assetId === FOREST_STATIC_ELF_ASSET_ID)).toHaveLength(2)

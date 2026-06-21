@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
 import {
   damagePlayer,
+  healPlayer,
   pickUpLoot,
   raidCaravan,
   recordCombatKill,
@@ -110,6 +111,7 @@ export function GameCanvas() {
                     emitDismember(limb)
                   }
                 },
+                onPlayerHealed: (amount) => dispatch(healPlayer(amount)),
                 // Close the loot loop (E3.5): adapt the caravan's aggregated drop
                 // into one pickUpLoot per stack so the HUD inventory updates, then
                 // advance the raid objective + score the haul (MPG.1).

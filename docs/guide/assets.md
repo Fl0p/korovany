@@ -309,8 +309,8 @@ Generated for [FLO-372](/FLO/issues/FLO-372).
 FLO-470 wires the remaining visible-but-unused GLBs into the forest scene through
 the same streaming manifest used by the tree/hut props:
 
-- `chest.glb` → `prop.forest-chest`, one static loot/decor chest near the
-  spawn-side caravan camp.
+- `chest.glb` → `prop.forest-chest`, four forest healing chests. Standing within
+  2.25 m restores 5 HP every 0.5 s; the chests are reusable cooldown stations.
 - `cargo-crate.glb` → `prop.forest-cargo-crate`, one static cargo prop beside the
   forest wagon camp.
 - `caravan-wagon.glb` → `prop.forest-caravan-wagon`, one prominent static wagon

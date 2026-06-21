@@ -15,6 +15,8 @@ import { createEmpireScene } from './empireScene'
  */
 export interface ZoneSceneOptions {
   onPlayerDamaged?: (amount: number) => void
+  /** Fired when a zone-local recovery source heals the player. */
+  onPlayerHealed?: (amount: number) => void
   /** Fired when the player defeats a caravan (E3.5); ignored by zones with no caravan. */
   onCaravanLooted?: (drop: LootDrop) => void
   /** Fired once per defeated combat target so progression can award XP. */

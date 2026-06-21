@@ -30,6 +30,20 @@ Import from `'../store'`:
 import { damagePlayer, healPlayer, resetPlayerHealth, restorePlayerHealth } from '../store'
 ```
 
+## Healing chests
+
+Forest chests are reusable recovery stations (FLO-473), not consumable pickups.
+The pure proximity/cooldown rule lives in `src/game/health/healingChest.ts`:
+
+- Radius: 2.25 m on the ground plane.
+- Pulse: 5 HP.
+- Cooldown: 0.5 s per chest while the player remains in range.
+
+`forestScene` owns the world positions via `FOREST_HEALING_CHEST_SPECS`, ticks the
+pure rule after movement each frame, and emits `onPlayerHealed(amount)`.
+`GameCanvas` adapts that callback to `healPlayer(amount)`, so healing uses the
+same Redux health authority and still clamps at max HP.
+
 ## HUD
 
 While the game is not in the menu, `App.tsx` renders a health bar in the HUD

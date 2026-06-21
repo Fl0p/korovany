@@ -38,7 +38,8 @@ the [character controller](./character-controller.md):
 
 The tree and hut were generated in [FLO-299](/FLO/issues/FLO-299) by Pygmalion
 using the Meshy pipeline under visual-language v1.2 (≤ 3000 tris). FLO-470 adds
-the leftover chest, cargo crate, wagon, and two static elf placements. Register
+the leftover cargo crate, wagon, and two static elf placements; FLO-473 promotes
+`chest.glb` from one-off decor to four healing chest placements. Register
 them via `seedForestAssets(registry)` from `src/scenes/forestScene.ts`; streamed
 GLBs are normalized and passed through the shared matte/faceted `flatShade()`
 conform before placement.
@@ -60,11 +61,15 @@ conform before placement.
    `seedForestAssets` registers the tree and hut URLs. Each prop calls
    `spawnStreamedInstance` which shows a placeholder box immediately and swaps
    to the GLB on load.
-3. **Props** — 12 streamed trees and 3 streamed huts placed at hard-coded (x, z)
-   coordinates, plus cheap procedural stumps, logs, rocks, and shrubs around the
-   spawn clearing. The inner 3.5-unit radius stays clear so the first combat
-   beats have readable movement space.
-4. **Controller + camera** — the same `CharacterController` and `ThirdPersonCamera`
+3. **Props** — 12 streamed trees, 3 streamed huts, 4 healing chests, and the
+   leftover cargo/wagon/elf decor placed at hard-coded (x, z) coordinates, plus
+   cheap procedural stumps, logs, rocks, and shrubs around the spawn clearing.
+   The inner 3.5-unit radius stays clear so the first combat beats have readable
+   movement space.
+4. **Healing chests** — `FOREST_HEALING_CHEST_SPECS` mirrors the streamed chest
+   placements. Standing within 2.25 m of a chest restores 5 HP every 0.5 s via
+   `onPlayerHealed`; chests are reusable cooldown stations, not consumed pickups.
+5. **Controller + camera** — the same `CharacterController` and `ThirdPersonCamera`
    from E1.1, spawned at `(0, 2, 0)` above the ground.
 
 ## Avatar & ground feel
