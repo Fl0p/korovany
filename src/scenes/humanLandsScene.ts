@@ -16,9 +16,10 @@ import type { LocomotionMode } from '../game/health/locomotion'
 import { CharacterController } from '../game/controller'
 import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
-import { registerPlayer, takeSpawn } from '../game/save/playerRuntime'
+import { readPlayerTransform, registerPlayer, takeSpawn } from '../game/save/playerRuntime'
 import type { PlayerTransform } from '../game/save'
 import type { LootDrop } from '../game/loot'
+import type { MinimapSnapshot } from '../game/minimap'
 import {
   createMeleeAttack,
   getMeleeHits,
@@ -69,6 +70,11 @@ export interface HumanLandsSceneOptions {
    */
   getSpeedMultiplier?: () => number
   getLocomotionMode?: () => LocomotionMode
+  /**
+   * Fired from the fixed-step loop, throttled to ~10 Hz, with a top-down radar
+   * snapshot for the HUD minimap (FLO-449). Positions stay scene-owned.
+   */
+  onMinimapTick?: (snapshot: MinimapSnapshot) => void
 }
 
 export interface HumanLandsScene {
@@ -85,6 +91,9 @@ export interface HumanLandsScene {
 }
 
 const DEFAULT_HERO_URL = '/models/korovany_hero_player-default.glb'
+
+/** Minimap publish cadence — ~10 Hz, decoupled from the render frame rate (FLO-449). */
+const MINIMAP_TICK_INTERVAL = 1 / 10
 
 /** This zone's content (landmarks + encounter anchors), the single source of
  * truth seeded from `docs/guide/worlds/velya-salt-road.md` (FLO-411, ADR-0004). */
@@ -122,6 +131,7 @@ export function createHumanLandsScene(
     onCaravanLooted,
     getSpeedMultiplier,
     getLocomotionMode,
+    onMinimapTick,
   } = options
 
   const engine = createEngine(canvas)
@@ -236,6 +246,20 @@ export function createHumanLandsScene(
   let meleeState = createMeleeAttack()
   let prevAttack = false
 
+  // Minimap radar (FLO-449): throttled ~10 Hz publish to the HUD bridge.
+  let minimapAccum = MINIMAP_TICK_INTERVAL // emit on the first frame
+  const emitMinimap = () => {
+    const player = readPlayerTransform()
+    if (!player) return
+    onMinimapTick?.({
+      player: { x: player.position.x, z: player.position.z, rotationY: player.rotationY },
+      caravans: caravans.filter((c) => !c.isDead()).map((c) => ({ x: c.position.x, z: c.position.z })),
+      soldiers: soldiers
+        .filter((s) => !s.isDead())
+        .map((s) => ({ x: s.mesh.position.x, z: s.mesh.position.z })),
+    })
+  }
+
   const frame = (dt: number) => {
     if (isPaused?.()) {
       scene.render()
@@ -295,6 +319,15 @@ export function createHumanLandsScene(
 
     loop.advance(dt)
     clampToWorld(controller.mesh.position) // contain the player within the world bounds
+
+    if (onMinimapTick) {
+      minimapAccum += dt
+      if (minimapAccum >= MINIMAP_TICK_INTERVAL) {
+        minimapAccum = 0
+        emitMinimap()
+      }
+    }
+
     rig.update(frameIntent.lookDX, frameIntent.lookDY)
     scene.render()
   }
