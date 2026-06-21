@@ -185,7 +185,7 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 > caravan/loot loop is live in Forest and Human Lands; Empire and Mountains have
 > no scene yet (locked in the map UI).
 
-### Phase 3.5 — Minimum Playable Game (MPG) `[~]` ⭐ NEXT PRIORITY
+### Phase 3.5 — Minimum Playable Game (MPG) `[x]` ✅ COMPLETE
 
 > **Why this phase exists (board feedback FLO-355, 2026-06-21: "она всё ещё не
 > играбельная").** A code audit of the deployed build confirmed the gap: every
@@ -231,10 +231,15 @@ Pygmalion via Iris.
   driven off the `damageEvents` bridge (`onDamage`/`onKill`/`onShake`); React
   `DamageNumber` overlay; wired into `humanLandsScene` + `App`. Unit-tested. (Ticket
   bookkeeping → `done` pending board/Aldric: FLO-367 sits under Aldric's auth boundary.)
-- **MPG.4 Audio system + core SFX** `[ ]` — **[FLO-383](/FLO/issues/FLO-383)** (Wayland)
+- **MPG.4 Audio system + core SFX** `[x]` — **[FLO-383](/FLO/issues/FLO-383)** (Wayland)
   Web Audio bus (`src/game/audio/`), lazy-init on first gesture, master mute/volume.
-  Subscribes to the existing `damageEvents` bridge for hit/kill/damage SFX + new
-  win/lose/UI emitters. CC0 SFX via Git LFS. Independent of MPG.2/MPG.7.
+  Subscribes to the existing `damageEvents` bridge for hit/kill/damage SFX + win/lose/UI
+  cues. Shipped a **procedural synth** (oscillator/noise envelopes) instead of CC0 LFS
+  samples — keeps the build serverless + asset-free and fully unit-testable; samples can
+  swap in later behind the same `sfx` cue API. **Merged to `main`** (PR #71, `ca2f280`,
+  567 tests green). Authored by Wayland; landed by Daedalus after Wayland's run hit the
+  upstream session limit with the work complete-but-uncommitted. (Ticket bookkeeping →
+  `done` pending board/Wayland: FLO-383 sits under Wayland's auth boundary.)
 - **MPG.5 Populate the world** `[x]` — **[FLO-365](/FLO/issues/FLO-365)** (Aldric)
   Human-lands: 2 caravans + 3 soldier patrols. Forest: 3 caravans + 5 soldiers.
   Makes the loop repeatable across both open zones.
@@ -261,6 +266,17 @@ Acceptance for the milestone: a first-time player who clicks New Game **knows wh
 to do, has a goal they can complete or fail, gets audible+visible feedback for
 every action, and reaches a win or lose screen** — demonstrated in the deployed
 build (rendered/screenshotted), not just in tests.
+
+> **✅ MILESTONE COMPLETE (2026-06-21).** All 7 MPG tasks merged to `main` and live:
+> MPG.1 objective+win/lose (PR #64), MPG.2 onboarding (PR #70/#71-chain), MPG.3 combat
+> juice (PR #67), MPG.4 audio (PR #71), MPG.5 populated world (FLO-365), MPG.6 surfaced
+> systems (FLO-366), MPG.7 procedural animation (FLO-384/387). New Game now: onboards the
+> player, gives a raid-3-caravans goal with HUD progress, populated zones to fight through,
+> screen-shake/hit-flash/damage-numbers + audio feedback on every hit, surfaced
+> injury/score systems, character animation, and explicit win/lose screens with restart.
+> **Next priority: unpark Phase 4** — E4.4 economy (FLO-353) + E4.5 progression (FLO-354)
+> now have a playable loop to attach to. Epic FLO-362 → `done` and FLO-383 → `done` are
+> board/assignee bookkeeping flips (boundary-locked from Daedalus).
 
 ### Phase 4 — Factions & economy (the RPG layer) `[~]`
 
@@ -402,6 +418,17 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
+- **r21** (2026-06-21) — **🎉 MPG MILESTONE COMPLETE.** **MPG.4 audio**
+  ([FLO-383](/FLO/issues/FLO-383)) merged (FF @ `ca2f280`, PR #71; 567 tests green) — Web
+  Audio bus + procedural synth SFX over the `damageEvents` bridge, no binary assets (kept
+  serverless). Authored by Wayland; **landed by Daedalus** after Wayland's run hit the
+  upstream session limit (4am reset) with the work complete-but-uncommitted in its worktree —
+  committed verbatim w/ Wayland authorship, rebased, validated, FF-merged. All 7 MPG tasks
+  are now on `main` and deploying; the game is playable end-to-end (onboard → goal → fight
+  with full audio+visual juice → win/lose). Phase 3.5 `[x]`. **Next priority: unpark Phase 4**
+  (E4.4 economy FLO-353, E4.5 progression FLO-354 — now have a playable loop to attach to).
+  Boundary-locked bookkeeping for the board: FLO-362 epic → `done`, FLO-383 → `done`, cancel
+  stale dups FLO-382/FLO-364/FLO-384. (Daedalus)
 - **r1** (2026-06-20) — initial plan tree authored by Daedalus (CTO) from
   canonical brief #2. Pending board approval before Phase 0/1 subtasks are cut.
 - **r2** (2026-06-20) — board approved r1. Phase 0 epic [FLO-277] cut with its
