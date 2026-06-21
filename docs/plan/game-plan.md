@@ -317,7 +317,7 @@ one at a time as predecessors land (no speculative spawns).
     `injurySlice`: per-limb status (intact / severed / prosthetic) for hand·leg·eye;
     bleed-out timer for untreated severance; save-migration v5 (guard validates base
     fields only). 649 tests green.
-  - **E6.1.2 Combat → dismemberment hook** `[~]` — **FLO-402** (Wayland, in_progress) — seeded RNG helper + `shouldSever`/`pickLimb` resolver; wire after `takeDamage` dispatch; emit `dismemberEvent`.
+  - **E6.1.2 Combat → dismemberment hook** `[x]` — **FLO-403** (Daedalus) — pure `dismemberment.ts` resolver (`dismemberChance`/`shouldSever`/`pickLimb`/`resolveDismemberment`, injected `Rng`): damage-scaled chance over a 15 HP threshold, capped at 0.6, uniform pick among intact limbs. Wired in `GameCanvas.onPlayerDamaged` after `damagePlayer` → `severPlayerLimb` (drives existing bleed/blackout/crawl) + `emitDismember` on the combat event bridge for downstream feedback. 657 tests green. *(FLO-402 was a concurrent-run duplicate of this ticket.)*
   - **E6.1.3 Hand loss & bleed-out** `[ ]` — severed hand disables attack/grab; if
     not treated before the timer, player dies. Treatment item (bandage) stops it.
   - **E6.1.4 Eye loss → half-screen overlay** `[ ]` — non-lethal; a post-process /

@@ -7,10 +7,13 @@ import {
   recordCombatKill,
   recordKill,
   selectLocomotionSpeedMultiplier,
+  severPlayerLimb,
   store,
   useAppDispatch,
   useAppSelector,
 } from '../store'
+import { emitDismember } from '../game/combat'
+import { resolveDismemberment } from '../game/health'
 import { caravanLootToPickups } from '../store/caravanLootAdapter'
 import { setAssetPhase } from '../store/streamingSlice'
 import { createCaravanPlayground } from './caravanPlayground'
@@ -81,7 +84,25 @@ export function GameCanvas() {
             ? createPerfBench(canvas)
             : inGame
             ? createZoneScene(zoneId, canvas, {
-                onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
+                onPlayerDamaged: (amount) => {
+                  dispatch(damagePlayer(amount))
+                  // E6.1.2 combat → dismemberment hook: a heavy enemy blow can
+                  // take a limb. Roll against the *current* injury state (read
+                  // off the store singleton — this fires inside the Babylon
+                  // loop, not a React render). On a sever, update the injury
+                  // slice (which drives bleed-out / blackout / crawl) and fire
+                  // the dismember event for downstream feedback. Combat is not
+                  // reproducible, so a plain Math.random generator is fine.
+                  const limb = resolveDismemberment(
+                    amount,
+                    store.getState().injury,
+                    Math.random,
+                  )
+                  if (limb) {
+                    dispatch(severPlayerLimb(limb))
+                    emitDismember(limb)
+                  }
+                },
                 // Close the loot loop (E3.5): adapt the caravan's aggregated drop
                 // into one pickUpLoot per stack so the HUD inventory updates, then
                 // advance the raid objective + score the haul (MPG.1).

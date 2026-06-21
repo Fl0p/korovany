@@ -14,8 +14,17 @@ export {
   emitShake,
   emitKill,
   emitAttack,
+  emitDismember,
   onDamage,
   onShake,
   onKill,
   onAttack,
+  onDismember,
+} from './damageEvents'
+export type {
+  DamageEventListener,
+  KillEventListener,
+  ShakeEventListener,
+  AttackEventListener,
+  DismemberEventListener,
 } from './damageEvents'

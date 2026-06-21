@@ -19,3 +19,15 @@ export {
   tickBleed,
   treatBleeding,
 } from './injuryModel'
+
+export {
+  DISMEMBER_BASE_CHANCE,
+  DISMEMBER_CHANCE_PER_DAMAGE,
+  DISMEMBER_DAMAGE_THRESHOLD,
+  DISMEMBER_MAX_CHANCE,
+  dismemberChance,
+  intactLimbs,
+  pickLimb,
+  resolveDismemberment,
+  shouldSever,
+} from './dismemberment'

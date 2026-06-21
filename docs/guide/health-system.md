@@ -122,10 +122,34 @@ direction — so a severed leg drops the capsule to 35% speed (`CRAWL_SPEED_MULT
 `App.tsx` ticks `tickInjuries(1)` once a second while the player is bleeding and
 the game is `playing`, and resets both health and injuries on death.
 
+### Combat → dismemberment hook (E6.1.2)
+
+Limbs are taken off by combat, not scripted events. The resolver lives in
+`src/game/health/dismemberment.ts` — pure functions, randomness injected as an
+`Rng` so it is unit-testable:
+
+| Function | Returns | Notes |
+|---|---|---|
+| `dismemberChance(amount)` | `number` | 0 below `DISMEMBER_DAMAGE_THRESHOLD` (15 HP); ramps `DISMEMBER_BASE_CHANCE` + `DISMEMBER_CHANCE_PER_DAMAGE` per HP over it; capped at `DISMEMBER_MAX_CHANCE` (0.6) |
+| `intactLimbs(state)` | `Limb[]` | the slots a hit can still take off |
+| `shouldSever(amount, state, rng)` | `boolean` | one roll; false when no limbs remain |
+| `pickLimb(state, rng)` | `Limb \| null` | uniform pick among intact limbs |
+| `resolveDismemberment(amount, state, rng)` | `Limb \| null` | combines the two — the limb to sever, or `null` |
+
+`GameCanvas.onPlayerDamaged` calls `resolveDismemberment(amount,
+store.getState().injury, Math.random)` right after `damagePlayer`. On a sever it
+dispatches `severPlayerLimb(limb)` — which drives the existing bleed-out /
+blackout / crawl outcomes — and fires `emitDismember(limb)` on the combat event
+bridge (`src/game/combat/damageEvents.ts`, `onDismember`) so downstream feedback
+(audio, HUD) can subscribe without reaching into the scene. Combat is not
+reproducible, so a plain `Math.random` generator is used (not the seeded RNG).
+
 ## Tests
 
 - `src/game/health/healthModel.test.ts` — 8 unit tests (pure functions)
 - `src/game/health/injuryModel.test.ts` — injury model unit tests (pure functions)
+- `src/game/health/dismemberment.test.ts` — combat dismemberment resolver (chance curve, limb pick, no-op when maimed)
+- `src/game/combat/damageEvents.test.ts` — dismember event pub/sub bridge
 - `src/store/healthSlice.test.ts` — 6 Redux tests
 - `src/store/injurySlice.test.ts` — injury slice + `tickInjuries` health-wiring tests
 - `src/app/App.test.tsx` — death → menu integration test
