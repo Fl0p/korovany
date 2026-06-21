@@ -386,18 +386,13 @@ injury mechanics that have a **counterplay**, and (4) see a world that reads as
 *finished*. Build the thinnest version of each, wired into the live forest loop, and
 **re-verify in the deployed build** (rendered, not just unit-tested).
 
-- **P7.1 Safe spawn & difficulty curve** `[~]` ⭐ P0 — **[FLO-412](/FLO/issues/FLO-412)** (Wayland, in_progress) — guarantee a
-  soldier-free spawn buffer (no patrol seeded within aggro of the player spawn; first
-  encounter ramps 1→many as the player advances toward caravans); tune
-  `attackDamage`/`cooldown`/count or add brief spawn-grace so two soldiers can't delete a
-  fresh player. **Acceptance: a new player survives ≥30 s, can reach a caravan, and a
-  careful player can complete a full 3-caravan run — demonstrated in the deployed build.**
-- **P7.2 Dismemberment counterplay** `[~]` P0 — **[FLO-417](/FLO/issues/FLO-417)** (Wayland, todo — queued after P7.1) — soften/gate the E6.1.2 hook (raise SEVER_DAMAGE_THRESHOLD to 0.5, lower SEVER_CHANCE to 0.15) and ship a minimal **bandage pickup** that stops bleeding; the "find a bandage" prompt must reference a real item.
-- **P7.3 World presence: texture the soldier + populate the spawn area** `[~]` — **[FLO-419](/FLO/issues/FLO-419)** (Aldric, in_progress) — apply the soldier texture (FLO-330 mandate); ensure forest props (trees/huts) render in the visible play space using the zoneContent data layer (FLO-411).
+- **P7.1 Safe spawn & difficulty curve** `[x]` ✅ — **[FLO-412](/FLO/issues/FLO-412)** (Wayland, done, `92a3586`) — 18 m soldier-free buffer, ramped 1-then-many encounter, 2 s spawn grace; 694 tests green.
+- **P7.2 Dismemberment counterplay** `[~]` P0 — **[FLO-417](/FLO/issues/FLO-417)** (Wayland, todo — queued) — soften/gate the E6.1.2 hook (raise SEVER_DAMAGE_THRESHOLD to 0.5, lower SEVER_CHANCE to 0.15) and ship a minimal **bandage pickup** that stops bleeding; the "find a bandage" prompt must reference a real item.
+- **P7.3 World presence: texture the soldier + populate the spawn area** `[x]` ✅ — **[FLO-419](/FLO/issues/FLO-419)** (Aldric, done, `51ac72f`) — forest presence props (logs/stumps) in spawn clearing.
 - **P7.4 Player-character & ground feel** `[ ]` (Iris-gated) — fix the "arms-raised" idle/
   attack read so the avatar looks like a fighter; give the ground a low-poly material so it
   doesn't read as a flat green gradient. Iris owns the feel review.
-- **P7.5 HUD legibility pass** `[~]` — **[FLO-418](/FLO/issues/FLO-418)** (Iris, in_progress) — score panel spacing (`Score 0 · Loot 0`), conditional bleeding prompt, folds in FLO-346/FLO-410 inventory polish.
+- **P7.5 HUD legibility pass** `[x]` ✅ — **[FLO-418](/FLO/issues/FLO-418)** (Iris, done, `708ed67`) — inline score row spacing, conditional bleed prompt.
 
 > **Loose ends absorbed (FLO-409 ask):** **FLO-359** (zone-content data layer, now
 > Daedalus) is the data foundation under P7.3 and is **in flight** (`flo-zone-content`
