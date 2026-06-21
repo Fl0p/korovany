@@ -43,6 +43,7 @@ import { SoldierEnemy } from './soldierEnemy'
 import { ArcherEnemy, DEFAULT_ARCHER_GLB } from './archerEnemy'
 import { ArrowVolley } from './arrowVolley'
 import { CaravanEnemy } from './caravanEnemy'
+import { type AnchorRespawnState, getAnchorsToRearm } from '../game/ai'
 import { CorpseManager } from './corpseManager'
 import { getZoneContent, type EncounterKind } from '../game/world'
 
@@ -506,16 +507,27 @@ export function createForestScene(
   // loot via `onCaravanLooted` — the reward event the caller dispatches into the
   // inventory (E3.4) so the HUD reflects the haul. The MPG.1 win objective is to
   // raid all of them (distinct spawns → distinct, reproducible loot seeds).
+  // After defeat, the anchor re-arms after CARAVAN_RESPAWN_MS so the player has
+  // a renewable gold faucet (FLO-456).
   // ------------------------------------------------------------------
-  const caravans = FOREST_CARAVAN_SPAWNS.map(
-    (spawn) =>
-      new CaravanEnemy(scene, {
-        spawn,
-        getPlayerPos: () => controller.mesh.position,
-        onLooted: onCaravanLooted,
-        onDefeated: () => onEnemyDefeated?.('caravan'),
-      }),
-  )
+  const anchorRespawnState: AnchorRespawnState[] = FOREST_CARAVAN_SPAWNS.map(() => ({
+    defeatedAt: null,
+  }))
+
+  const spawnCaravanAt = (index: number): CaravanEnemy => {
+    const spawn = FOREST_CARAVAN_SPAWNS[index]
+    return new CaravanEnemy(scene, {
+      spawn,
+      getPlayerPos: () => controller.mesh.position,
+      onLooted: onCaravanLooted,
+      onDefeated: () => {
+        onEnemyDefeated?.('caravan')
+        anchorRespawnState[index] = { defeatedAt: performance.now() }
+      },
+    })
+  }
+
+  const caravans: CaravanEnemy[] = FOREST_CARAVAN_SPAWNS.map((_, i) => spawnCaravanAt(i))
   // Back-compat handle: the standalone E3.5 smoke + tests drive the first caravan.
   const caravan = caravans[0]
 
@@ -599,6 +611,18 @@ export function createForestScene(
       onEnemyKilled,
       corpseGlbUrl === null ? undefined : DEFAULT_ARCHER_GLB,
     )
+
+    // Re-arm caravan anchors whose cooldown has elapsed (FLO-456). Dispose the
+    // dead wreck, create a fresh caravan at the same anchor, register it with
+    // the scheduler. Reset defeatedAt so this only fires once per defeat cycle.
+    const toRearm = getAnchorsToRearm(performance.now(), anchorRespawnState)
+    for (const idx of toRearm) {
+      caravans[idx].dispose()
+      anchorRespawnState[idx] = { defeatedAt: null }
+      const fresh = spawnCaravanAt(idx)
+      caravans[idx] = fresh
+      loop.scheduler.register(fresh)
+    }
 
     loop.advance(dt)
     clampToWorld(controller.mesh.position) // contain the player within the world bounds

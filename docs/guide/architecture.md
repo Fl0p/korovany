@@ -99,3 +99,15 @@ active-index ceilings) with a pure evaluator, a scene `FrameProfiler` that grade
 a rolling mean, and a DOM `PerfHud` overlay. A live profiling bench over a
 576-tree forest is reachable at `?dev=perf`. See
 [Performance budget](./performance-budget.md) (E5.4).
+
+## Caravan respawn (FLO-456)
+
+Caravans are the primary gold faucet. Each zone registers one caravan per anchor
+in `src/game/world/` zone content. When a caravan is looted and defeated, its
+anchor records a `defeatedAt` timestamp. The **pure scheduler**
+`src/game/ai/caravanRespawn.ts` (`getAnchorsToRearm`) is polled every frame in
+`forestScene.ts` and `humanLandsScene.ts`: once `CARAVAN_RESPAWN_MS` (60 s) has
+elapsed, the dead caravan mesh is disposed and a fresh `CaravanEnemy` is created
+at the same anchor. The anchor count never grows — there are never more live
+caravans than the zone's original anchor set. The scheduler is engine-agnostic
+and fully unit-tested (no Babylon import). See [ADR 0005](../decisions/0005-win-goal-conquest.md).

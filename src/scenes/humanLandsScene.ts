@@ -31,6 +31,7 @@ import { ScreenShakeManager } from '../game/camera/screenShake'
 import { emitAttack, emitDamage, emitKill, emitShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { CaravanEnemy } from './caravanEnemy'
+import { type AnchorRespawnState, getAnchorsToRearm } from '../game/ai'
 import { getZoneContent, type EncounterKind } from '../game/world'
 
 /** Zone id used for the human-lands scene's save/corpse persistence. */
@@ -199,14 +200,23 @@ export function createHumanLandsScene(
       }),
   )
 
-  const caravans = HUMAN_LANDS_CARAVAN_SPAWNS.map(
-    (spawn) =>
-      new CaravanEnemy(scene, {
-        spawn,
-        getPlayerPos: () => controller.mesh.position,
-        onLooted: onCaravanLooted,
-      }),
-  )
+  const anchorRespawnStateHL: AnchorRespawnState[] = HUMAN_LANDS_CARAVAN_SPAWNS.map(() => ({
+    defeatedAt: null,
+  }))
+
+  const spawnCaravanHL = (index: number): CaravanEnemy => {
+    const spawn = HUMAN_LANDS_CARAVAN_SPAWNS[index]
+    return new CaravanEnemy(scene, {
+      spawn,
+      getPlayerPos: () => controller.mesh.position,
+      onLooted: onCaravanLooted,
+      onDefeated: () => {
+        anchorRespawnStateHL[index] = { defeatedAt: performance.now() }
+      },
+    })
+  }
+
+  const caravans: CaravanEnemy[] = HUMAN_LANDS_CARAVAN_SPAWNS.map((_, i) => spawnCaravanHL(i))
 
   const loop = new FixedStepLoop({ world: undefined, dt: 1 / 60 })
   loop.scheduler.register(controller)
@@ -261,6 +271,16 @@ export function createHumanLandsScene(
       // Offset the camera target slightly to produce the shake.
       rig.camera.target.x += shakeX
       rig.camera.target.y += shakeY
+    }
+
+    // Re-arm caravan anchors whose cooldown has elapsed (FLO-456).
+    const toRearmHL = getAnchorsToRearm(performance.now(), anchorRespawnStateHL)
+    for (const idx of toRearmHL) {
+      caravans[idx].dispose()
+      anchorRespawnStateHL[idx] = { defeatedAt: null }
+      const fresh = spawnCaravanHL(idx)
+      caravans[idx] = fresh
+      loop.scheduler.register(fresh)
     }
 
     loop.advance(dt)

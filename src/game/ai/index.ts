@@ -50,3 +50,6 @@ export {
   DEFAULT_ARCHER_PARAMS,
   stepArcherFSM,
 } from './rangedArcherFSM'
+
+export type { AnchorRespawnState } from './caravanRespawn'
+export { CARAVAN_RESPAWN_MS, getAnchorsToRearm } from './caravanRespawn'
