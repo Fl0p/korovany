@@ -72,14 +72,27 @@ aggregates repeats into one stack per id. The default caravan haul:
 
 | Item id | Label | Weight | Qty |
 |---|---|---|---|
-| `gold` | Gold coins | 50 | 5–25 |
+| `gold` | Gold coins | 60 | 10–40 |
 | `grain` | Sack of grain | 30 | 1–3 |
+| `bandage` | Bandage | 20 | 1–2 |
 | `cloth` | Bolt of cloth | 15 | 1–2 |
 | `blade` | Looted blade | 5 | 1 |
 
 The dropped `id`s are inventory item ids (see the E3.4 item catalog). The loot
 event carries only ids + counts; display metadata is resolved from the catalog,
 keeping the reward payload small.
+
+### Gold balance — prosthetics are reachable (FLO-459)
+
+Gold is tuned so caravan loot can fund the [prosthetics shop](economy.md#prosthetics-shop)
+(80 + 120 + 60 = **260 gold** for all three). At weight 60 / 10–40 the expected
+haul is **≈ 35 gold per caravan**, so **8 caravan kills ≈ 277 gold** cover the
+full set. The two available zones spawn **5 caravans at once** (forest 3 +
+human-lands 2), and each anchor re-arms on a 60 s cooldown (FLO-456), so 8 kills
+is comfortably reachable in a single session — no longer "слишком скудно" to ever
+try the recovery path. The invariant is pinned by a balance unit test in
+`src/game/loot/lootTable.test.ts` that derives the 260 target from
+`PROSTHETIC_OFFERS` rather than hardcoding it.
 
 ## Reward event (consumed by the E3.4 inventory)
 
