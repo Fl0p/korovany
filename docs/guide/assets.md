@@ -36,6 +36,8 @@ any Community/showcase page.
 | **Caravan wagon (Salt Road)** | `public/models/caravan-wagon.glb` | **2827** | 394 KiB | static | `019ee749-d4cf-79b9-b813-d98be2201197` (preview) / `019ee74d-2300-772c-8a22-612c27dd99dc` (retexture) |
 | **Cargo crate (Salt Road)** | `public/models/cargo-crate.glb` | **1022** | 296 KiB | static | `019ee743-a02c-7878-a22e-7b67cdfbafa6` (preview) |
 | **Ruined watchtower (Salt Road)** | `public/models/watchtower.glb` | **2564** | 379 KiB | static | `019ee749-6051-7990-b286-98be4ecf82b4` (retexture) |
+| **Ranged enemy (archer)** | `public/models/ranged-archer.glb` | **2589** | 258 KiB | static (no skeleton) | preview `019ee91a-3128-705b-8acc-3d10e03e9930` · retexture `019ee91c-7315-78b1-8841-a90f77930d17` |
+| **Empire palace-guard** | `public/models/empire-palace-guard.glb` | **2793** | 357 KiB | static (no skeleton) | retexture `019ee91c-7f15-78b4-9665-5f7c18268eec` (of soldier `019ee601-93f0-7988-86f8-e35ce1067881`) |
 
 ### Empire toll gate — Phase 3.5 (Salt Road pack)
 
@@ -111,6 +113,64 @@ ticket E2.3).
   ticket). Flag rig needs to Pygmalion if a skeletal pass is wanted.
 - **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
   public/models/empire-soldier.glb` → 2 meshes, 2794 tris, no errors.
+
+### Ranged enemy (archer) — Phase 8
+
+A ranged-combat archetype with a **deliberately distinct silhouette from the
+empire soldier** (the soldier holds a musket across the body; this archer holds
+a drawn longbow with a back quiver and a hood). Feeds Phase 8 zones and combat
+depth ([FLO-426](/FLO/issues/FLO-426), parent [FLO-423](/plan/game-plan)).
+
+- **Budget:** 2589 tris ≤ 3000 (v1.2), within the char tier. Bounding box ≈
+  0.62 × 2.0 × 1.12 units (humanoid; the bow extends the Z depth — that's the
+  silhouette). Textured, **357 KiB → 258 KiB** GLB. Up-axis +Y, pivot at base.
+- **Provenance:** Meshy text-to-3D **preview** at `--art-style realistic
+  --target-polycount 2500 --topology triangle`, then a geometry-preserving
+  **retexture** (flat/unlit albedo — the v1.2-preferred path over PBR refine,
+  which drifts low-poly into a semi-realistic band, see
+  `tools/meshy-3d/API-FITNESS.md`).
+  - Preview prompt: *"low-poly stylized archer enemy, humanoid game character
+    standing drawing a longbow, hooded leather jerkin and soft cap, quiver of
+    arrows on the back, lean ranger build, faceted flat-shaded surfaces, muted
+    earthy palette, full body, single character"* (negative: *"high-poly, smooth
+    subdivision, photorealistic, gun, musket, rifle"*).
+  - Retexture style: *"hooded woodland ranger archer, dark forest-green hood and
+    cloak, brown leather jerkin and bracers, tan leather quiver of arrows, plain
+    wooden longbow, weathered brown boots, flat low-poly unlit faceted color
+    zones, muted earthy forest palette"*. Embedded maps resized to ≤1024 via
+    `tools/meshy-3d/resize_glb_textures.py --max 1024 --quality 85` (2.9 MB →
+    258 KiB). 20 preview + 10 retexture = 30 Meshy credits.
+- **Rig:** ships **static (no skeleton)** — matches the soldier/hero, so the same
+  loader/controller handles it. A skeletal/animation pass (Meshy auto-rig) is a
+  separate future ticket; flag Pygmalion if wanted.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
+  public/models/ranged-archer.glb` → 2 meshes, 2589 tris, no errors.
+
+### Empire palace-guard — Phase 8
+
+An ornate **ceremonial** variant for the Empire zone — crimson dress coat with
+gold braid and epaulettes, white crossbelts, plumed bicorne — reading clearly
+distinct from the field soldier's muted grey-green. **Reuse-first
+([FLO-426](/FLO/issues/FLO-426)): no fresh generation** — this is a
+geometry-preserving **retexture of the existing empire-soldier mesh**, which
+also gives that shared silhouette a *textured* delivery (the soldier itself
+ships preview-only/untextured).
+
+- **Budget:** 2793 tris ≤ 3000 (v1.2). Bounding box ≈ 1.01 × 2.0 × 0.88 units —
+  identical geometry to the soldier. Textured, **357 KiB** GLB.
+- **Provenance:** Meshy **retexture** of the locally-decimated 2794-tri soldier
+  GLB, sourced via a `data:` URI (not the soldier's *task id* — Meshy's stored
+  task is the undecimated 3105-tri original, which would land over the 3000-tri
+  ceiling; texturing the shipped decimated GLB keeps it in budget without a
+  post-texture decimation that risks UV-seam artifacts). Retexture style:
+  *"imperial palace ceremonial guard, ornate crimson red dress coat with gold
+  braid and shoulder epaulettes, white crossbelts over the chest, tall black
+  bearskin ceremonial helmet, polished black boots, flat low-poly unlit faceted
+  color zones, regal imperial crimson and gold palette"*. Maps resized to ≤1024
+  (3.2 MB → 357 KiB). 10 Meshy credits.
+- **Rig:** ships **static (no skeleton)** — inherits the soldier's mesh.
+- **Verification:** loads headless via `node tools/meshy-3d/smoke_load_glb.mjs
+  public/models/empire-palace-guard.glb` → 2 meshes, 2793 tris, no errors.
 
 ### Roadside shrine (Salt Road) — Phase 3.5 (MPG)
 
