@@ -14,8 +14,21 @@ export {
   emitShake,
   emitKill,
   emitAttack,
+  emitDismember,
   onDamage,
   onShake,
   onKill,
   onAttack,
+  onDismember,
 } from './damageEvents'
+export type { DismemberEventListener } from './damageEvents'
+export {
+  DISMEMBER_BASE_CHANCE,
+  DISMEMBER_SEVERITY_WEIGHT,
+  DISMEMBER_LOW_HP_WEIGHT,
+  severChance,
+  shouldSever,
+  pickLimb,
+  resolveDismember,
+} from './dismember'
+export type { Hp } from './dismember'

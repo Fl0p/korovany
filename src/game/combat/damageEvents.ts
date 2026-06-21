@@ -8,15 +8,19 @@
  * 3D layer and the DOM layer can import it without a circular dep.
  */
 
+import type { Limb } from '../health/injuryModel'
+
 export type DamageEventListener = (amount: number, screenX: number, screenY: number) => void
 export type KillEventListener = () => void
 export type ShakeEventListener = () => void
 export type AttackEventListener = () => void
+export type DismemberEventListener = (limb: Limb) => void
 
 let damageListeners: DamageEventListener[] = []
 let killListeners: KillEventListener[] = []
 let shakeListeners: ShakeEventListener[] = []
 let attackListeners: AttackEventListener[] = []
+let dismemberListeners: DismemberEventListener[] = []
 
 /** Fire from the Babylon scene when any entity takes a hit. */
 export function emitDamage(amount: number, screenX: number, screenY: number): void {
@@ -38,6 +42,15 @@ export function emitAttack(): void {
   for (const fn of attackListeners) fn()
 }
 
+/**
+ * Fire when a damaging hit severs one of the player's limbs (E6.1.2). The
+ * combat→dismember resolver decides the limb at the damage edge; HUD overlays
+ * and the audio bus subscribe to react (bleed prompt, eye vignette, gore SFX).
+ */
+export function emitDismember(limb: Limb): void {
+  for (const fn of dismemberListeners) fn(limb)
+}
+
 export function onDamage(fn: DamageEventListener): () => void {
   damageListeners.push(fn)
   return () => { damageListeners = damageListeners.filter((l) => l !== fn) }
@@ -56,4 +69,9 @@ export function onKill(fn: KillEventListener): () => void {
 export function onAttack(fn: AttackEventListener): () => void {
   attackListeners.push(fn)
   return () => { attackListeners = attackListeners.filter((l) => l !== fn) }
+}
+
+export function onDismember(fn: DismemberEventListener): () => void {
+  dismemberListeners.push(fn)
+  return () => { dismemberListeners = dismemberListeners.filter((l) => l !== fn) }
 }

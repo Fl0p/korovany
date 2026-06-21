@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { createGameEngine } from '../engine'
+import { emitDismember } from '../game/combat'
+import { resolveDismember } from '../game/combat/dismember'
+import { createRng } from '../game/util/rng'
 import {
   damagePlayer,
   pickUpLoot,
@@ -7,6 +10,7 @@ import {
   recordCombatKill,
   recordKill,
   selectLocomotionSpeedMultiplier,
+  severPlayerLimb,
   store,
   useAppDispatch,
   useAppSelector,
@@ -64,6 +68,13 @@ export function GameCanvas() {
     if (!canvas) return
 
     const dev = new URLSearchParams(window.location.search).get('dev')
+
+    // Seeded PRNG for the combat→dismember rolls (E6.1.2). One stream per scene
+    // mount, seeded from the wall clock so successive runs differ; the resolver
+    // itself stays pure/deterministic given this `rng`, which is what the unit
+    // tests pin. No global Math.random in the game-logic path.
+    const dismemberRng = createRng(Date.now() >>> 0)
+
     const game =
       dev === 'controller'
         ? createControllerPlayground(canvas)
@@ -81,7 +92,25 @@ export function GameCanvas() {
             ? createPerfBench(canvas)
             : inGame
             ? createZoneScene(zoneId, canvas, {
-                onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
+                // Apply the hit, then roll the dismember resolver once at the
+                // damage edge (E6.1.2). On a sever, dispatch into the existing
+                // per-limb injury model and announce it on the damage bridge so
+                // HUD/audio (and E6.1.3+ outcomes) can react — the scene stays
+                // decoupled from the injury state.
+                onPlayerDamaged: (amount) => {
+                  dispatch(damagePlayer(amount))
+                  const state = store.getState()
+                  const limb = resolveDismember(
+                    amount,
+                    state.health.player,
+                    state.injury,
+                    dismemberRng,
+                  )
+                  if (limb) {
+                    dispatch(severPlayerLimb(limb))
+                    emitDismember(limb)
+                  }
+                },
                 // Close the loot loop (E3.5): adapt the caravan's aggregated drop
                 // into one pickUpLoot per stack so the HUD inventory updates, then
                 // advance the raid objective + score the haul (MPG.1).

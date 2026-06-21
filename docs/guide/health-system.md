@@ -122,11 +122,59 @@ direction — so a severed leg drops the capsule to 35% speed (`CRAWL_SPEED_MULT
 `App.tsx` ticks `tickInjuries(1)` once a second while the player is bleeding and
 the game is `playing`, and resets both health and injuries on death.
 
+### Combat → dismemberment (E6.1.2)
+
+A damaging hit on the player can sever a limb. The decision is made once, at the
+damage edge, by a pure resolver in `src/game/combat/dismember.ts` — no Babylon,
+no Redux, fully unit-testable:
+
+```ts
+import { resolveDismember } from '../game/combat/dismember'
+
+// after the hit has been applied to health:
+const limb = resolveDismember(amount, state.health.player, state.injury, rng)
+if (limb) { dispatch(severPlayerLimb(limb)); emitDismember(limb) }
+```
+
+| Function | Returns | Notes |
+|---|---|---|
+| `severChance(amount, hp)` | `0..1` | Sever probability; pure, no RNG consumed |
+| `shouldSever(amount, hp, rng)` | `boolean` | Rolls once against `severChance` |
+| `pickLimb(injury, rng)` | `Limb \| null` | Uniform pick over **intact** slots; `null` if none left |
+| `resolveDismember(amount, hp, injury, rng)` | `Limb \| null` | Compose: roll, then pick |
+
+**Probability curve.** Chance rises with hit *severity* and *low remaining HP*
+on top of a flat base, then clamps to 1:
+
+```
+chance = DISMEMBER_BASE_CHANCE                            (0.05)
+       + DISMEMBER_SEVERITY_WEIGHT × min(1, amount/maxHp)  (×0.6)
+       + DISMEMBER_LOW_HP_WEIGHT  × (1 − current/maxHp)    (×0.35)
+```
+
+A non-positive hit (or non-positive max HP) can never sever. Already-severed
+slots are skipped, so a limb is never re-severed and `resolveDismember` returns
+`null` once every slot is gone.
+
+**RNG.** The resolver takes a seeded `Rng` (`src/game/util/rng.ts`, mulberry32),
+so the same seed → the same outcome (pinned by unit tests). `GameCanvas` creates
+one stream per scene mount (`createRng(Date.now())`); no global `Math.random` is
+used in the game-logic path.
+
+**Wiring & event.** `GameCanvas`'s `onPlayerDamaged` callback applies the hit,
+runs the resolver against the live store, and on a sever dispatches
+`severPlayerLimb(limb)` **and** emits a `dismemberEvent` on the damage bridge
+(`emitDismember(limb)` / `onDismember(fn)` in `src/game/combat/damageEvents.ts`).
+HUD overlays, the audio bus, and the E6.1.3+ outcomes subscribe to the event —
+the Babylon scene never touches injury state directly.
+
 ## Tests
 
 - `src/game/health/healthModel.test.ts` — 8 unit tests (pure functions)
 - `src/game/health/injuryModel.test.ts` — injury model unit tests (pure functions)
 - `src/store/healthSlice.test.ts` — 6 Redux tests
 - `src/store/injurySlice.test.ts` — injury slice + `tickInjuries` health-wiring tests
+- `src/game/combat/dismember.test.ts` — dismember resolver: `severChance`, `shouldSever`, `pickLimb`, `resolveDismember` (seeded/deterministic)
+- `src/game/combat/damageEvents.test.ts` — `dismemberEvent` emit/subscribe bridge
 - `src/app/App.test.tsx` — death → menu integration test
 - `src/game/save/save.test.ts` — save round-trip preserves `health` (HP persistence)
