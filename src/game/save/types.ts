@@ -68,8 +68,14 @@ export interface SaveData {
 /** Save slot identifier. Slot 0 is the autosave slot. */
 export type SlotId = number
 
-/** The single autosave slot used by autosave-on-pause and Continue. */
+/** The default autosave slot used when no slot is explicitly chosen. */
 export const DEFAULT_SLOT: SlotId = 0
+
+/** Number of player-facing save slots (0 … MAX_SLOTS − 1). */
+export const MAX_SLOTS = 3
+
+/** Every addressable slot id, ascending. */
+export const ALL_SLOT_IDS: readonly SlotId[] = Array.from({ length: MAX_SLOTS }, (_, i) => i)
 
 /** A snapshot of live player state, ready to be serialised into a {@link SaveData}. */
 export interface PlayerSnapshot {

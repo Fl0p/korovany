@@ -7,11 +7,26 @@ import { onDamage } from '../game/combat/damageEvents'
 import { audioBus } from '../game/audio'
 import { WorldMap } from '../components/WorldMap'
 import { OnboardingIntroCard } from '../components/OnboardingIntroCard'
+import { SaveSlotsPanel } from '../components/SaveSlotsPanel'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
 import { BANDAGE_ITEM_ID, totalItemCount } from '../game/economy'
-import { hasSave, loadLatest, saveGame } from '../game/save'
+import {
+  ALL_SLOT_IDS,
+  DEFAULT_SLOT,
+  buildSlotSummaries,
+  clearSave,
+  formatContinueHint,
+  hasSave,
+  listSlots,
+  loadLatestRecord,
+  loadSlot,
+  saveGame,
+  type SaveData,
+  type SaveSlotSummary,
+  type SlotId,
+} from '../game/save'
 import { listZones, planTravel, type ZoneId } from '../game/world'
 import {
   applyPlayerTransform,
@@ -154,8 +169,15 @@ export function App() {
   }, [phase])
 
   const [hasSaveSlot, setHasSaveSlot] = useState(false)
-  // Main menu sub-view: the landing actions, or the New-Game faction picker.
-  const [menuView, setMenuView] = useState<'main' | 'factions'>('main')
+  const [continueHint, setContinueHint] = useState<string | null>(null)
+  const [slotSummaries, setSlotSummaries] = useState<SaveSlotSummary[]>(() =>
+    buildSlotSummaries([], ALL_SLOT_IDS),
+  )
+  /** Slot that receives autosaves (last loaded or new-game target). */
+  const [activeSlot, setActiveSlot] = useState<SlotId>(DEFAULT_SLOT)
+  const [newGameTargetSlot, setNewGameTargetSlot] = useState<SlotId | null>(null)
+  // Main menu sub-view: landing actions, faction picker, or save manager.
+  const [menuView, setMenuView] = useState<'main' | 'factions' | 'saves'>('main')
   // World-map / fast-travel overlay (E3.1). `traveling` keeps the overlay in its
   // "Travelling…" state until the destination scene has streamed in.
   const [worldMapOpen, setWorldMapOpen] = useState(false)
@@ -194,18 +216,27 @@ export function App() {
   const snapshotRef = useRef({ health, zoneId, inventory, playerFactionId, progression })
   snapshotRef.current = { health, zoneId, inventory, playerFactionId, progression }
 
-  // Probe whether a save exists so the Continue button can render enabled/empty.
-  useEffect(() => {
-    let active = true
-    void hasSave()
-      .then((exists) => {
-        if (active) setHasSaveSlot(exists)
-      })
-      .catch(() => {})
-    return () => {
-      active = false
+  const refreshSaveMeta = useCallback(async () => {
+    try {
+      const [exists, records, latest] = await Promise.all([
+        hasSave(),
+        listSlots(),
+        loadLatestRecord(),
+      ])
+      setHasSaveSlot(exists)
+      setContinueHint(latest ? formatContinueHint(latest.data) : null)
+      setSlotSummaries(buildSlotSummaries(records, ALL_SLOT_IDS))
+    } catch {
+      setHasSaveSlot(false)
+      setContinueHint(null)
+      setSlotSummaries(buildSlotSummaries([], ALL_SLOT_IDS))
     }
   }, [])
+
+  // Probe saves on boot and after slot mutations so Continue + the manager stay fresh.
+  useEffect(() => {
+    void refreshSaveMeta()
+  }, [refreshSaveMeta])
 
   useEffect(() => {
     if (settingsOpen) settingsPrimaryActionRef.current?.focus()
@@ -227,10 +258,11 @@ export function App() {
     void saveGame(
       { transform, health: hp, zoneId: zone, inventory: inv, playerFactionId: faction, progression: prog },
       Date.now(),
+      { slot: activeSlot },
     )
-      .then(() => setHasSaveSlot(true))
+      .then(() => refreshSaveMeta())
       .catch(() => {})
-  }, [phase])
+  }, [phase, activeSlot, refreshSaveMeta])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -327,10 +359,27 @@ export function App() {
     dispatch(resetRun())
   }, [dispatch])
 
+  const restoreFromSave = useCallback(
+    (data: SaveData, slot: SlotId) => {
+      setActiveSlot(slot)
+      stageSpawn(data.transform)
+      applyPlayerTransform(data.transform)
+      dispatch(restorePlayerHealth(data.health))
+      dispatch(restorePlayer({ zoneId: data.zoneId }))
+      dispatch(restoreInventory(data.inventory))
+      dispatch(setPlayerFaction(data.playerFactionId))
+      dispatch(restoreProgression(data.progression))
+      dispatch(resetRun())
+      dispatch(continueGame())
+    },
+    [dispatch],
+  )
+
   // New Game opens the faction picker; the campaign only starts once a faction
   // is chosen so the choice is recorded in `factionSlice` and the save.
   const onNewGame = useCallback(() => {
     audioBus.play('uiClick')
+    setNewGameTargetSlot(null)
     setMenuView('factions')
   }, [])
 
@@ -338,9 +387,17 @@ export function App() {
     (factionId: PlayableFactionId) => {
       resetRunState()
       dispatch(setPlayerFaction(factionId))
+      const targetSlot = newGameTargetSlot ?? activeSlot
+      if (newGameTargetSlot !== null) {
+        void clearSave({ slot: newGameTargetSlot })
+          .then(() => refreshSaveMeta())
+          .catch(() => {})
+      }
+      setActiveSlot(targetSlot)
+      setNewGameTargetSlot(null)
       dispatch(startNewGame({ showIntro: true }))
     },
-    [resetRunState, dispatch],
+    [resetRunState, dispatch, newGameTargetSlot, activeSlot, refreshSaveMeta],
   )
 
   // Restart from the win/lose screen: fresh run, same faction (no need to
@@ -352,20 +409,43 @@ export function App() {
   }, [resetRunState, dispatch])
 
   const onContinue = useCallback(async () => {
-    const data = await loadLatest()
-    if (!data) return
-    // Stage for a scene that boots later; teleport the one already running.
-    stageSpawn(data.transform)
-    applyPlayerTransform(data.transform)
-    dispatch(restorePlayerHealth(data.health))
-    dispatch(restorePlayer({ zoneId: data.zoneId }))
-    dispatch(restoreInventory(data.inventory))
-    dispatch(setPlayerFaction(data.playerFactionId))
-    dispatch(restoreProgression(data.progression))
-    // The objective/score aren't persisted yet — resume with a fresh tally.
-    dispatch(resetRun())
-    dispatch(continueGame())
-  }, [dispatch])
+    const record = await loadLatestRecord()
+    if (!record) return
+    restoreFromSave(record.data, record.slot)
+  }, [restoreFromSave])
+
+  const onLoadSlot = useCallback(
+    async (slot: SlotId) => {
+      const data = await loadSlot(slot)
+      if (!data) {
+        void refreshSaveMeta()
+        return
+      }
+      audioBus.play('uiClick')
+      restoreFromSave(data, slot)
+    },
+    [restoreFromSave, refreshSaveMeta],
+  )
+
+  const onDeleteSlot = useCallback(
+    async (slot: SlotId) => {
+      await clearSave({ slot })
+      await refreshSaveMeta()
+    },
+    [refreshSaveMeta],
+  )
+
+  const onNewGameIntoSlot = useCallback((slot: SlotId) => {
+    audioBus.play('uiClick')
+    setNewGameTargetSlot(slot)
+    setMenuView('factions')
+  }, [])
+
+  const onOpenSaveManager = useCallback(() => {
+    audioBus.play('uiClick')
+    void refreshSaveMeta()
+    setMenuView('saves')
+  }, [refreshSaveMeta])
 
   return (
     <div className="app-shell">
@@ -468,6 +548,18 @@ export function App() {
         <FactionPicker
           factions={PLAYABLE_FACTIONS}
           onConfirm={onBeginWithFaction}
+          onBack={() => {
+            setNewGameTargetSlot(null)
+            setMenuView(newGameTargetSlot !== null ? 'saves' : 'main')
+          }}
+        />
+      ) : null}
+      {phase === 'menu' && menuView === 'saves' ? (
+        <SaveSlotsPanel
+          slots={slotSummaries}
+          onLoad={(slot) => void onLoadSlot(slot)}
+          onDelete={(slot) => void onDeleteSlot(slot)}
+          onNewGame={onNewGameIntoSlot}
           onBack={() => setMenuView('main')}
         />
       ) : null}
@@ -487,11 +579,21 @@ export function App() {
               </button>
               <button
                 type="button"
+                className="menu-action-with-detail"
                 onClick={() => void onContinue()}
                 disabled={!hasSaveSlot}
                 aria-disabled={!hasSaveSlot}
+                aria-label={
+                  continueHint ? `Continue latest save — ${continueHint}` : 'Continue latest save'
+                }
               >
-                Continue
+                <span className="menu-action-label">Continue</span>
+                {continueHint ? (
+                  <span className="menu-action-detail">{continueHint}</span>
+                ) : null}
+              </button>
+              <button type="button" onClick={onOpenSaveManager}>
+                Manage Saves
               </button>
               <button
                 type="button"

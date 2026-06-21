@@ -90,7 +90,7 @@ describe('<App />', () => {
   it('disables Continue and shows the empty-state hint when no save exists', () => {
     // jsdom has no IndexedDB, so the save probe fails closed → no save.
     renderApp()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Continue latest save' })).toBeDisabled()
     expect(screen.getByText(/No saved game yet/)).toBeInTheDocument()
   })
 
@@ -573,7 +573,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
       const user = userEvent.setup()
       renderApp()
 
-      const cont = await screen.findByRole('button', { name: 'Continue' })
+      const cont = await screen.findByRole('button', { name: /Continue latest save/ })
       await waitFor(() => expect(cont).toBeEnabled())
 
       await user.click(cont)
@@ -588,5 +588,32 @@ describe('<App /> save/load (fake-indexeddb)', () => {
     } finally {
       unregister()
     }
+  })
+
+  it('opens the save manager from the main menu', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(screen.getByRole('button', { name: 'Manage Saves' }))
+    expect(screen.getByRole('heading', { name: 'Save slots' })).toBeInTheDocument()
+  })
+
+  it('shows Continue hint text when a save exists', async () => {
+    await saveGame(
+      {
+        transform: { position: { x: 0, y: 1, z: 0 }, rotationY: 0 },
+        health: { current: 50, max: 100 },
+        zoneId: 'forest',
+        inventory: { counts: {}, equippedItemId: null },
+        playerFactionId: FACTION_IDS.Neutral,
+        progression: createProgression(),
+      },
+      1_700_000_000_000,
+    )
+
+    renderApp()
+
+    const cont = await screen.findByRole('button', { name: /Continue latest save — Forest/ })
+    expect(cont).toBeEnabled()
   })
 })
