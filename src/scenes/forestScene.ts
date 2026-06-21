@@ -34,6 +34,7 @@ import type { PlayerTransform } from '../game/save'
 import { type CorpseStore } from '../game/corpses'
 import type { LootDrop } from '../game/loot'
 import type { CombatKillTarget } from '../game/progression'
+import { emitAttack, emitDamage, emitKill, emitShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { CaravanEnemy } from './caravanEnemy'
 import { CorpseManager } from './corpseManager'
@@ -277,7 +278,10 @@ export function createForestScene(
       new SoldierEnemy(scene, {
         spawn,
         getPlayerPos: () => controller.mesh.position,
-        onAttackPlayer: (dmg) => onPlayerDamaged?.(dmg),
+        onAttackPlayer: (dmg) => {
+          onPlayerDamaged?.(dmg)
+          emitShake() // player-hurt SFX + camera shake bridge (mirrors human-lands)
+        },
         onDefeated: () => onEnemyDefeated?.('soldier'),
       }),
   )
@@ -339,6 +343,7 @@ export function createForestScene(
     // Advance the player melee state machine (edge-triggered on F key).
     const attackPressed = frameIntent.attack && !prevAttack
     prevAttack = frameIntent.attack
+    if (attackPressed) emitAttack() // swing SFX on the rising edge, before hit resolution
     meleeState = stepMeleeAttack(meleeState, attackPressed, dt)
     controller.setAttackPhase(meleeState.phase)
 
@@ -351,7 +356,18 @@ export function createForestScene(
       const targets: Damageable[] = soldiers.filter((s) => !s.isDead())
       targets.push(...caravans.filter((c) => !c.isDead()))
       const hits = getMeleeHits(meleeState, playerPos as unknown as Vec3, forward as unknown as Vec3, targets)
-      hits.forEach((h) => h.takeDamage(25))
+      hits.forEach((h) => {
+        const wasDead = (h as SoldierEnemy | CaravanEnemy).isDead?.()
+        h.takeDamage(25)
+        const nowDead = (h as SoldierEnemy | CaravanEnemy).isDead?.()
+        // Feed the combat event bridge so the audio bus + HUD react (hit thud +
+        // damage number on each hit, death sting on a kill). Centred screen
+        // position is the same safe default human-lands uses pending full 3D→2D.
+        // No emitShake here — that drives the player-hurt SFX and is reserved for
+        // when the *player* is struck (soldier onAttackPlayer above).
+        emitDamage(25, 50, 40)
+        if (!wasDead && nowDead) emitKill()
+      })
     }
 
     // Turn any soldier that died this frame into a persistent corpse, scoring
