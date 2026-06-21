@@ -54,6 +54,7 @@ export default defineConfig({
           { text: 'Faction system', link: '/guide/faction-system' },
           { text: 'Economy', link: '/guide/economy' },
           { text: 'Character progression', link: '/guide/character-progression' },
+          { text: 'Dev tools', link: '/guide/dev-tools' },
           { text: 'Testing', link: '/guide/testing' },
         ],
       },

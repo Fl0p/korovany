@@ -70,6 +70,18 @@ states. Its interaction design, wireframes, state matrix, tokens, and
 accessibility are specified in the
 [World-map overlay UX spec](./world-map-overlay-ux) (E3.1-UX).
 
+## Sequential unlock & the dev override
+
+In normal play a world opens only once the **previous** world in the conquest
+order is conquered (ADR 0005). `App` feeds the set of unlocked zone ids into both
+the world-map (greys out still-locked zones) and `planTravel` (rejects travel to
+them with `zone-not-yet-unlocked`).
+
+For inspection, a **dev-only override** unlocks every registered zone so you can
+fast-travel to any map without playing through the campaign. It is on by default
+in `npm run dev` and never active in prod builds. Full toggle reference and
+caveats: [Dev tools → Unlock all zones](./dev-tools).
+
 ## Streaming entry point (E3.2, wired in FLO-345)
 
 `createZoneScene(zoneId, canvas, options)` is the single place a zone's scene is
