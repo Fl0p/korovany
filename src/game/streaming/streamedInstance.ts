@@ -10,6 +10,19 @@ export interface StreamedInstance {
 }
 
 /**
+ * LOD-enabled streamed instance: maintains both impostor (billboard) and full mesh.
+ * The manager handles distance-based switching with hysteresis.
+ */
+export interface LODStreamedInstance extends StreamedInstance {
+  /** The full 3D mesh (loaded from GLB). */
+  fullMesh: TransformNode
+  /** The billboard impostor (camera-facing). */
+  impostor: import('@babylonjs/core').Mesh
+  /** Current LOD state. */
+  state: 'impostor' | 'fullMesh'
+}
+
+/**
  * Spawn a streamed asset: placeholder immediately, swap to the GLB on success.
  * On load error the placeholder stays (graceful fallback, no throw to caller).
  */

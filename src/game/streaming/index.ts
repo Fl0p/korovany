@@ -17,6 +17,7 @@ export {
   FOREST_TREE_ASSET_ID,
   WOODEN_HUT_ASSET_ID,
 } from './zoneManifests'
+export { LODManager, type LODConfig, type LODInstance } from './lodManager'
 export type { AssetLoadPhase, AssetMetadata, AssetRecord } from './types'
 
 import type { Scene } from '@babylonjs/core'
