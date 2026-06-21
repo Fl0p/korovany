@@ -300,7 +300,7 @@ Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 - **E5.1 Tree impostors** `[x]` — **FLO-392/FLO-394** (Wayland, done, `381e529`) — billboard sprites via Babylon native `mesh.addLODLevel`; `treeImpostor.ts` + bench scene.
 - **E5.2 Impostor→3D hysteresis** `[x]` — **FLO-393/FLO-395** (Wayland, done, `471df49`) — hysteresis dead-zone (`hysteresisBand`) on `treeImpostor`; parallel lodManager implementation retired by FLO-395 reconciliation.
 - **E5.3 Instanced vegetation** `[~]` — **FLO-396** (Wayland, in_progress) — thin-instances for dense forest at frame budget.
-- **E5.4 Performance budget & profiling** `[ ]` — keep 60fps target on mid hardware; document budgets.
+- **E5.4 Performance budget & profiling** `[ ]` — **FLO-398** (backlog, unassigned; assign after FLO-396 lands) — keep 60fps target on mid hardware; document budgets.
 
 ### Phase 6 — Depth & polish `[ ]`
 
