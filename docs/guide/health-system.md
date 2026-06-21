@@ -41,6 +41,11 @@ bar itself is `aria-hidden`.
 Alongside it the HUD surfaces the other built-but-previously-invisible systems
 (MPG.6, FLO-366):
 
+- **Sprint stamina bar** (`.hud-stamina`, ARIA `group` "Player stamina: N of
+  100") — mirrors the health bar (label, fill, numeric readout) but in a distinct
+  cyan→green gradient so it does not read as health (FLO-465). It tracks the
+  engine-authoritative sprint pool pushed from the character controller; see
+  [sprint stamina](./character-controller.md#sprint-stamina-controllerstaminats).
 - **Bleeding indicator** (`.hud-bleeding`, ARIA `status`) — shown while
   `selectIsBleeding` is true, with a pulsing dot. The prompt is conditional
   (P7.2): with no bandage carried it reads "find a bandage"; once a bandage is in

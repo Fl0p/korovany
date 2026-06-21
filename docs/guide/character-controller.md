@@ -77,7 +77,7 @@ feet rest on ground `g` when the origin sits at `g + capsuleHalfHeight`.
 | Param | Default | Meaning |
 | ----- | ------- | ------- |
 | `walkSpeed` | `4` | Ground speed, units/s. |
-| `sprintSpeed` | `7` | Speed while Shift is held, units/s. |
+| `sprintSpeed` | `9` | Speed while Shift is held *and stamina is available*, units/s (2.25× walk). |
 | `gravity` | `24` | Downward acceleration, units/s². |
 | `jumpSpeed` | `8` | Initial upward velocity of a jump, units/s. |
 | `coyoteTime` | `0.12` | Grace window after leaving ground, seconds. |
@@ -93,6 +93,41 @@ The binding casts a short ray straight down from the capsule origin
 point's `Y` as the ground height — Babylon's built-in `pickWithRay`, no bespoke
 physics engine. Out of reach → `null` → the capsule falls freely. The probe must
 exceed one step of fall to avoid tunnelling at speed.
+
+### Sprint stamina (`controller/stamina.ts`)
+
+Sprint is gated by a stamina pool so it cannot run forever (FLO-465). The pool is
+**authoritative in the engine**, not Redux: it changes every frame, and pushing a
+60 fps dispatch into the store as the source of truth would churn React for no
+reason (lens: *budgets are real* + *trust the boundary*). The controller owns the
+value via the pure `stepStamina(state, sprintingIntent, dt, params)` state machine
+(mirrors the `stepMovement` pure-fn pattern, unit-tested headless) and only
+*pushes* it to the [display slice](./state-management.md) for the HUD.
+
+| Param | Default | Meaning |
+| ----- | ------- | ------- |
+| `max` | `100` | Full stamina pool. |
+| `drainRate` | `25` | Units/s drained while sprint is active (≈4 s from full). |
+| `regenRate` | `15` | Units/s regenerated after the idle delay. |
+| `regenDelay` | `0.5` | Idle seconds after sprinting before regen begins. |
+| `reEnableThreshold` | `15` | At 0, sprint stays locked out until regen passes this (hysteresis — no stutter-sprint). |
+
+Effective sprint = `Shift held AND stamina available`. When the pool empties,
+`stepStamina` reports `sprintActive: false`, the controller feeds *walk* speed to
+`stepMovement`, and the player keeps moving — sprint just ends. The controller
+dispatches the display value **only when the rounded percentage changes**, so the
+HUD bar updates without a per-frame dispatch storm. The HUD renders it as a
+distinct cyan→green `.hud-stamina` bar next to the health bar.
+
+### Sprint head-bob
+
+The [procedural animator](https://github.com/Flopsstuff/korovany/tree/main/src/game/animation)
+picks its head-bob from the fed locomotion speed in three tiers — idle → move →
+**sprint**. Above `7.5` units/s (i.e. sprint's `9`, but not walk's `4`) it uses a
+deeper, faster bob (amplitude `0.085` / `3.4 Hz` vs the move tier's `0.055` /
+`2.4 Hz`), so an active sprint is visible without any new plumbing. The controller
+feeds the actual ground speed (`walkSpeed`/`sprintSpeed × speedMultiplier`) so a
+slowed crawl-sprint stays below the threshold and bobs like a walk.
 
 ### Follow camera (`camera/`)
 
@@ -146,7 +181,9 @@ for the full dev-scene wiring.
 ## Tests
 
 - `controller/movement.test.ts` — pure gravity, ground clamp, jump,
-  coyote-time window, and the no-double-jump rule.
+  coyote-time window, the no-double-jump rule, and the `9 units/s` sprint speed.
+- `controller/stamina.test.ts` — pure stamina drain to 0, regen after the idle
+  delay, the hysteresis re-enable, and `sprintActive` flipping false at empty.
 - `camera/boom.test.ts` — pure look clamp and boom pull-in.
 - `controller/characterController.test.ts` — the Babylon bindings under
   `NullEngine`: real downward-ray ground landing, camera-relative walking,

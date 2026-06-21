@@ -57,7 +57,7 @@ const dispatch = useAppDispatch()
 dispatch(damagePlayer(30))
 ```
 
-`RootState` is `{ app, faction, game, health, injury, inventory, player, progression, streaming }` — the union of every
+`RootState` is `{ app, faction, game, health, injury, inventory, player, progression, stamina, streaming }` — the union of every
 slice's state. Adding a slice to `configureStore` automatically widens
 `RootState`, so selectors and the typed hooks stay correct with no extra
 plumbing.
@@ -133,6 +133,23 @@ This is the single health authority. See [Health system](./health-system).
   `resetPlayerHealth()`, `restorePlayerHealth(h: HealthState)` (overwrite from a
   loaded save).
 - **Read via:** `useAppSelector((s) => s.health.player.current)`.
+
+### `staminaSlice` — sprint stamina (display-only)
+
+The HUD projection of the sprint-stamina pool (FLO-465). The pool is
+**authoritative in the character controller** (the pure `stepStamina` machine in
+`src/game/controller/stamina.ts`); this slice is *not* the source of truth — the
+controller pushes `setStamina` only when the rounded display percentage changes,
+so the bar updates without a 60 fps dispatch storm (lens: *trust the boundary*).
+See [sprint stamina](./character-controller.md#sprint-stamina-controllerstaminats).
+
+- **State:** `{ current: number; max: number }` (`StaminaStoreState`); default
+  full (`{ current: 100, max: 100 }`).
+- **Actions:** `setStamina({ current, max })` (push from the engine tick),
+  `resetStamina()` (back to a full pool for a New Game).
+- **Read via:** `useAppSelector((s) => s.stamina)`.
+- **Not saved:** stamina is transient runtime state — it is not part of the save
+  schema and refills to full on load.
 
 ### `playerSlice` — player progress
 
