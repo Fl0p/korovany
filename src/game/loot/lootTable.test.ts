@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest'
+import { PROSTHETIC_OFFERS } from '../economy/prostheticsShop'
 import { createSeededRng } from '../util/seededRandom'
 import { DEFAULT_CARAVAN_LOOT, rollLoot, type LootTable } from './lootTable'
+
+/** Caravan quota in currently available zones (forest 3 + human-lands 5). */
+const AVAILABLE_WORLD_CARAVAN_QUOTA = 8
+
+const SAMPLE_SEEDS = 2_000
+
+function goldFromDrop(drop: ReturnType<typeof rollLoot>): number {
+  return drop.items.find((stack) => stack.id === 'gold')?.qty ?? 0
+}
+
+function meanGoldPerCaravan(sampleSeeds: number): number {
+  let total = 0
+  for (let seed = 0; seed < sampleSeeds; seed++) {
+    total += goldFromDrop(rollLoot(DEFAULT_CARAVAN_LOOT, createSeededRng(seed)))
+  }
+  return total / sampleSeeds
+}
 
 const ids = (table: LootTable) => new Set(table.entries.map((e) => e.id))
 
@@ -17,6 +35,15 @@ describe('rollLoot — determinism', () => {
     )
     // Not every pair must differ, but the set should not collapse to one.
     expect(new Set(drops).size).toBeGreaterThan(1)
+  })
+})
+
+describe('default caravan loot — prosthetics economy (FLO-457)', () => {
+  it('yields enough expected gold across the available-world caravan quota for all prosthetics', () => {
+    const prostheticsCatalogGold = PROSTHETIC_OFFERS.reduce((sum, offer) => sum + offer.price, 0)
+    const expectedGoldPerCaravan = meanGoldPerCaravan(SAMPLE_SEEDS)
+    const expectedWorldGold = expectedGoldPerCaravan * AVAILABLE_WORLD_CARAVAN_QUOTA
+    expect(expectedWorldGold).toBeGreaterThanOrEqual(prostheticsCatalogGold)
   })
 })
 

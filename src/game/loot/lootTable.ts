@@ -49,7 +49,7 @@ export interface LootDrop {
 export const DEFAULT_CARAVAN_LOOT: LootTable = {
   rolls: 3,
   entries: [
-    { id: 'gold', label: 'Gold coins', weight: 50, minQty: 5, maxQty: 25 },
+    { id: 'gold', label: 'Gold coins', weight: 60, minQty: 10, maxQty: 40 },
     { id: 'grain', label: 'Sack of grain', weight: 30, minQty: 1, maxQty: 3 },
     { id: 'bandage', label: 'Bandage', weight: 20, minQty: 1, maxQty: 2 },
     { id: 'cloth', label: 'Bolt of cloth', weight: 15, minQty: 1, maxQty: 2 },

@@ -15,6 +15,17 @@ scalar — looted coin is spendable coin, and there is no second balance to keep
 sync. As a consequence this ticket needs **no save-schema bump**: the gold
 balance already persists as part of the inventory snapshot.
 
+### Caravan gold pacing (FLO-457)
+
+`DEFAULT_CARAVAN_LOOT` drops gold with weight **60**, quantity **10–40**, on
+**3** rolls per defeated caravan (expected ≈ **35** gold per caravan). The
+currently available world ships **8** caravans (forest **3** + human-lands
+**5**), so a player who raids every caravan in those zones can expect roughly
+**280** gold — enough to buy every prosthetics-shop offer (hand **80** + leg
+**120** + eye **60** = **260** total). Prosthetic prices stay unchanged; only
+caravan generosity was retuned so the dismemberment recovery loop is reachable
+without grinding beyond the shipped caravan quota.
+
 `src/game/economy/currency.ts` is the named seam over that balance:
 
 - `CURRENCY_ITEM_ID` — the item id that doubles as money (`'gold'`).
