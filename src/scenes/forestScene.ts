@@ -11,6 +11,7 @@ import {
   Vector3,
 } from '@babylonjs/core'
 import { createWorldBounds } from './worldBounds'
+import { buildPlayerAvatar } from './playerAvatar'
 import { resizeEngineToDisplay } from '../engine'
 import { ThirdPersonCamera } from '../game/camera'
 import { CharacterController } from '../game/controller'
@@ -204,7 +205,12 @@ export function createForestSpawnProps(
 export interface ForestSceneOptions {
   /** Engine factory — inject a headless `NullEngine` in tests. */
   createEngine?: (canvas: HTMLCanvasElement) => AbstractEngine
-  /** Hero GLB to mount on the capsule; `null` skips it. */
+  /**
+   * Player visual control. `null` skips the avatar (headless tests). Any other
+   * value (including the default) mounts the procedural low-poly fighter from
+   * {@link buildPlayerAvatar}; the rig-less hero GLB was retired in P7.4
+   * (FLO-422) because its baked T-pose read as a scarecrow, not a fighter.
+   */
   heroUrl?: string | null
   /** Called when an enemy hits the player. Caller dispatches damagePlayer. */
   onPlayerDamaged?: (amount: number) => void
@@ -358,9 +364,9 @@ export function createForestScene(
   // bounding box (FLO-368). `clampToWorld` keeps the capsule inside the walls
   // each frame, since the controller has no horizontal collision of its own.
   // ------------------------------------------------------------------
-  // Muted olive-green (P7.4) — desaturated from the old pure grass green so the
-  // ground recedes and the props/enemies read as the foreground.
-  const { clamp: clampToWorld } = createWorldBounds(scene, new Color3(0.29, 0.37, 0.23))
+  // Muted forest-floor olive (P7.4) — desaturated from the old pure grass green
+  // so the ground recedes and the props/enemies/avatar read as the foreground.
+  const { clamp: clampToWorld } = createWorldBounds(scene, new Color3(0.27, 0.36, 0.21))
   createForestSpawnProps(scene)
 
   // ------------------------------------------------------------------
@@ -413,16 +419,15 @@ export function createForestScene(
   controller.mesh.material = capsuleMat
   controller.mesh.isVisible = false
 
-  if (heroUrl) {
-    void import('./modelLoader').then(({ loadModel }) =>
-      loadModel(scene, heroUrl, { targetSize: 1.8, groundIt: true }).then((hero) => {
-        hero.root.parent = controller.mesh
-        hero.root.position = new Vector3(0, -0.9, 0)
-        for (const mesh of hero.meshes) mesh.isPickable = false
-        controller.mesh.isVisible = false
-        controller.animator.node = hero.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
-      }),
-    )
+  // Player visual: a procedural low-poly fighter built from flat-shaded boxes
+  // (P7.4 / FLO-422). `heroUrl: null` (headless tests) skips it.
+  if (heroUrl !== null) {
+    const avatar = buildPlayerAvatar(scene)
+    avatar.root.parent = controller.mesh
+    avatar.root.position = new Vector3(0, -0.9, 0)
+    controller.mesh.isVisible = false
+    controller.animator.node =
+      avatar.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
   }
 
   // ------------------------------------------------------------------

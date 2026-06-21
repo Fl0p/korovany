@@ -9,6 +9,7 @@ import {
   Vector3,
 } from '@babylonjs/core'
 import { createWorldBounds } from './worldBounds'
+import { buildPlayerAvatar } from './playerAvatar'
 import { resizeEngineToDisplay } from '../engine'
 import { ThirdPersonCamera } from '../game/camera'
 import { CharacterController } from '../game/controller'
@@ -38,7 +39,11 @@ export const HUMAN_LANDS_ZONE_ID = 'human-lands'
 export interface HumanLandsSceneOptions {
   /** Engine factory — inject a headless `NullEngine` in tests. */
   createEngine?: (canvas: HTMLCanvasElement) => AbstractEngine
-  /** Hero GLB to mount on the capsule; `null` skips it (tests). */
+  /**
+   * Player visual control. `null` skips the avatar (tests). Any other value
+   * mounts the procedural low-poly fighter ({@link buildPlayerAvatar}); the
+   * rig-less hero GLB was retired in P7.4 (FLO-422).
+   */
   heroUrl?: string | null
   /**
    * Spawn pose for the player capsule. Defaults to a staged fast-travel/Continue
@@ -168,15 +173,13 @@ export function createHumanLandsScene(
   controller.mesh.material = capsuleMat
   controller.mesh.isVisible = false
 
-  if (heroUrl) {
-    void import('./modelLoader').then(({ loadModel }) =>
-      loadModel(scene, heroUrl, { targetSize: 1.8, groundIt: true }).then((hero) => {
-        hero.root.parent = controller.mesh
-        hero.root.position = new Vector3(0, -0.9, 0)
-        for (const mesh of hero.meshes) mesh.isPickable = false
-        controller.animator.node = hero.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
-      }),
-    )
+  // Player visual: procedural low-poly fighter (P7.4 / FLO-422). `null` skips it.
+  if (heroUrl !== null) {
+    const avatar = buildPlayerAvatar(scene)
+    avatar.root.parent = controller.mesh
+    avatar.root.position = new Vector3(0, -0.9, 0)
+    controller.animator.node =
+      avatar.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
   }
 
   const hitFlash = new HitFlashManager()

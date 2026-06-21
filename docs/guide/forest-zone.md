@@ -40,14 +40,15 @@ Meshy pipeline under visual-language v1.2 (≤ 3000 tris). Register them via
 
 `createForestScene(canvas, options)` boots a Babylon `Scene` and:
 
-1. **Ground** — a `WORLD_SIZE` (600 × 600 unit) `MeshBuilder.CreateGround`
-   tessellated with `subdivisions: 6` and `isPickable: true` so the character
-   controller's downward ray lands correctly. The shared `createWorldBounds`
-   (`src/scenes/worldBounds.ts`) builds it; the forest passes a muted olive-green
-   `Color3(0.29, 0.37, 0.23)` (P7.4) — desaturated from the old pure grass green
-   so the ground recedes and props/enemies read as the foreground. The ground
-   material is **matte** (near-zero `specularColor`) for the flat-shaded low-poly
-   look of visual-language v1.2, not a plasticky lit plane.
+1. **Ground** — built by `createWorldBounds` (`worldBounds.ts`): a 600 × 600 unit
+   `MeshBuilder.CreateGround` with `isPickable: true` so the controller's downward
+   ray lands correctly. The plane stays perfectly flat (ray-safe) but is
+   subdivided (`subdivisions: 48`), flat-shaded, and given a deterministic
+   per-facet brightness jitter via vertex colours, on a matte (near-zero specular)
+   muted-olive `Color3(0.27, 0.36, 0.21)` material — so it reads as a low-poly
+   faceted surface, not a "plain green gradient" (P7.4 / FLO-422). Desaturated
+   from the old pure grass green so the ground recedes and props/enemies read as
+   the foreground.
 2. **Streaming** — `AssetRegistry` + `AssetStreamLoader` (same system as E1.2).
    `seedForestAssets` registers the tree and hut URLs. Each prop calls
    `spawnStreamedInstance` which shows a placeholder box immediately and swaps
@@ -61,21 +62,24 @@ Meshy pipeline under visual-language v1.2 (≤ 3000 tris). Register them via
 
 ## Avatar & ground feel
 
-The player is rendered by the hero GLB (`heroUrl`, default
-`/models/korovany_hero_player-default.glb`), loaded through `modelLoader`'s
-`loadModel` with `targetSize: 1.8` and `groundIt: true`. The collision capsule
-itself is invisible; the GLB root is parented to it at `(0, -0.9, 0)` so the
-avatar's feet sit on the ground plane (the "ground feel"), and all hero meshes
-are `isPickable: false` so they never intercept the controller's downward ray.
-The root is handed to `controller.animator.node` for procedural motion.
+The player is rendered by a **procedural low-poly fighter** built in
+`buildPlayerAvatar` (`src/scenes/playerAvatar.ts`) from flat-shaded box
+primitives — head, torso, legs/boots, and arms posed in a boxer's guard (fists
+up beside the head, elbows out, staggered stance, torso braced slightly forward).
+The collision capsule itself is invisible; the avatar `root` is parented to it at
+`(0, -0.9, 0)` so the feet sit on the ground plane (the "ground feel"), every
+part is `isPickable: false` so it never intercepts the controller's downward ray,
+and the `root` is handed to `controller.animator.node` for procedural motion
+(bob/lean/lunge/topple). `heroUrl: null` skips the avatar for headless tests; any
+other value (including the default) mounts the procedural fighter.
 
-**Pose constraint (P7.4 / FLO-420).** The default hero GLB is a single welded
-mesh (`node0`, 2894 tris, one material, **no skeleton/bones**). Its arms are
-baked into the geometry in a splayed A-pose, so they **cannot be reposed in
-code** — there is no rig to rotate and no separable arm sub-mesh. Procedural
-animation can only move the whole root (bob/lean), not individual limbs. Bringing
-the arms into a natural idle requires re-authoring (rig + repose, or regenerate)
-the asset; that is tracked as a 3D-art follow-up, not a scene-code change.
+**Why procedural, not the hero GLB (P7.4 / FLO-422).** The default hero GLB is a
+single welded mesh (`node0`, 2894 tris, one material, **no skeleton/bones**) baked
+in a splayed arms-out pose — it reads as a surrendering bystander, not a fighter,
+and **cannot be reposed in code** (no rig to rotate, no separable arm sub-mesh).
+Rather than block on a 3D-art re-author, the player is built from geometry in the
+target fighter pose at zero asset cost. It is a two-way door: a future rigged hero
+can drop back in behind the same `root` + animator contract.
 
 ## Scene options
 

@@ -1,4 +1,11 @@
-import { Color3, NullEngine, Scene, type StandardMaterial, Vector3 } from '@babylonjs/core'
+import {
+  Color3,
+  NullEngine,
+  Scene,
+  type StandardMaterial,
+  Vector3,
+  VertexBuffer,
+} from '@babylonjs/core'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { WORLD_SIZE, createWorldBounds } from './worldBounds'
 
@@ -33,18 +40,37 @@ describe('worldBounds', () => {
     for (const wall of walls) expect(wall.isPickable).toBe(false)
   })
 
-  it('tessellates the ground and gives it a matte (flat-shaded low-poly) material (P7.4)', () => {
-    const { ground } = createWorldBounds(scene, new Color3(0.29, 0.37, 0.23))
+  it('gives the ground a faceted, matte, flat-shaded low-poly material (P7.4)', () => {
+    const color = new Color3(0.27, 0.36, 0.21)
+    const { ground } = createWorldBounds(scene, color)
 
-    // subdivisions:6 → a 6×6 grid of quads (72 tris), not a single 2-tri quad.
-    expect(ground.getTotalIndices()).toBe(6 * 6 * 2 * 3)
+    // Subdivided + flat-shaded into many facets (far more than a 2-triangle quad)
+    // so lighting/tint can catch per-facet — the low-poly read.
+    expect(ground.getTotalIndices() / 3).toBeGreaterThan(1000)
+
+    // Per-facet brightness lives in vertex colours; every position vertex carries
+    // a colour, and the colours actually vary (not one flat sheet).
+    const colors = ground.getVerticesData(VertexBuffer.ColorKind)
+    const positions = ground.getVerticesData(VertexBuffer.PositionKind)
+    expect(colors).toBeTruthy()
+    expect(positions).toBeTruthy()
+    expect(colors!.length).toBe((positions!.length / 3) * 4)
+    const reds = new Set<number>()
+    for (let i = 0; i < colors!.length; i += 4) reds.add(Math.round(colors![i] * 1000))
+    expect(reds.size).toBeGreaterThan(1) // brightness varies across facets
 
     const mat = ground.material as StandardMaterial
-    expect(mat.diffuseColor.equalsFloats(0.29, 0.37, 0.23)).toBe(true)
+    expect(mat.diffuseColor.equalsFloats(color.r, color.g, color.b)).toBe(true)
     // Near-zero specular keeps the surface matte, not plasticky.
     expect(mat.specularColor.r).toBeLessThan(0.1)
     expect(mat.specularColor.g).toBeLessThan(0.1)
     expect(mat.specularColor.b).toBeLessThan(0.1)
+  })
+
+  it('keeps the ground plane perfectly flat so the controller ground-ray is unaffected', () => {
+    const { ground } = createWorldBounds(scene, new Color3(0.27, 0.36, 0.21))
+    const positions = ground.getVerticesData(VertexBuffer.PositionKind)!
+    for (let i = 1; i < positions.length; i += 3) expect(positions[i]).toBe(0) // every y === 0
   })
 
   it('clamps a position outside the walls back inside, leaving interior points untouched', () => {

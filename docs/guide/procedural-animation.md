@@ -56,7 +56,11 @@ The topple uses `dt` from the caller, which already reflects `engine.timeScale` 
 **Player (`CharacterController`)**:
 - `animator: CharacterAnimator` exposed as a public field.
 - Call `controller.setAttackPhase(meleeState.phase)` each frame after `stepMeleeAttack`.
-- Wire `controller.animator.node` in the GLB load callback.
+- Wire `controller.animator.node` to the avatar root. The player visual is the
+  procedural box-primitive fighter from `src/scenes/playerAvatar.ts`
+  (`buildPlayerAvatar`), built synchronously and parented to the capsule (P7.4 /
+  FLO-422). Its `root` satisfies the same `AnimatableNode` contract the old hero
+  GLB did, so bob/lean/lunge/topple apply unchanged.
 
 **Soldiers (`SoldierEnemy`)**:
 - `animator: CharacterAnimator` exposed as a public field.

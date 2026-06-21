@@ -15,7 +15,7 @@ import { createInputController, type Intent } from '../game/input'
 import { FixedStepLoop } from '../game/loop'
 import { registerPlayer, takeSpawn } from '../game/save/playerRuntime'
 import type { PlayerTransform } from '../game/save/types'
-import { loadModel } from './modelLoader'
+import { buildPlayerAvatar } from './playerAvatar'
 
 /**
  * Minimal dev/test scene for the third-person character controller (E1.1).
@@ -125,15 +125,16 @@ export function createControllerPlayground(
   capsuleMat.diffuseColor = new Color3(0.3, 0.5, 0.8)
   controller.mesh.material = capsuleMat
 
-  if (heroUrl) {
-    void loadModel(scene, heroUrl, { targetSize: 1.8, groundIt: true }).then((hero) => {
-      hero.root.parent = controller.mesh
-      // Drop the visual so its feet sit at the capsule's feet (origin − halfHeight).
-      hero.root.position = new Vector3(0, -0.9, 0)
-      // A pure visual: never a ground-ray or camera-boom pick target.
-      for (const mesh of hero.meshes) mesh.isPickable = false
-      controller.mesh.isVisible = false
-    })
+  // Player visual: procedural low-poly fighter (P7.4 / FLO-422). `null` keeps the
+  // bare capsule (tests).
+  if (heroUrl !== null) {
+    const avatar = buildPlayerAvatar(scene)
+    avatar.root.parent = controller.mesh
+    // Drop the visual so its feet sit at the capsule's feet (origin − halfHeight).
+    avatar.root.position = new Vector3(0, -0.9, 0)
+    controller.mesh.isVisible = false
+    controller.animator.node =
+      avatar.root as unknown as import('../game/animation/proceduralAnimator').AnimatableNode
   }
 
   const loop = new FixedStepLoop({ world: undefined, dt: 1 / 60 })
