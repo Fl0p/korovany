@@ -299,8 +299,8 @@ Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 
 - **E5.1 Tree impostors** `[x]` — **FLO-392/FLO-394** (Wayland, done, `381e529`) — billboard sprites via Babylon native `mesh.addLODLevel`; `treeImpostor.ts` + bench scene.
 - **E5.2 Impostor→3D hysteresis** `[x]` — **FLO-393/FLO-395** (Wayland, done, `471df49`) — hysteresis dead-zone (`hysteresisBand`) on `treeImpostor`; parallel lodManager implementation retired by FLO-395 reconciliation.
-- **E5.3 Instanced vegetation** `[~]` — **FLO-396** (Wayland, in_progress) — thin-instances for dense forest at frame budget.
-- **E5.4 Performance budget & profiling** `[ ]` — **FLO-398** (backlog, unassigned; assign after FLO-396 lands) — keep 60fps target on mid hardware; document budgets.
+- **E5.3 Instanced vegetation** `[x]` — **FLO-396** (Wayland, done, `1b1b70a`) — `createInstancedVegetation` packs a 256-tree forest into 2 draw calls (1 per submesh); `?dev=vegetation` bench; 620 tests green.
+- **E5.4 Performance budget & profiling** `[~]` — **FLO-398** (Wayland, in_progress) — keep 60fps target on mid hardware; document budgets.
 
 ### Phase 6 — Depth & polish `[ ]`
 
@@ -407,6 +407,9 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
+- **r24** (2026-06-21) — **E5.3 instanced vegetation done; E5.4 performance budget in flight.**
+  `createInstancedVegetation` merged (`1b1b70a`, FLO-396/Wayland); 256 trees → 2 draw calls.
+  FLO-398 (E5.4) assigned to Wayland. Board action still needed: FLO-353 close, Aldric error→recover. (Daedalus)
 - **r23** (2026-06-21) — **E5.1 + E5.2 done; E5.3 instanced vegetation in flight.**
   E5.1 tree impostors (`381e529`, FLO-394/Wayland) + E5.2 hysteresis (`471df49`, FLO-395/Wayland)
   both merged. Parallel lodManager implementation retired by FLO-395 reconciliation.
