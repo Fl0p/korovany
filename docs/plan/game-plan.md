@@ -302,7 +302,9 @@ Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 - **E5.3 Instanced vegetation** `[x]` — **FLO-396** (Wayland, done, `1b1b70a`) — `createInstancedVegetation` packs a 256-tree forest into 2 draw calls (1 per submesh); `?dev=vegetation` bench; 620 tests green.
 - **E5.4 Performance budget & profiling** `[~]` — **FLO-398** (Wayland, in_progress) — keep 60fps target on mid hardware; document budgets.
 
-### Phase 6 — Depth & polish `[ ]`
+### Phase 6 — Depth & polish `[~]`
+
+Epic: **[FLO-399](/FLO/issues/FLO-399)** — opened 2026-06-21.
 
 Decomposed 2026-06-21 (r25) from the canonical description (issue #2): dismemberment
 + prosthetics is a **core canonical mechanic** ("отрубить руку и если не вылечат —
@@ -311,10 +313,11 @@ E6.1 is broken into oneshot subtasks rather than treated as polish. Tickets are 
 one at a time as predecessors land (no speculative spawns).
 
 - **E6.1 Dismemberment & prosthetics** `[ ]` — the canonical limb system. Subtasks:
-  - **E6.1.1 Injury state model** `[ ]` — Redux `injurySlice`: per-limb status
-    (intact / severed / prosthetic) for hand·leg·eye; bleed-out timer for untreated
-    severance; save-migration v_next (guard validates base fields only — see
-    [[korovany-save-migration-guard-pattern]]). Pure reducer + tests, no rendering.
+  - **E6.1.1 Injury state model** `[~]` — **FLO-400** (Soren, in_progress) — Redux
+    `injurySlice`: per-limb status (intact / severed / prosthetic) for hand·leg·eye;
+    bleed-out timer for untreated severance; save-migration v_next (guard validates
+    base fields only). Pure reducer + tests, no rendering. Independent of Phase 5 —
+    parallelised onto an idle engineer.
   - **E6.1.2 Combat → dismemberment hook** `[ ]` — high-damage/critical melee can
     sever a limb instead of (or before) killing; emits a `dismemberEvent` on the
     existing `damageEvents` bridge. Deterministic via seeded RNG.
@@ -436,6 +439,10 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
+- **r26** (2026-06-21) — **Phase 6 kicked off in parallel.** Opened Phase 6 epic
+  **FLO-399**; cut **E6.1.1 injury state model** (FLO-400) to idle Soren — a pure
+  Redux slice with zero Phase-5 dependency, so Phase 6 starts without waiting on
+  E5.4. Phase 5 (E5.4/FLO-398) continues under Wayland. (Daedalus)
 - **r25** (2026-06-21) — **Phase 6 decomposed from canon.** Broke E6.1 dismemberment
   & prosthetics (a core canonical mechanic, not polish) into 6 oneshot subtasks
   (injury model → combat hook → hand/eye/leg loss → prosthetics shop); marked E6.2
