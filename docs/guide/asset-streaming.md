@@ -17,6 +17,7 @@ are mirrored into Redux so the HUD can show “Loading…”.
 | `placeholder.ts`        | `createPlaceholderBox` — 1×1 box until the GLB arrives.              |
 | `streamedInstance.ts`   | `spawnStreamedInstance` — placeholder → model swap (error-safe).     |
 | `zoneStreaming.ts`      | `ZoneStreamingManager` — load a zone's content on entry, dispose the zone left behind (FLO-333). |
+| `treeImpostor.ts`       | `attachTreeImpostor` — billboard LOD for distant trees + `measureLODRender` (FLO-394). |
 | `index.ts`              | `createAssetStreaming` factory + public barrel.                      |
 
 Babylon imports are isolated to the loader glue and placeholder helpers; the
@@ -125,6 +126,57 @@ Because the destination scene is a fresh engine + scene, the previous zone's
 content is released both by its manager's `dispose()` and by the engine teardown
 — meshes stay bounded across an A→B→A round-trip. The `[zone] enter` /
 `[zone] dispose` console lines make the load/unload observable in a browser smoke.
+
+## Tree impostors (distance LOD)
+
+The dense forest (Phase 5, FLO-391) places many copies of one tree GLB
+(`forest-tree.glb`, ~1357 tris). Drawing every copy at full detail is wasteful
+when, past a few dozen units, only the silhouette is legible.
+`attachTreeImpostor(scene, model.meshes, options)` collapses a distant tree to a
+single **billboard plane** (2 tris) carrying a flat snapshot of the tree.
+
+```ts
+import { attachTreeImpostor, DEFAULT_IMPOSTOR_SWAP_DISTANCE } from '../game/streaming'
+
+const tree = await loadModel(scene, '/models/forest-tree.glb', { targetSize: 4 })
+const impostor = attachTreeImpostor(scene, tree.meshes, {
+  swapDistance: 35, // camera distance (units) beyond which the billboard takes over
+  // texture: sharedAtlas, // reuse one bake across many trees of the same species
+})
+// …on teardown:
+impostor.dispose()
+```
+
+**Mechanism — Babylon native LOD.** The impostor plane is registered as the
+tree's far LOD level via `mesh.addLODLevel(swapDistance, plane)`; sibling meshes
+(e.g. a separate trunk) get `addLODLevel(swapDistance, null)` so the far tree is
+*exactly one* billboard. Babylon swaps by camera distance during active-mesh
+evaluation — no per-frame loop. A mesh used as an LOD level is **linked** and
+never rendered on its own, so there is no double-draw, and instances of an
+LOD-equipped mesh inherit its levels (compatible with the future thin-instanced
+forest, E5.3).
+
+**Texture — one-shot side snapshot.** When no `texture` is supplied, the model
+is rendered once from an orthographic side view into a `RenderTargetTexture`
+(alpha preserved, alpha-tested at 0.4) — no offline build step. The billboard
+uses `BILLBOARDMODE_Y` so trees stay upright and rotate only around the vertical
+axis to face the camera. Under a headless `NullEngine` (tests) the bake is a
+no-op and the plane falls back to a flat green stand-in; the LOD wiring is
+identical.
+
+**Swap pop is acceptable (this ticket).** The mesh→billboard switch is a hard
+cut. Hiding it with hysteresis / cross-fade is **E5.2 (FLO-393)** and
+thin-instancing the whole forest is **E5.3** — both deliberately out of scope
+here. A configurable `cullDistance` can drop the impostor entirely past a far
+range.
+
+**Measuring the win.** `measureLODRender(sources, camera)` resolves each source
+mesh through its LOD chain (full mesh → impostor → culled) and sums the meshes +
+triangles that actually render — pure CPU, so before/after numbers are
+deterministic even under `NullEngine`. The `?dev=impostor` benchmark scene
+(`src/scenes/impostorBench.ts`) plants a 16×16 grid (256 trees) sharing one
+baked texture and logs the full-detail vs. impostor cost to the console and
+`window.__korovanyImpostorBench`.
 
 ## HUD wiring
 

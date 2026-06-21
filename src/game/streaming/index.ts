@@ -18,6 +18,14 @@ export {
   WOODEN_HUT_ASSET_ID,
 } from './zoneManifests'
 export { LODManager, type LODConfig, type LODInstance } from './lodManager'
+export {
+  attachTreeImpostor,
+  measureLODRender,
+  DEFAULT_IMPOSTOR_SWAP_DISTANCE,
+  type TreeImpostor,
+  type TreeImpostorOptions,
+  type LODRenderStats,
+} from './treeImpostor'
 export type { AssetLoadPhase, AssetMetadata, AssetRecord } from './types'
 
 import type { Scene } from '@babylonjs/core'
