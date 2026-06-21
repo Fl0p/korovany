@@ -116,13 +116,16 @@ emphasis.update(dt)   // call each frame (wall-clock dt, not scaled)
 
 ### Event bridge (`src/game/combat/damageEvents.ts`)
 
-Lightweight pub/sub crossing the Babylon ↔ React boundary without a circular dep:
+Lightweight pub/sub crossing the Babylon ↔ React/audio boundary without a
+circular dep. Both live combat zones — `forestScene` (default) and
+`humanLandsScene` — emit these; the HUD and the [audio bus](./audio) subscribe.
 
-| Function | Direction | Consumer |
+| Function | Direction | Consumers |
 |---|---|---|
-| `emitDamage(amount, x, y)` | Scene → HUD | `App` shows floating number |
-| `emitShake()` | Scene → HUD | future HUD shake hook |
-| `emitKill()` | Scene → HUD | future kill-feed |
+| `emitDamage(amount, x, y)` | Scene → HUD/audio | `App` floating number · `hit` SFX |
+| `emitShake()` | Scene → HUD/audio | player-hurt: `playerHurt` SFX (player struck) |
+| `emitKill()` | Scene → HUD/audio | `kill` SFX (enemy death) |
+| `emitAttack()` | Scene → audio | `attack` swing SFX (rising edge of the attack input) |
 
 ### Test coverage
 

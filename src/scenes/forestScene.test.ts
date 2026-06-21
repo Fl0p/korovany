@@ -17,6 +17,7 @@ import {
 } from '../game/save/playerRuntime'
 import { CorpseManager } from './corpseManager'
 import { CorpseStore } from '../game/corpses'
+import { onAttack, onShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { DEFAULT_SOLDIER_PARAMS } from '../game/ai'
 
@@ -344,5 +345,49 @@ describe('reapDeadSoldiers (live → corpse transition)', () => {
     const [corpse] = store.forZone(FOREST_ZONE_ID)
     expect(corpse.position.x).toBeCloseTo(6)
     expect(corpse.position.z).toBeCloseTo(6)
+  })
+})
+
+// FLO-383: the default forest zone must feed the combat event bridge so the
+// audio bus (and HUD) actually react — otherwise the merged audio system is
+// silent in the zone the player starts in.
+describe('createForestScene — combat event bridge (audio/HUD feedback)', () => {
+  beforeEach(() => {
+    takeSpawn() // boot at the clearing centre so the soldier (6,6) is in range
+  })
+
+  function drive(game: { step(dt: number): void }, frames: number) {
+    for (let i = 0; i < frames; i++) game.step(1 / 60)
+  }
+
+  it('emits a shake (player-hurt) event when a soldier strikes the player', () => {
+    let shakes = 0
+    const off = onShake(() => shakes++)
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      isPaused: () => false,
+    })
+    drive(game, 600) // soldier closes in and lands a hit
+    off()
+    game.dispose()
+    expect(shakes).toBeGreaterThan(0)
+  })
+
+  it('emits an attack (swing) event on the rising edge of the attack key', () => {
+    let swings = 0
+    const off = onAttack(() => swings++)
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      isPaused: () => false,
+    })
+    // Hold the attack key (KeyF) so input.sample() reads it on the next frame.
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyF' }))
+    drive(game, 2)
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyF' }))
+    off()
+    game.dispose()
+    expect(swings).toBe(1) // exactly once — edge-triggered, not per-frame
   })
 })
