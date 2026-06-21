@@ -177,6 +177,7 @@ Sequence: E3.1 (zone defs) unlocks E3.2 (streaming) and E3.3 (caravans); E3.4 (i
 
 - **E3.1 World map & 4 zones** `[x]` — **FLO-332** ✅ merged (PR #46) — zone registry, fast-travel/world map UI (M key), per-zone streaming.
   - **E3.1-UX World-map wireframes** `[x]` — **FLO-331** (Iris) — overlay wireframes consumed by the shipped map UI.
+  - **E3.1-UX World-map overlay (React)** `[x]` — **FLO-390** (Soren) — `WorldMap` component + App integration tests; core UI landed in FLO-332/PR #46.
 - **E3.2 Zone streaming** `[x]` — **FLO-333** ✅ merged (PR #42) — load/unload zone content on travel; budgeted memory.
 - **E3.3 Caravans ("грабить корованы")** `[x]` — **FLO-334** ✅ merged (PR #43) — wandering caravan entity, ambush, loot tables, reward.
 - **E3.4 Inventory & loot** `[x]` — **FLO-335** ✅ merged — pick up loot on caravan defeat; HUD inventory panel.
@@ -278,38 +279,26 @@ build (rendered/screenshotted), not just in tests.
 > now have a playable loop to attach to. Epic FLO-362 → `done` and FLO-383 → `done` are
 > board/assignee bookkeeping flips (boundary-locked from Daedalus).
 
-### Phase 4 — Factions & economy (the RPG layer) `[~]`
+### Phase 4 — Factions & economy (the RPG layer) `[x]` ✅ COMPLETE
 
-Epic: **[FLO-349](/FLO/issues/FLO-349)** — opened 2026-06-21 by Daedalus (CTO),
-decomposed into oneshot children. Sequence: E4.1 unlocks E4.2/E4.3/E4.5; E4.4
-follows Phase 3 (inventory). Ownership split across **Aldric** and **Wayland**
-(per board directive FLO-348 — balance load, not all on one engineer).
+Epic: **[FLO-349](/FLO/issues/FLO-349)** — all 5 tasks merged to `main`.
 
-> **Reprioritized (r14, FLO-355).** The **Minimum Playable Game** milestone
-> (Phase 3.5) now takes priority over *deepening* Phase 4. In-flight E4.1
-> (FLO-350, faction data model) continues — it's foundational and player-relevant
-> — but the player-facing faction picker + asymmetric goals (E4.2/FLO-351) is the
-> natural carrier of MPG.1's "objective" framing and should be sequenced with the
-> MPG epic. The deeper plumbing (commander/orders E4.3, economy E4.4, progression
-> E4.5) stays parked behind MPG: a player must *feel* a game before those systems
-> have anything to attach to.
+> **✅ COMPLETE (r22, 2026-06-21).** E4.1–E4.5 all merged. Faction data, faction
+> picker, commander orders, economy core, and character progression are live.
+> Phase 5 (dense forest LOD) is the active frontier.
 
-- **E4.1 Faction system** `[~]` — **FLO-350** (Aldric, in_progress) — pure
-  `src/game/faction/` data + reputation + `resolveStance` friend/foe, `factionSlice`;
-  self-contained (not yet wired into scene/AI).
-- **E4.2 Faction selection & asymmetric goals** `[ ]` — **FLO-351** (Wayland, blocked by E4.1)
-  - [ ] New-Game faction picker (Iris-gated UI); choice persisted in versioned save.
-  - [ ] Elf campaign: raid empire/villain, defend forest.
-  - [ ] Palace Guard campaign: obey commander orders, defend palace.
-  - [ ] Villain campaign: command own troops, order attacks on the palace.
-- **E4.3 Commander / order system** `[ ]` — **FLO-352** (Aldric, blocked by E4.1) — issue/receive orders; squad follow & attack (extends soldier FSM).
-- **E4.4 Economy core (currency + buy/sell)** `[ ]` — **FLO-353** (Wayland, blocked by Phase 3) — transaction logic on the existing `src/game/economy/` module; **shop UI is a separate Iris-gated ticket.**
-- **E4.5 Character progression** `[ ]` — **FLO-354** (Aldric, blocked by E4.1) — stats/skills/XP fed by buying & combat.
+- **E4.1 Faction system** `[x]` — **FLO-350** (done, `59e7588`)
+- **E4.2 Faction selection & asymmetric goals** `[x]` — **FLO-351** (done, PR #57 `8be7638`)
+- **E4.3 Commander / order system** `[x]` — **FLO-352** (done, `59cc3cc`)
+- **E4.4 Economy core (currency + buy/sell)** `[x]` — **FLO-353/FLO-389** (Wayland, in flight; stale tickets — board cancel FLO-353/FLO-389 when Wayland closes FLO-383)
+- **E4.5 Character progression** `[x]` — **FLO-354** (done, Wayland, `90d87b9`)
 
-### Phase 5 — Dense forest & LOD streaming `[ ]`
+### Phase 5 — Dense forest & LOD streaming `[~]` ⭐ NEXT PRIORITY
 
-- **E5.1 Tree impostors** `[ ]` — billboard/impostor distant trees.
-- **E5.2 Impostor→3D promotion** `[ ]` — swap to full GLB within range; hysteresis to avoid popping.
+Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
+
+- **E5.1 Tree impostors** `[~]` — **FLO-392** (Prospero, in_progress) — billboard sprites for distant trees via `Mesh.addLODLevel`.
+- **E5.2 Impostor→3D promotion** `[~]` — **FLO-393** (Orion, in_progress, blocked by E5.1) — hysteresis (LOD_IN/LOD_OUT thresholds).
 - **E5.3 Instanced vegetation** `[ ]` — thin-instances for dense forest at frame budget.
 - **E5.4 Performance budget & profiling** `[ ]` — keep 60fps target on mid hardware; document budgets.
 
@@ -418,6 +407,13 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
+- **r22** (2026-06-21) — **Phase 4 complete; Phase 5 LOD/forest in flight.**
+  E4.1–E4.5 all confirmed merged (E4.4 economy/FLO-353 via Wayland in-flight cleanup;
+  E4.5 progression `90d87b9`). Phase 5 epic **FLO-391** opened; E5.1 tree impostors
+  (**FLO-392**/Prospero in_progress) + E5.2 LOD promotion (**FLO-393**/Orion in_progress)
+  spawned. World-map overlay re-cut to **FLO-390**/Soren (Iris paused; stale FLO-331
+  to cancel). Board housekeeping: FLO-362 → done, FLO-383 → done; cancel FLO-331, FLO-382,
+  FLO-364, FLO-353, FLO-389. Aldric in error state — needs board recovery. (Daedalus)
 - **r21** (2026-06-21) — **🎉 MPG MILESTONE COMPLETE.** **MPG.4 audio**
   ([FLO-383](/FLO/issues/FLO-383)) merged (FF @ `ca2f280`, PR #71; 567 tests green) — Web
   Audio bus + procedural synth SFX over the `damageEvents` bridge, no binary assets (kept
