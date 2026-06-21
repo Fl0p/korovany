@@ -13,8 +13,23 @@ const valid: SaveData = {
   inventory: { counts: { gold: 5 }, equippedItemId: null },
   playerFactionId: FACTION_IDS.ForestElves,
   progression: createProgression(),
+  caravansRaidedByZone: { forest: 2, 'human-lands': 1 },
   savedAt: 42,
 }
+
+// A v4 save has progression but predates `caravansRaidedByZone` (FLO-455 / v5).
+// Used to prove conquest tracking is added on migrate with no loss of the other
+// fields a long-running campaign accrued.
+const v4Save = {
+  version: 4,
+  transform: { position: { x: 2, y: 1, z: 2 }, rotationY: 1 },
+  health: { current: 70, max: 100 },
+  zoneId: 'human-lands',
+  inventory: { counts: { gold: 12, blade: 1 }, equippedItemId: 'blade' },
+  playerFactionId: FACTION_IDS.Villain,
+  progression: { ...createProgression(), xp: 40, level: 2, nextLevelXp: 200 },
+  savedAt: 11,
+} as unknown as SaveData
 
 // A v1 save predates the `inventory` field (E3.4 / v2), the `playerFactionId`
 // field (E4.2 / v3), and the `progression` field (E4.5 / v4). Used to prove
@@ -95,10 +110,35 @@ describe('migrate', () => {
     expect(migrated.inventory).toEqual(createInventory())
     expect(migrated.playerFactionId).toBe(FACTION_IDS.Neutral)
     expect(migrated.progression).toEqual(createProgression())
+    expect(migrated.caravansRaidedByZone).toEqual({})
     // Pre-existing fields are carried through untouched.
     expect(migrated.transform).toEqual(v1Save.transform)
     expect(migrated.health).toEqual(v1Save.health)
     expect(migrated.zoneId).toBe('forest')
+  })
+
+  it('migrates a v4 save forward, adding an empty conquest map without losing other fields', () => {
+    const migrated = migrate(v4Save)
+    expect(migrated.version).toBe(SAVE_VERSION)
+    // The new field defaults to an empty map (no conquest progress predates v5).
+    expect(migrated.caravansRaidedByZone).toEqual({})
+    // Everything the campaign had accrued survives the migration — no data loss.
+    expect(migrated.transform).toEqual(v4Save.transform)
+    expect(migrated.health).toEqual(v4Save.health)
+    expect(migrated.zoneId).toBe('human-lands')
+    expect(migrated.inventory).toEqual(v4Save.inventory)
+    expect(migrated.playerFactionId).toBe(FACTION_IDS.Villain)
+    expect(migrated.progression).toEqual(v4Save.progression)
+  })
+
+  it('trusts a persisted conquest map when stamping an old version forward', () => {
+    const old = { ...valid, version: 4, caravansRaidedByZone: { forest: 3 } }
+    expect(migrate(old).caravansRaidedByZone).toEqual({ forest: 3 })
+  })
+
+  it('coerces a malformed conquest map to empty rather than trusting it', () => {
+    const bad = { ...valid, caravansRaidedByZone: { forest: 'lots' } } as unknown as SaveData
+    expect(migrate(bad).caravansRaidedByZone).toEqual({})
   })
 
   it('keeps an existing inventory when stamping an old version forward', () => {
@@ -153,5 +193,15 @@ describe('parseSaveData old-version round-trips', () => {
     expect(parsed?.version).toBe(SAVE_VERSION)
     expect(parsed?.playerFactionId).toBe(FACTION_IDS.Neutral)
     expect(parsed?.progression).toEqual(createProgression())
+  })
+
+  it('loads a pre-conquest save and upgrades it without losing progress (v4)', () => {
+    const parsed = parseSaveData(v4Save)
+    expect(parsed).not.toBeNull()
+    expect(parsed?.version).toBe(SAVE_VERSION)
+    expect(parsed?.caravansRaidedByZone).toEqual({})
+    // The campaign's accrued inventory and progression are intact.
+    expect(parsed?.inventory).toEqual(v4Save.inventory)
+    expect(parsed?.progression).toEqual(v4Save.progression)
   })
 })

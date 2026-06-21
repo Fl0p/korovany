@@ -33,6 +33,17 @@ function isTransform(value: unknown): value is PlayerTransform {
   return isVec3(t.position) && typeof t.rotationY === 'number' && Number.isFinite(t.rotationY)
 }
 
+/**
+ * Guard for a per-zone caravan map: a record of zone id → finite non-negative
+ * count. A malformed value migrates to an empty map rather than being trusted.
+ */
+function isRaidedByZone(value: unknown): value is Record<string, number> {
+  if (typeof value !== 'object' || value === null) return false
+  return Object.values(value as Record<string, unknown>).every(
+    (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0,
+  )
+}
+
 function isHealth(value: unknown): value is HealthState {
   if (typeof value !== 'object' || value === null) return false
   const h = value as Record<string, unknown>
@@ -47,8 +58,8 @@ function isHealth(value: unknown): value is HealthState {
 /**
  * Structural guard for a loadable save record. Validates the fields present in
  * every version since v1 (the migration baseline). Fields added in later
- * versions — `inventory` (v2), `playerFactionId` (v3), `progression` (v4) — are
- * intentionally *not*
+ * versions — `inventory` (v2), `playerFactionId` (v3), `progression` (v4),
+ * `caravansRaidedByZone` (v5) — are intentionally *not*
  * required here so older saves still pass the guard and get upgraded by
  * {@link migrate}; migrate is the single place that fills them in.
  */
@@ -77,6 +88,9 @@ export function isSaveData(value: unknown): value is SaveData {
  *   id is also coerced to neutral rather than trusted.
  * - v3 → v4: `progression` was added (E4.5). Older saves start at the baseline
  *   progression model; later saves carry their XP/stats/skills forward.
+ * - v4 → v5: `caravansRaidedByZone` was added (FLO-455, world-conquest goal).
+ *   Older saves carry no per-zone tracking, so they migrate with an empty map —
+ *   no data loss (there was nothing per-zone to lose).
  */
 export function migrate(data: SaveData): SaveData {
   const inventory = isInventoryState((data as { inventory?: unknown }).inventory)
@@ -89,15 +103,25 @@ export function migrate(data: SaveData): SaveData {
   const progression = isProgressionState((data as { progression?: unknown }).progression)
     ? data.progression
     : createProgression()
+  const rawByZone = (data as { caravansRaidedByZone?: unknown }).caravansRaidedByZone
+  const caravansRaidedByZone = isRaidedByZone(rawByZone) ? data.caravansRaidedByZone : {}
   if (
     data.version === SAVE_VERSION &&
     inventory === data.inventory &&
     playerFactionId === data.playerFactionId &&
-    progression === data.progression
+    progression === data.progression &&
+    caravansRaidedByZone === data.caravansRaidedByZone
   ) {
     return data
   }
-  return { ...data, inventory, playerFactionId, progression, version: SAVE_VERSION }
+  return {
+    ...data,
+    inventory,
+    playerFactionId,
+    progression,
+    caravansRaidedByZone,
+    version: SAVE_VERSION,
+  }
 }
 
 /**

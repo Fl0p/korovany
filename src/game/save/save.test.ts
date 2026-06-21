@@ -37,6 +37,7 @@ const snapshot: PlayerSnapshot = {
       endurance: { level: 10, xp: 0 },
     },
   },
+  caravansRaidedByZone: { forest: 2, 'human-lands': 1 },
 }
 
 describe('createSaveData', () => {
@@ -50,6 +51,13 @@ describe('createSaveData', () => {
     expect(data.inventory).toEqual({ counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' })
     expect(data.playerFactionId).toBe(FACTION_IDS.ForestElves)
     expect(data.progression).toEqual(snapshot.progression)
+    expect(data.caravansRaidedByZone).toEqual({ forest: 2, 'human-lands': 1 })
+  })
+
+  it('decouples the persisted conquest map from the live slice reference', () => {
+    const data = createSaveData(snapshot, 1000)
+    expect(data.caravansRaidedByZone).not.toBe(snapshot.caravansRaidedByZone)
+    expect(data.caravansRaidedByZone).toEqual(snapshot.caravansRaidedByZone)
   })
 
   it('decouples the persisted inventory from the live slice reference', () => {
@@ -78,6 +86,7 @@ describe('save round-trip (fake-indexeddb)', () => {
       inventory: { counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' },
       playerFactionId: FACTION_IDS.ForestElves,
       progression: snapshot.progression,
+      caravansRaidedByZone: { forest: 2, 'human-lands': 1 },
       savedAt: 1234,
     })
   })

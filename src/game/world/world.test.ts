@@ -5,6 +5,8 @@ import {
   isZoneId,
   listZones,
   planTravel,
+  ZONE_CARAVAN_QUOTAS,
+  ZONE_CONQUEST_ORDER,
   ZONE_ORDER,
   ZONES,
   type ZoneId,
@@ -49,6 +51,24 @@ describe('zone registry', () => {
     expect(isZoneId('forest')).toBe(true)
     expect(isZoneId('atlantis')).toBe(false)
   })
+
+  it('declares a conquest quota for every zone (ADR 0005)', () => {
+    expect(ZONE_CARAVAN_QUOTAS).toEqual({
+      forest: 3,
+      'human-lands': 5,
+      empire: 6,
+      mountains: 8,
+    })
+    for (const id of ALL_IDS) {
+      expect(ZONE_CARAVAN_QUOTAS[id]).toBeGreaterThan(0)
+    }
+  })
+
+  it('orders the conquest campaign forest → human-lands → empire → mountains', () => {
+    expect(ZONE_CONQUEST_ORDER).toEqual(['forest', 'human-lands', 'empire', 'mountains'])
+    // Every zone appears exactly once.
+    expect([...ZONE_CONQUEST_ORDER].sort()).toEqual([...ALL_IDS].sort())
+  })
 })
 
 describe('planTravel (fast-travel resolver)', () => {
@@ -88,5 +108,22 @@ describe('planTravel (fast-travel resolver)', () => {
 
   it('rejects travel to the zone the player is already in', () => {
     expect(planTravel('forest', 'forest')).toEqual({ ok: false, reason: 'already-here' })
+  })
+
+  it('rejects an available zone that conquest has not sequentially unlocked yet', () => {
+    // human-lands is available but not in the unlocked set → gated (ADR 0005).
+    expect(planTravel('forest', 'human-lands', ['forest'])).toEqual({
+      ok: false,
+      reason: 'zone-not-yet-unlocked',
+    })
+  })
+
+  it('allows travel once the destination is in the unlocked set', () => {
+    const result = planTravel('forest', 'human-lands', ['forest', 'human-lands'])
+    expect(result.ok).toBe(true)
+  })
+
+  it('skips the unlock gate when no unlocked set is supplied', () => {
+    expect(planTravel('forest', 'human-lands').ok).toBe(true)
   })
 })

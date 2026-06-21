@@ -39,6 +39,34 @@ describe('WorldMap', () => {
     expect(onTravel).toHaveBeenCalledWith('empire')
   })
 
+  it('gates an available world that conquest has not unlocked yet', () => {
+    // Only forest unlocked → human-lands is available but not yet travelable (ADR 0005).
+    render(
+      <WorldMap
+        zones={zones}
+        currentZoneId="forest"
+        unlockedZoneIds={['forest']}
+        onTravel={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+    const humanLands = screen.getByRole('button', { name: /Human lands.*Conquer the previous world/s })
+    expect(humanLands).toBeDisabled()
+  })
+
+  it('allows an available world once conquest unlocks it', () => {
+    render(
+      <WorldMap
+        zones={zones}
+        currentZoneId="forest"
+        unlockedZoneIds={['forest', 'human-lands']}
+        onTravel={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /Human lands/ })).not.toBeDisabled()
+  })
+
   it('requires select then confirm before travelling', async () => {
     const onTravel = vi.fn()
     const user = userEvent.setup()

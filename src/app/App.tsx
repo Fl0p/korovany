@@ -29,7 +29,14 @@ import {
   type SaveSlotSummary,
   type SlotId,
 } from '../game/save'
-import { getZoneDirective, listZones, planTravel, type ZoneId } from '../game/world'
+import {
+  getZoneDirective,
+  listZones,
+  planTravel,
+  ZONE_CARAVAN_QUOTAS,
+  ZONE_CONQUEST_ORDER,
+  type ZoneId,
+} from '../game/world'
 import {
   applyPlayerTransform,
   readPlayerTransform,
@@ -49,10 +56,12 @@ import {
   restorePlayer,
   restorePlayerHealth,
   restoreProgression,
+  restoreRunProgress,
   returnToMenu,
   purchaseProsthetic,
   equip,
   unequipItem,
+  selectCaravansRaidedByZone,
   selectHasHalfScreenBlackout,
   selectGold,
   selectInjury,
@@ -70,10 +79,31 @@ import {
   useBandage,
   winGame,
 } from '../store'
-import { evaluateOutcome } from '../game/objective/objectiveMachine'
+import {
+  evaluateOutcome,
+  isZoneConquered,
+  unlockedZoneIds,
+} from '../game/objective/objectiveMachine'
 
 /** Static zone list for the world map (registry order). */
 const ZONES = listZones()
+/** Zone ids the campaign requires conquering — the worlds with a playable scene. */
+const AVAILABLE_ZONE_IDS = ZONES.filter((zone) => zone.status === 'available').map((zone) => zone.id)
+/**
+ * Sequential-unlock chain over the **available** worlds, in conquest order
+ * (ADR 0005). Filtering to available zones is essential: a `locked` world
+ * (no scene yet) can never be conquered, so leaving it in the chain would gate
+ * every later world behind it forever — making the campaign unwinnable. Locked
+ * worlds therefore "do not block the achievable victory" (ADR 0005); they slot
+ * back into the chain automatically when they flip to `available`.
+ */
+const CONQUEST_CHAIN = ZONE_CONQUEST_ORDER.filter((id) => AVAILABLE_ZONE_IDS.includes(id))
+/** Number of worlds the player must conquer to win (data-driven, ADR 0005). */
+const WORLD_COUNT = AVAILABLE_ZONE_IDS.length
+/** Display name of the first campaign world (the New-Game spawn). */
+const FIRST_ZONE = ZONES.find((zone) => zone.id === ZONE_CONQUEST_ORDER[0])
+const FIRST_ZONE_NAME = FIRST_ZONE?.displayName ?? 'Forest'
+const FIRST_ZONE_QUOTA = ZONE_CARAVAN_QUOTAS[ZONE_CONQUEST_ORDER[0]]
 
 /**
  * App shell: a full-viewport stage holding the 3D canvas with React overlays
@@ -101,8 +131,7 @@ export function App() {
   const goldBalance = useAppSelector(selectGold)
   const playerFactionId = useAppSelector(selectPlayerFactionId)
   const progression = useAppSelector((state) => state.progression)
-  const caravansRaided = useAppSelector((state) => state.game.caravansRaided)
-  const objectiveTarget = useAppSelector((state) => state.game.objectiveTarget)
+  const caravansRaidedByZone = useAppSelector(selectCaravansRaidedByZone)
   const isLoadingAssets = useAppSelector(selectIsStreamingLoading)
   const isBleeding = useAppSelector(selectIsBleeding)
   const hasHalfScreenBlackout = useAppSelector(selectHasHalfScreenBlackout)
@@ -113,6 +142,19 @@ export function App() {
   // as "defend" to a Palace Guard and "raid" to an Elf/Villain. Flavour/direction
   // only — the win condition stays the caravan-raid count below.
   const zoneDirective = getZoneDirective(zoneId, playerFactionId)
+
+  // World-conquest progress (ADR 0005), derived from the per-zone raid map: how
+  // many available worlds are conquered, and the current zone's raid progress
+  // toward its quota — surfaced on the objective HUD.
+  const conqueredWorlds = AVAILABLE_ZONE_IDS.filter((id) =>
+    isZoneConquered(id, caravansRaidedByZone, ZONE_CARAVAN_QUOTAS),
+  ).length
+  const currentZoneName = ZONES.find((zone) => zone.id === zoneId)?.displayName ?? 'Zone'
+  const currentZoneQuota = ZONE_CARAVAN_QUOTAS[zoneId as ZoneId] ?? 0
+  const currentZoneRaided = Math.min(caravansRaidedByZone[zoneId] ?? 0, currentZoneQuota)
+  // Sequentially-unlocked worlds (ADR 0005): the next world opens once the prior
+  // is conquered. Gates fast-travel in the world map below.
+  const unlockedZones = unlockedZoneIds(CONQUEST_CHAIN, caravansRaidedByZone, ZONE_CARAVAN_QUOTAS)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const onboardingPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
@@ -210,13 +252,14 @@ export function App() {
   useEffect(() => {
     if (phase !== 'playing') return
     const outcome = evaluateOutcome({
-      caravansRaided,
-      target: objectiveTarget,
+      raidedByZone: caravansRaidedByZone,
+      quotas: ZONE_CARAVAN_QUOTAS,
+      availableZoneIds: AVAILABLE_ZONE_IDS,
       playerDead: health.current <= 0,
     })
     if (outcome === 'won') dispatch(winGame())
     else if (outcome === 'lost') dispatch(loseGame())
-  }, [phase, caravansRaided, objectiveTarget, health.current, dispatch])
+  }, [phase, caravansRaidedByZone, health.current, dispatch])
 
   // Bleed-out: while a wound is untreated and the game is live, drain HP each
   // second. tickInjuries funnels the damage into the health system, so an
@@ -230,8 +273,22 @@ export function App() {
 
   // Latest player scalars, read at autosave time without re-arming the pause
   // effect every time health/zone change.
-  const snapshotRef = useRef({ health, zoneId, inventory, playerFactionId, progression })
-  snapshotRef.current = { health, zoneId, inventory, playerFactionId, progression }
+  const snapshotRef = useRef({
+    health,
+    zoneId,
+    inventory,
+    playerFactionId,
+    progression,
+    caravansRaidedByZone,
+  })
+  snapshotRef.current = {
+    health,
+    zoneId,
+    inventory,
+    playerFactionId,
+    progression,
+    caravansRaidedByZone,
+  }
 
   const refreshSaveMeta = useCallback(async () => {
     try {
@@ -270,10 +327,24 @@ export function App() {
     if (phase !== 'paused') return
     const transform = readPlayerTransform()
     if (!transform) return
-    const { health: hp, zoneId: zone, inventory: inv, playerFactionId: faction, progression: prog } =
-      snapshotRef.current
+    const {
+      health: hp,
+      zoneId: zone,
+      inventory: inv,
+      playerFactionId: faction,
+      progression: prog,
+      caravansRaidedByZone: byZone,
+    } = snapshotRef.current
     void saveGame(
-      { transform, health: hp, zoneId: zone, inventory: inv, playerFactionId: faction, progression: prog },
+      {
+        transform,
+        health: hp,
+        zoneId: zone,
+        inventory: inv,
+        playerFactionId: faction,
+        progression: prog,
+        caravansRaidedByZone: byZone,
+      },
       Date.now(),
       { slot: activeSlot },
     )
@@ -368,8 +439,10 @@ export function App() {
   // destination scene, which consumes the staged spawn on boot (`takeSpawn`).
   const onTravel = useCallback(
     (target: ZoneId) => {
-      const result = planTravel(snapshotRef.current.zoneId, target)
-      if (!result.ok) return // locked/current are already disabled in the UI
+      const snap = snapshotRef.current
+      const unlocked = unlockedZoneIds(CONQUEST_CHAIN, snap.caravansRaidedByZone, ZONE_CARAVAN_QUOTAS)
+      const result = planTravel(snap.zoneId, target, unlocked)
+      if (!result.ok) return // locked/current/not-yet-unlocked are already disabled in the UI
       setTraveling(true)
       stageSpawn(result.plan.spawn)
       dispatch(setZone(target))
@@ -427,6 +500,7 @@ export function App() {
       dispatch(setPlayerFaction(data.playerFactionId))
       dispatch(restoreProgression(data.progression))
       dispatch(resetRun())
+      dispatch(restoreRunProgress(data.caravansRaidedByZone))
       dispatch(continueGame())
     },
     [dispatch],
@@ -517,7 +591,9 @@ export function App() {
       {isLoadingAssets ? <p className="hud-loading">Loading…</p> : null}
       {showOnboardingIntro && phase === 'playing' ? (
         <OnboardingIntroCard
-          objectiveTarget={objectiveTarget}
+          worldCount={WORLD_COUNT}
+          firstZoneName={FIRST_ZONE_NAME}
+          firstZoneQuota={FIRST_ZONE_QUOTA}
           dismissButtonRef={onboardingPrimaryActionRef}
           onDismiss={() => dispatch(dismissOnboardingIntro())}
         />
@@ -559,14 +635,14 @@ export function App() {
           </div>
           <p
             className="hud-objective"
-            aria-label={`Objective: raid ${objectiveTarget} caravans — ${Math.min(
-              caravansRaided,
-              objectiveTarget,
-            )} done`}
+            aria-label={`Objective: conquer the worlds — ${conqueredWorlds} of ${WORLD_COUNT} conquered. ${currentZoneName}: ${currentZoneRaided} of ${currentZoneQuota} caravans raided.`}
           >
-            <span className="hud-objective-label">Raid caravans</span>
+            <span className="hud-objective-label">Worlds conquered</span>
             <span className="hud-objective-count">
-              {Math.min(caravansRaided, objectiveTarget)}/{objectiveTarget}
+              {conqueredWorlds}/{WORLD_COUNT}
+            </span>
+            <span className="hud-objective-zone">
+              {currentZoneName} {currentZoneRaided}/{currentZoneQuota}
             </span>
           </p>
           {/* Standing objective banner — a persistent note, not a live status
@@ -608,8 +684,8 @@ export function App() {
           />
           <Minimap
             phase={phase}
-            objectiveDone={caravansRaided}
-            objectiveTarget={objectiveTarget}
+            objectiveDone={currentZoneRaided}
+            objectiveTarget={currentZoneQuota}
           />
           {phase === 'playing' ? (
             <>
@@ -655,6 +731,7 @@ export function App() {
         <WorldMap
           zones={ZONES}
           currentZoneId={zoneId}
+          unlockedZoneIds={unlockedZones}
           status={traveling ? 'loading' : 'idle'}
           onTravel={onTravel}
           onClose={() => {
@@ -778,11 +855,11 @@ export function App() {
           <div className="menu-panel endgame-panel">
             <p className="menu-kicker">{phase === 'won' ? 'Victory' : 'Defeated'}</p>
             <h1 id="endgame-title">
-              {phase === 'won' ? 'Korovany raided' : 'You fell in the forest'}
+              {phase === 'won' ? 'The worlds are conquered' : 'You fell in the forest'}
             </h1>
             <p className="menu-hint endgame-summary">
               {phase === 'won'
-                ? `You raided ${objectiveTarget} caravans.`
+                ? `You conquered ${conqueredWorlds} of ${WORLD_COUNT} worlds.`
                 : 'The raid is over.'}{' '}
               Final score: <strong>{score}</strong>.
             </p>

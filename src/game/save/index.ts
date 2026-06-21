@@ -68,6 +68,7 @@ export function createSaveData(snapshot: PlayerSnapshot, savedAt: number): SaveD
         survival: { ...snapshot.progression.skills.survival },
       },
     },
+    caravansRaidedByZone: { ...snapshot.caravansRaidedByZone },
     savedAt,
   }
 }

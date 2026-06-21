@@ -11,7 +11,7 @@ import { registerPlayer } from '../game/save/playerRuntime'
 import type { AssetLoadPhase } from '../game/streaming/types'
 import { appReducer, type AppPhase } from '../store/appSlice'
 import { DEFAULT_FACTION_STATE, factionReducer } from '../store/factionSlice'
-import { gameReducer, OBJECTIVE_CARAVAN_TARGET, type GameState } from '../store/gameSlice'
+import { gameReducer, type GameState } from '../store/gameSlice'
 import { healthReducer } from '../store/healthSlice'
 import { injuryReducer } from '../store/injurySlice'
 import { inventoryReducer } from '../store/inventorySlice'
@@ -32,6 +32,17 @@ vi.mock('../scenes/GameCanvas', () => ({
   GameCanvas: () => <div data-testid="game-canvas" />,
 }))
 
+// Conquering every available world (forest 3 + human-lands 5 + empire 6 +
+// mountains 8) is the win condition (ADR 0005); empire shipped a palace scene in
+// E8.1/FLO-427 and mountains in E8.2/FLO-428, so both count. Raiding a flat 3 in
+// forest alone does NOT win.
+const CONQUERED_WORLDS: Record<string, number> = {
+  forest: 3,
+  'human-lands': 5,
+  empire: 6,
+  mountains: 8,
+}
+
 function renderApp(
   initialPhase: AppPhase = 'menu',
   streamingPhases: Record<string, AssetLoadPhase> = {},
@@ -42,7 +53,7 @@ function renderApp(
   game: GameState = {
     kills: 0,
     caravansRaided: 0,
-    objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+    caravansRaidedByZone: {},
     score: 0,
   },
   progression: ProgressionState = createProgression(),
@@ -126,7 +137,7 @@ describe('<App />', () => {
     await user.click(screen.getByRole('button', { name: /Forest Elves/ }))
     await user.click(screen.getByRole('button', { name: 'Begin' }))
 
-    expect(screen.getByRole('heading', { name: 'Raid the caravans' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Conquer the worlds' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Choose your faction' })).not.toBeInTheDocument()
     expect(screen.queryByText('Paused')).not.toBeInTheDocument()
     expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
@@ -141,26 +152,26 @@ describe('<App />', () => {
     await user.click(screen.getByRole('button', { name: 'Begin' }))
     await user.click(screen.getByRole('button', { name: 'Begin raid' }))
 
-    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/Objective: raid 3 caravans/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Conquer the worlds' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Objective: conquer the worlds/)).toBeInTheDocument()
   })
 
   it('does not show the onboarding intro after restarting from the win screen', async () => {
     const user = userEvent.setup()
     renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 80, max: 100 }, createInventory(), createInjuryState(), {
       kills: 2,
-      caravansRaided: OBJECTIVE_CARAVAN_TARGET,
-      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      caravansRaided: 16,
+      caravansRaidedByZone: CONQUERED_WORLDS,
       score: 41,
     })
 
     await user.click(screen.getByRole('button', { name: 'Restart' }))
-    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Conquer the worlds' })).not.toBeInTheDocument()
   })
 
   it('does not show the onboarding intro mid-play without the flag', () => {
     renderApp('playing')
-    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Conquer the worlds' })).not.toBeInTheDocument()
   })
 
   it('returns from the faction picker to the main menu via Back', async () => {
@@ -250,26 +261,41 @@ describe('<App />', () => {
     expect(screen.queryByRole('button', { name: 'New Game' })).not.toBeInTheDocument()
   })
 
-  it('shows the win screen with the final score once the raid objective is met', () => {
+  it('shows the win screen with the final score once every world is conquered', () => {
     renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 80, max: 100 }, createInventory(), createInjuryState(), {
       kills: 2,
-      caravansRaided: OBJECTIVE_CARAVAN_TARGET,
-      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      caravansRaided: 16,
+      caravansRaidedByZone: CONQUERED_WORLDS,
       score: 41,
     })
-    expect(screen.getByRole('heading', { name: 'Korovany raided' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'The worlds are conquered' })).toBeInTheDocument()
     expect(screen.getByText(/Final score:/)).toHaveTextContent('Final score: 41.')
     expect(screen.getByRole('button', { name: 'Restart' })).toBeInTheDocument()
   })
 
-  it('shows the live raid objective counter and score while playing', () => {
+  it('does not win on a flat 3 caravans raided in one zone (conquest is per zone)', () => {
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 80, max: 100 }, createInventory(), createInjuryState(), {
+      kills: 0,
+      caravansRaided: 3,
+      // forest conquered (3) but human-lands untouched → campaign not won.
+      caravansRaidedByZone: { forest: 3 },
+      score: 20,
+    })
+    expect(screen.queryByRole('heading', { name: 'The worlds are conquered' })).not.toBeInTheDocument()
+    // Still playing: the objective HUD shows 1 of 4 worlds conquered.
+    expect(screen.getByLabelText(/Objective: conquer the worlds/)).toHaveTextContent('1/4')
+  })
+
+  it('shows the live conquest objective counter and score while playing', () => {
     renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 100, max: 100 }, createInventory(), createInjuryState(), {
       kills: 1,
       caravansRaided: 1,
-      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      caravansRaidedByZone: { forest: 1 },
       score: 17,
     })
-    expect(screen.getByLabelText(/Objective: raid 3 caravans/)).toHaveTextContent('1/3')
+    const objective = screen.getByLabelText(/Objective: conquer the worlds/)
+    expect(objective).toHaveTextContent('0/4') // no world conquered yet
+    expect(objective).toHaveTextContent('Forest 1/3') // current zone progress
     expect(screen.getByRole('group', { name: 'Score' })).toHaveTextContent('17')
   })
 
@@ -280,16 +306,18 @@ describe('<App />', () => {
     const user = userEvent.setup()
     renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 80, max: 100 }, createInventory(), createInjuryState(), {
       kills: 4,
-      caravansRaided: OBJECTIVE_CARAVAN_TARGET,
-      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      caravansRaided: 16,
+      caravansRaidedByZone: CONQUERED_WORLDS,
       score: 88,
     })
 
     await user.click(screen.getByRole('button', { name: 'Restart' }))
 
     // Back in play: the win screen is gone and the run reset to a fresh tally.
-    expect(screen.queryByRole('heading', { name: 'Korovany raided' })).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/Objective: raid 3 caravans/)).toHaveTextContent('0/3')
+    expect(screen.queryByRole('heading', { name: 'The worlds are conquered' })).not.toBeInTheDocument()
+    const objective = screen.getByLabelText(/Objective: conquer the worlds/)
+    expect(objective).toHaveTextContent('0/4')
+    expect(objective).toHaveTextContent('Forest 0/3')
     // Score panel reads 0 after the reset (kills + loot both wiped).
     expect(screen.getByRole('group', { name: 'Score' })).toHaveTextContent('0')
   })
@@ -314,7 +342,7 @@ describe('<App />', () => {
       { current: 100, max: 100 },
       createInventory(),
       createInjuryState(),
-      { kills: 0, caravansRaided: 0, objectiveTarget: OBJECTIVE_CARAVAN_TARGET, score: 0 },
+      { kills: 0, caravansRaided: 0, caravansRaidedByZone: {}, score: 0 },
       createProgression(),
       false,
       { current: 60, max: 100 },
@@ -332,7 +360,7 @@ describe('<App />', () => {
       { current: 100, max: 100 },
       createInventory(),
       createInjuryState(),
-      { kills: 0, caravansRaided: 0, objectiveTarget: OBJECTIVE_CARAVAN_TARGET, score: 0 },
+      { kills: 0, caravansRaided: 0, caravansRaidedByZone: {}, score: 0 },
       createProgression(),
       false,
       { current: 0, max: 100 },
@@ -406,7 +434,16 @@ describe('<App /> world map (E3.1-UX, FLO-390)', () => {
 
   it('fast-travels after select and confirm', async () => {
     const user = userEvent.setup()
-    const { store } = renderApp('playing')
+    // Forest must be conquered for human-lands to be sequentially unlocked (ADR 0005).
+    const { store } = renderApp(
+      'playing',
+      {},
+      DEFAULT_PLAYER_STATE,
+      { current: 100, max: 100 },
+      createInventory(),
+      createInjuryState(),
+      { kills: 0, caravansRaided: 3, caravansRaidedByZone: { forest: 3 }, score: 0 },
+    )
 
     await user.click(screen.getByRole('button', { name: /Travel/ }))
     await user.click(screen.getByRole('button', { name: /Human lands/ }))
@@ -488,7 +525,7 @@ describe('<App /> surfaced injury & score systems (MPG.6)', () => {
       full,
       { counts: { gold: 14, blade: 1 }, equippedItemId: 'blade' },
       createInjuryState(),
-      { kills: 0, caravansRaided: 0, objectiveTarget: OBJECTIVE_CARAVAN_TARGET, score: 7 },
+      { kills: 0, caravansRaided: 0, caravansRaidedByZone: {}, score: 7 },
     )
     const panel = screen.getByRole('group', { name: 'Score' })
     expect(panel).toHaveTextContent('Score')
@@ -502,7 +539,7 @@ describe('<App /> surfaced injury & score systems (MPG.6)', () => {
     renderApp('menu', {}, DEFAULT_PLAYER_STATE, full, noInventory, createInjuryState(), {
       kills: 0,
       caravansRaided: 0,
-      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      caravansRaidedByZone: {},
       score: 3,
     })
     expect(screen.queryByRole('group', { name: 'Score' })).not.toBeInTheDocument()
@@ -592,7 +629,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
       }, createInjuryState(), {
         kills: 0,
         caravansRaided: 0,
-        objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+        caravansRaidedByZone: {},
         score: 0,
       }, {
         ...createProgression(),
@@ -654,6 +691,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
         transform: { position: { x: 7, y: 1, z: 7 }, rotationY: 0 },
         health: { current: 50, max: 100 },
         zoneId: 'forest',
+        caravansRaidedByZone: {},
         inventory: { counts: { grain: 3 }, equippedItemId: null },
         playerFactionId: FACTION_IDS.Empire,
         progression: {
@@ -680,7 +718,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
 
       await user.click(cont)
 
-      expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'Conquer the worlds' })).not.toBeInTheDocument()
 
       // Resumed into play: the menu is gone and the live player was teleported.
       await waitFor(() =>
@@ -706,6 +744,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
         transform: { position: { x: 0, y: 1, z: 0 }, rotationY: 0 },
         health: { current: 50, max: 100 },
         zoneId: 'forest',
+        caravansRaidedByZone: {},
         inventory: { counts: {}, equippedItemId: null },
         playerFactionId: FACTION_IDS.Neutral,
         progression: createProgression(),

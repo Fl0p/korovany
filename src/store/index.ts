@@ -56,13 +56,14 @@ export {
 export type { FactionReputationChange, FactionReputationSet, FactionState } from './factionSlice'
 export {
   KILL_SCORE,
-  OBJECTIVE_CARAVAN_TARGET,
   raidCaravan,
   recordKill,
   resetRun,
+  restoreRunProgress,
+  selectCaravansRaidedByZone,
   selectScore,
 } from './gameSlice'
-export type { GameState } from './gameSlice'
+export type { GameState, RaidCaravanPayload } from './gameSlice'
 export {
   damagePlayer,
   healPlayer,

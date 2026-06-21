@@ -9,6 +9,12 @@ export interface WorldMapProps {
   zones: readonly ZoneDefinition[]
   /** Zone the player is currently in (gets the "You are here" marker). */
   currentZoneId: string
+  /**
+   * Zone ids unlocked by conquest progress (ADR 0005). An available zone not in
+   * this set is travel-disabled with a "Conquer the previous world" hint. Omit to
+   * leave every available zone travelable (no progression gate).
+   */
+  unlockedZoneIds?: readonly string[]
   /** Travel lifecycle for the loading / error states. */
   status?: TravelStatus
   /** Commit fast-travel to an available, non-current zone. */
@@ -26,7 +32,14 @@ export interface WorldMapProps {
  * locked, confirm/cancel, empty/loading/error states, 1280×800). Visual polish
  * tracks Iris's wireframes; this is the functional first pass.
  */
-export function WorldMap({ zones, currentZoneId, status = 'idle', onTravel, onClose }: WorldMapProps) {
+export function WorldMap({
+  zones,
+  currentZoneId,
+  unlockedZoneIds,
+  status = 'idle',
+  onTravel,
+  onClose,
+}: WorldMapProps) {
   const [selected, setSelected] = useState<ZoneId | null>(null)
   const busy = status === 'loading'
 
@@ -59,8 +72,11 @@ export function WorldMap({ zones, currentZoneId, status = 'idle', onTravel, onCl
             {zones.map((zone) => {
               const isCurrent = zone.id === currentZoneId
               const isLocked = zone.status === 'locked'
+              // Available but not yet sequentially unlocked by conquest (ADR 0005).
+              const isNotYetUnlocked =
+                !isLocked && unlockedZoneIds !== undefined && !unlockedZoneIds.includes(zone.id)
               const isSelected = zone.id === selected
-              const disabled = isCurrent || isLocked || busy
+              const disabled = isCurrent || isLocked || isNotYetUnlocked || busy
               return (
                 <li key={zone.id}>
                   <button
@@ -80,6 +96,10 @@ export function WorldMap({ zones, currentZoneId, status = 'idle', onTravel, onCl
                       <span className="worldmap-badge worldmap-badge-here">You are here</span>
                     ) : isLocked ? (
                       <span className="worldmap-badge worldmap-badge-locked">Locked</span>
+                    ) : isNotYetUnlocked ? (
+                      <span className="worldmap-badge worldmap-badge-locked">
+                        Conquer the previous world
+                      </span>
                     ) : null}
                   </button>
                 </li>

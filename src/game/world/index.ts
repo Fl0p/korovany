@@ -3,7 +3,7 @@ import { ZONE_ORDER, ZONES } from './zones'
 import type { ZoneDefinition, ZoneId } from './types'
 
 export type { Faction, ZoneDefinition, ZoneId, ZoneStatus, ZoneStreaming } from './types'
-export { ZONES, ZONE_ORDER } from './zones'
+export { ZONES, ZONE_ORDER, ZONE_CARAVAN_QUOTAS, ZONE_CONQUEST_ORDER } from './zones'
 export type {
   EncounterAnchor,
   EncounterKind,
@@ -37,7 +37,11 @@ export function isZoneAvailable(id: string): boolean {
 }
 
 /** Why a fast-travel request was rejected. */
-export type TravelError = 'unknown-zone' | 'zone-locked' | 'already-here'
+export type TravelError =
+  | 'unknown-zone'
+  | 'zone-locked'
+  | 'already-here'
+  | 'zone-not-yet-unlocked'
 
 /** A validated fast-travel: the destination zone and the spawn to teleport to. */
 export interface TravelPlan {
@@ -51,14 +55,26 @@ export type TravelResult =
 
 /**
  * Pure fast-travel resolver — the testable core of the travel action. Validates
- * that the target exists, is unlocked, and is not the current zone, then returns
- * the destination + spawn. The caller (App) performs the side effects: stage the
- * spawn on the `playerRuntime` bridge and dispatch `setZone`.
+ * that the target exists, has a playable scene, is not the current zone, and —
+ * when an `unlockedZoneIds` set is supplied — has been sequentially unlocked by
+ * conquest progress (ADR 0005). Returns the destination + spawn. The caller (App)
+ * performs the side effects: stage the spawn on the `playerRuntime` bridge and
+ * dispatch `setZone`.
+ *
+ * Passing `unlockedZoneIds` is optional: omit it to skip the progression gate
+ * (e.g. callers that have already validated unlock state).
  */
-export function planTravel(currentZoneId: string, targetZoneId: string): TravelResult {
+export function planTravel(
+  currentZoneId: string,
+  targetZoneId: string,
+  unlockedZoneIds?: readonly string[],
+): TravelResult {
   const zone = getZone(targetZoneId)
   if (!zone) return { ok: false, reason: 'unknown-zone' }
   if (zone.status !== 'available') return { ok: false, reason: 'zone-locked' }
   if (zone.id === currentZoneId) return { ok: false, reason: 'already-here' }
+  if (unlockedZoneIds && !unlockedZoneIds.includes(zone.id)) {
+    return { ok: false, reason: 'zone-not-yet-unlocked' }
+  }
   return { ok: true, plan: { zone, spawn: zone.spawn } }
 }

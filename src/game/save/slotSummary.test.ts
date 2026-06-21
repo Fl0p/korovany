@@ -21,6 +21,7 @@ const snapshot = {
   inventory: { counts: { gold: 2 }, equippedItemId: null },
   playerFactionId: FACTION_IDS.ForestElves,
   progression: { ...createProgression(), level: 3, xp: 50 },
+  caravansRaidedByZone: {},
 }
 
 describe('slot CRUD helpers', () => {

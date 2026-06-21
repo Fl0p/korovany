@@ -117,7 +117,9 @@ export function GameCanvas() {
                   const pickups = caravanLootToPickups(drop)
                   for (const pickup of pickups) dispatch(pickUpLoot(pickup))
                   const lootPoints = pickups.reduce((sum, p) => sum + p.count, 0)
-                  dispatch(raidCaravan(lootPoints))
+                  // Conquest is tracked per zone — credit the raid to the zone this
+                  // scene is mounted for (ADR 0005).
+                  dispatch(raidCaravan({ zoneId, lootPoints }))
                 },
                 onEnemyDefeated: (target) => dispatch(recordCombatKill(target)),
                 // Score each enemy soldier defeated (MPG.1).

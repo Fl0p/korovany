@@ -92,16 +92,21 @@ The top-level screen/phase the player is on.
 
 ### `gameSlice` — in-run gameplay stats
 
-The per-run win objective and running score (MPG.1). The "is this run
-won/lost?" decision is pure and lives in
+The per-run world-conquest progress and running score
+([ADR 0005](../decisions/0005-win-goal-conquest.md)). The "is this world
+conquered / is this run won/lost?" decisions are pure and live in
 [`objectiveMachine`](./objective-loop.md); this slice only holds live progress.
 
-- **State:** `{ kills, caravansRaided, objectiveTarget, score }` (`GameState`).
+- **State:** `{ kills, caravansRaided, caravansRaidedByZone, score }`
+  (`GameState`). `caravansRaidedByZone` (`Record<zoneId, number>`) is the
+  conquest progress; `caravansRaided` is the flat total kept for the score path.
 - **Actions:** `recordKill()` (a soldier fell — bumps `kills` + `KILL_SCORE`
-  points), `raidCaravan(lootPoints)` (advances the objective + adds the haul to
-  `score`), `resetRun()` (fresh game / Restart).
-- **Constants:** `OBJECTIVE_CARAVAN_TARGET` (caravans to raid to win),
-  `KILL_SCORE` (points per soldier).
+  points), `raidCaravan({ zoneId, lootPoints })` (increments that zone's conquest
+  count + the flat total, adds the haul to `score`), `restoreRunProgress(byZone)`
+  (Continue: rebuild the per-zone map from a save, recomputing the total),
+  `resetRun()` (fresh game / Restart).
+- **Constants:** `KILL_SCORE` (points per soldier). Per-world quotas live with
+  `ZONES` in `src/game/world/zones.ts` (`ZONE_CARAVAN_QUOTAS`), not here.
 - **Read via:** `useAppSelector((s) => s.game.score)` / `selectScore`, or the
   raw counters off `s.game`.
 

@@ -20,8 +20,11 @@
  * - v3 — added `playerFactionId` (E4.2); pre-v3 saves migrate forward as
  *   `neutral` (the unaffiliated default).
  * - v4 — added `progression` (E4.5); older saves migrate with a fresh baseline.
+ * - v5 — added `caravansRaidedByZone` (FLO-455, world-conquest goal); older saves
+ *   migrate with an empty map (no conquest progress yet — no data loss, the legacy
+ *   run had no per-zone tracking to lose).
  */
-export const SAVE_VERSION = 4
+export const SAVE_VERSION = 5
 
 import type { HealthState } from '../health'
 import type { InventoryState } from '../economy'
@@ -61,6 +64,11 @@ export interface SaveData {
   readonly playerFactionId: FactionId
   /** Character progression at save time (E4.5), sourced from `progressionSlice`. */
   readonly progression: ProgressionState
+  /**
+   * World-conquest progress at save time (FLO-455): caravans raided per zone,
+   * keyed by zone id. Sourced from `gameSlice.caravansRaidedByZone`.
+   */
+  readonly caravansRaidedByZone: Record<string, number>
   /** Epoch milliseconds when the snapshot was taken; used to pick the latest slot. */
   readonly savedAt: number
 }
@@ -88,4 +96,6 @@ export interface PlayerSnapshot {
   readonly playerFactionId: FactionId
   /** Character progression at snapshot time, sourced from `progressionSlice`. */
   readonly progression: ProgressionState
+  /** World-conquest progress at snapshot time, sourced from `gameSlice`. */
+  readonly caravansRaidedByZone: Record<string, number>
 }

@@ -15,6 +15,7 @@ const snapshot = {
   inventory: { counts: {}, equippedItemId: null },
   playerFactionId: FACTION_IDS.ForestElves,
   progression: createProgression(),
+  caravansRaidedByZone: {},
 }
 
 describe('<SaveSlotsPanel />', () => {
