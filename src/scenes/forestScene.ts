@@ -29,6 +29,7 @@ import {
   WOODEN_HUT_ASSET_ID,
   ZoneStreamingManager,
   defaultLoadGlb,
+  FOREST_HEALING_CHEST_PLACEMENTS,
   getZoneManifest,
 } from '../game/streaming'
 import {
@@ -54,6 +55,11 @@ import { CorpseManager } from './corpseManager'
 import { getZoneContent, type EncounterKind } from '../game/world'
 import { ZONE_MAPS } from '../game/world/mapProps'
 import { renderMapProps } from './mapPropsRenderer'
+import {
+  createHealingChestStates,
+  tickHealingChests,
+  type HealingChestSpec,
+} from '../game/health'
 
 /** Zone id used for the forest scene's corpse persistence. */
 export const FOREST_ZONE_ID = 'forest'
@@ -259,6 +265,8 @@ export interface ForestSceneOptions {
   heroUrl?: string | null
   /** Called when an enemy hits the player. Caller dispatches damagePlayer. */
   onPlayerDamaged?: (amount: number) => void
+  /** Called when the player stands on/near a healing chest. Caller dispatches healPlayer. */
+  onPlayerHealed?: (amount: number) => void
   /**
    * Spawn pose for the player capsule. Defaults to a staged Continue spawn
    * (`takeSpawn()`) so a loaded save lands the player where it left off, falling
@@ -385,6 +393,13 @@ export function spawnGraceDamageScale(elapsedSeconds: number): number {
   return elapsedSeconds < SPAWN_GRACE_SECONDS ? 0 : 1
 }
 
+export const FOREST_HEALING_CHEST_SPECS: readonly HealingChestSpec[] =
+  FOREST_HEALING_CHEST_PLACEMENTS.flatMap((placement, index) =>
+    placement.position
+      ? [{ id: `forest-healing-chest-${index + 1}`, position: placement.position }]
+      : [],
+  )
+
 function defaultEngineFactory(canvas: HTMLCanvasElement): Engine {
   return new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true)
 }
@@ -406,6 +421,7 @@ export function createForestScene(
     createEngine = defaultEngineFactory,
     heroUrl = DEFAULT_HERO_URL,
     onPlayerDamaged,
+    onPlayerHealed,
     initialSpawn = takeSpawn(),
     corpseStore,
     corpseGlbUrl,
@@ -600,6 +616,7 @@ export function createForestScene(
   // Melee attack state for the player (edge-triggered on intent.attack).
   let meleeState = createMeleeAttack()
   let prevAttack = false
+  let healingChestStates = createHealingChestStates(FOREST_HEALING_CHEST_SPECS)
 
   // Minimap radar (FLO-449): publish a top-down snapshot to the HUD bridge,
   // throttled to ~10 Hz so the bottom-screen radar tracks the player + caravans
@@ -697,6 +714,18 @@ export function createForestScene(
 
     loop.advance(dt)
     clampToWorld(controller.mesh.position) // contain the player within the world bounds
+
+    if (onPlayerHealed) {
+      const playerPos = controller.mesh.position
+      const healing = tickHealingChests(
+        FOREST_HEALING_CHEST_SPECS,
+        healingChestStates,
+        { x: playerPos.x, y: playerPos.y, z: playerPos.z },
+        dt,
+      )
+      healingChestStates = healing.states
+      if (healing.healAmount > 0) onPlayerHealed(healing.healAmount)
+    }
 
     // Minimap radar tick — throttled to ~10 Hz off the accumulated sim time so
     // the HUD radar updates without a per-frame snapshot (FLO-449).

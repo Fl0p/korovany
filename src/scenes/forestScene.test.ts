@@ -7,6 +7,7 @@ import {
   FOREST_CARGO_CRATE_ASSET_ID,
   FOREST_CARAVAN_WAGON_ASSET_ID,
   FOREST_CHEST_ASSET_ID,
+  FOREST_HEALING_CHEST_SPECS,
   FOREST_STATIC_ELF_ASSET_ID,
   FOREST_TREE_ASSET_ID,
   FOREST_SPAWN_PROP_SPECS,
@@ -32,6 +33,7 @@ import { CorpseStore } from '../game/corpses'
 import { onAttack, onShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { DEFAULT_SOLDIER_PARAMS } from '../game/ai'
+import { HEALING_CHEST_AMOUNT, HEALING_CHEST_COOLDOWN_SECONDS } from '../game/health'
 
 // jsdom has no WebGL, so inject a headless NullEngine and skip hero/asset GLB
 // fetches. Asserts the scene wires the ground, controller, and streaming loader.
@@ -318,6 +320,40 @@ describe('createForestScene — caravan loot loop (E3.5)', () => {
     game.dispose()
   })
 
+  it('declares multiple healing chests in the forest start zone', () => {
+    expect(FOREST_HEALING_CHEST_SPECS).toHaveLength(4)
+    for (const chest of FOREST_HEALING_CHEST_SPECS) {
+      expect(chest.position.y).toBe(0)
+    }
+  })
+
+  it('emits reusable healing pulses when the player stands on a chest', () => {
+    takeSpawn()
+    const onPlayerHealed = vi.fn()
+    const [chest] = FOREST_HEALING_CHEST_SPECS
+    const game = createForestScene(document.createElement('canvas'), {
+      heroUrl: null,
+      createEngine: () => new NullEngine(),
+      onPlayerHealed,
+      initialSpawn: {
+        position: { x: chest.position.x, y: 2, z: chest.position.z },
+        rotationY: 0,
+      },
+    })
+
+    game.step(0)
+    expect(onPlayerHealed).toHaveBeenCalledWith(HEALING_CHEST_AMOUNT)
+    onPlayerHealed.mockClear()
+
+    game.step(0.1)
+    expect(onPlayerHealed).not.toHaveBeenCalled()
+
+    game.step(HEALING_CHEST_COOLDOWN_SECONDS)
+    expect(onPlayerHealed).toHaveBeenCalledWith(HEALING_CHEST_AMOUNT)
+
+    game.dispose()
+  })
+
   it('emits the rolled loot exactly once when the caravan is defeated', () => {
     const onCaravanLooted = vi.fn()
     const game = createForestScene(document.createElement('canvas'), {
@@ -403,21 +439,25 @@ describe('forest safe spawn & difficulty curve (FLO-412)', () => {
   // 13 m closest approach, outside the 10 m detection radius — and the wander is
   // deterministic, so the full ≥ 30 s window is provably and reproducibly safe.
   // Restored to the real acceptance bound the band-aid had shrunk.
-  it('keeps a New Game player unharmed for 30+ s of idle play (survivable spawn)', () => {
-    takeSpawn() // New Game → clearing centre (0,2,0)
-    const onPlayerDamaged = vi.fn()
-    const game = createForestScene(document.createElement('canvas'), {
-      heroUrl: null,
-      createEngine: () => new NullEngine(),
-      onPlayerDamaged,
-    })
+  it(
+    'keeps a New Game player unharmed for 30+ s of idle play (survivable spawn)',
+    () => {
+      takeSpawn() // New Game → clearing centre (0,2,0)
+      const onPlayerDamaged = vi.fn()
+      const game = createForestScene(document.createElement('canvas'), {
+        heroUrl: null,
+        createEngine: () => new NullEngine(),
+        onPlayerDamaged,
+      })
 
-    // 1900 frames ≈ 31.7 s at the fixed 1/60 step.
-    for (let i = 0; i < 1900; i++) game.step(1 / 60)
-    expect(onPlayerDamaged).not.toHaveBeenCalled()
+      // 1900 frames ≈ 31.7 s at the fixed 1/60 step.
+      for (let i = 0; i < 1900; i++) game.step(1 / 60)
+      expect(onPlayerDamaged).not.toHaveBeenCalled()
 
-    game.dispose()
-  })
+      game.dispose()
+    },
+    15000,
+  )
 
   // Acceptance (FLO-412): the player can walk to a caravan without dying. The
   // nearest caravan (`caravan-1`, (-8,-6), 10 m) sits inside the soldier-free

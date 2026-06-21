@@ -21,7 +21,7 @@ import type { ZoneAssetPlacement, ZoneManifest } from './zoneStreaming'
 export const FOREST_TREE_ASSET_ID = 'env.forest-tree'
 /** Wooden hut placed at the edge of the forest clearing (FLO-299). */
 export const WOODEN_HUT_ASSET_ID = 'env.wooden-hut'
-/** Static loot chest tucked into the forest as visible leftover decor (FLO-470). */
+/** Healing chest tucked into the forest as visible recovery pickup decor (FLO-473). */
 export const FOREST_CHEST_ASSET_ID = 'prop.forest-chest'
 /** Static cargo crate used as forest caravan-camp decor (FLO-470). */
 export const FOREST_CARGO_CRATE_ASSET_ID = 'prop.forest-cargo-crate'
@@ -53,17 +53,36 @@ const FOREST_HUT_POSITIONS: readonly [number, number][] = [
   [-7, 15],
 ]
 
+export const FOREST_HEALING_CHEST_PLACEMENTS: readonly ZoneAssetPlacement[] = [
+  {
+    assetId: FOREST_CHEST_ASSET_ID,
+    position: { x: -2.6, y: 0, z: -6.8 },
+    rotationY: -0.35,
+  },
+  {
+    assetId: FOREST_CHEST_ASSET_ID,
+    position: { x: 4.8, y: 0, z: 4.6 },
+    rotationY: 1.2,
+  },
+  {
+    assetId: FOREST_CHEST_ASSET_ID,
+    position: { x: -10.2, y: 0, z: 9.7 },
+    rotationY: 0.25,
+  },
+  {
+    assetId: FOREST_CHEST_ASSET_ID,
+    position: { x: 13.2, y: 0, z: -4.4 },
+    rotationY: -1.1,
+  },
+]
+
 const FOREST_LEFTOVER_PLACEMENTS: readonly ZoneAssetPlacement[] = [
   {
     assetId: FOREST_CARAVAN_WAGON_ASSET_ID,
     position: { x: -5.5, y: 0, z: -9 },
     rotationY: Math.PI / 2,
   },
-  {
-    assetId: FOREST_CHEST_ASSET_ID,
-    position: { x: -2.6, y: 0, z: -6.8 },
-    rotationY: -0.35,
-  },
+  ...FOREST_HEALING_CHEST_PLACEMENTS,
   {
     assetId: FOREST_CARGO_CRATE_ASSET_ID,
     position: { x: -7.4, y: 0, z: -6.1 },

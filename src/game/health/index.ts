@@ -37,3 +37,12 @@ export {
   resolveDismemberment,
   shouldSever,
 } from './dismemberment'
+export type { HealingChestSpec, HealingChestState, HealingChestTick } from './healingChest'
+export {
+  HEALING_CHEST_AMOUNT,
+  HEALING_CHEST_COOLDOWN_SECONDS,
+  HEALING_CHEST_RADIUS,
+  createHealingChestStates,
+  isInsideHealingChest,
+  tickHealingChests,
+} from './healingChest'
