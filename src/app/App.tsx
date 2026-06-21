@@ -50,6 +50,8 @@ import {
   restoreProgression,
   returnToMenu,
   purchaseProsthetic,
+  equip,
+  unequipItem,
   selectHasHalfScreenBlackout,
   selectGold,
   selectInjury,
@@ -570,7 +572,11 @@ export function App() {
               <span className="hud-score-value">{lootCount}</span>
             </span>
           </div>
-          <InventoryPanel inventory={inventory} />
+          <InventoryPanel
+            inventory={inventory}
+            onEquipItem={(itemId) => dispatch(equip(itemId))}
+            onUnequipItem={() => dispatch(unequipItem())}
+          />
           {phase === 'playing' ? (
             <>
               <button

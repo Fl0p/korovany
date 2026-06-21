@@ -9,6 +9,7 @@
 export {
   ITEMS,
   BANDAGE_ITEM_ID,
+  WHEELCHAIR_ITEM_ID,
   getItemDef,
   itemName,
   isEquippable,

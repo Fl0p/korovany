@@ -7,6 +7,7 @@ import {
   recordCombatKill,
   recordKill,
   selectLocomotionSpeedMultiplier,
+  selectLocomotionMode,
   severPlayerLimb,
   store,
   useAppDispatch,
@@ -125,6 +126,7 @@ export function GameCanvas() {
                 // straight off the store singleton — a per-frame getter, not a
                 // React-reactive value.
                 getSpeedMultiplier: () => selectLocomotionSpeedMultiplier(store.getState()),
+                getLocomotionMode: () => selectLocomotionMode(store.getState()),
               })
             : createGameEngine(canvas, {
                 onAssetLoadingState: (id, phase) => dispatch(setAssetPhase({ id, phase })),

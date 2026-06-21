@@ -10,6 +10,7 @@ import {
 import type { System } from '../loop'
 import type { Intent } from '../input'
 import type { PlayerTransform } from '../save/types'
+import type { LocomotionMode } from '../health/locomotion'
 import {
   DEFAULT_MOVEMENT_PARAMS,
   type MovementParams,
@@ -50,6 +51,11 @@ export interface CharacterControllerOptions {
    * Defaults to a constant `1` — no injury, full speed.
    */
   readonly getSpeedMultiplier?: () => number
+  /**
+   * Active leg-loss locomotion pose for the procedural animator (E6.1.5).
+   * Defaults to `'normal'`.
+   */
+  readonly getLocomotionMode?: () => LocomotionMode
   /** Movement tuning. Defaults to {@link DEFAULT_MOVEMENT_PARAMS}. */
   readonly params?: MovementParams
   /** Spawn position of the capsule origin (centre). Default `(0, 1, 0)`. */
@@ -80,6 +86,7 @@ export class CharacterController implements System {
   private readonly scene: Scene
   private readonly getIntent: () => Intent
   private readonly getSpeedMultiplier: () => number
+  private readonly getLocomotionMode: () => LocomotionMode
   private readonly params: MovementParams
   private readonly groundProbe: number
   private readonly isGround: (mesh: AbstractMesh) => boolean
@@ -92,6 +99,7 @@ export class CharacterController implements System {
     this.camera = options.camera ?? null
     this.getIntent = options.getIntent
     this.getSpeedMultiplier = options.getSpeedMultiplier ?? (() => 1)
+    this.getLocomotionMode = options.getLocomotionMode ?? (() => 'normal')
     this.groundProbe = options.groundProbe ?? 0.4
 
     const height = options.capsuleHeight ?? 1.8
@@ -201,6 +209,7 @@ export class CharacterController implements System {
       speed: dir.x !== 0 || dir.z !== 0 ? 4 : 0,
       attackPhase: this.attackPhase,
       isDead: this.dead,
+      locomotionMode: this.getLocomotionMode(),
     })
   }
 
