@@ -18,6 +18,7 @@ are mirrored into Redux so the HUD can show “Loading…”.
 | `streamedInstance.ts`   | `spawnStreamedInstance` — placeholder → model swap (error-safe).     |
 | `zoneStreaming.ts`      | `ZoneStreamingManager` — load a zone's content on entry, dispose the zone left behind (FLO-333). |
 | `treeImpostor.ts`       | `attachTreeImpostor` — billboard LOD for distant trees with anti-pop hysteresis + `measureLODRender` (FLO-394/393). |
+| `instancedVegetation.ts` | `createInstancedVegetation` — thin-instance a tree GLB across many placements (one draw call per submesh) + `measureVegetationDrawCalls` (FLO-396). |
 | `index.ts`              | `createAssetStreaming` factory + public barrel.                      |
 
 Babylon imports are isolated to the loader glue and placeholder helpers; the
@@ -187,6 +188,55 @@ deterministic even under `NullEngine`. The `?dev=impostor` benchmark scene
 (`src/scenes/impostorBench.ts`) plants a 16×16 grid (256 trees) sharing one
 baked texture and logs the full-detail vs. impostor cost to the console and
 `window.__korovanyImpostorBench`.
+
+## Instanced vegetation (thin-instances, E5.3)
+
+Impostors cut *triangles* far away; they do nothing for the *draw-call* cost of a
+dense forest. Cloning a tree GLB once per position gives one draw call **per
+submesh per tree** — a 256-tree forest of a 2-submesh tree is 512 draw calls, and
+draw-call submission (not triangle count) is the CPU bottleneck on mid hardware.
+`createInstancedVegetation(root, model.meshes, placements)` packs every copy of
+each submesh into a single Babylon **thin-instance** matrix buffer, so the whole
+scatter renders in **one draw call per submesh** regardless of count.
+
+```ts
+import { createInstancedVegetation, measureVegetationDrawCalls } from '../game/streaming'
+
+const tree = await loadModel(scene, '/models/forest-tree.glb', { targetSize: 4 })
+const forest = createInstancedVegetation(tree.root, tree.meshes, [
+  { position: { x: 0, y: 0, z: 0 } },
+  { position: { x: 6, y: 0, z: 0 }, rotationY: Math.PI / 2, scale: 1.2 },
+  // …one entry per tree
+])
+measureVegetationDrawCalls(forest) // { trees, naiveDrawCalls, instancedDrawCalls, drawCallReduction }
+// …on teardown:
+forest.dispose()
+```
+
+**Mechanism — matrix composition.** Babylon composes a thin instance at render
+time as `finalWorld = meshWorldMatrix × instanceBuffer`. A tree GLB is a
+hierarchy (trunk + canopy submeshes under a transform root), so each submesh
+carries a non-trivial pose relative to the root. `createInstancedVegetation`
+captures that pose (`protoLocal = submeshWorld · rootWorld⁻¹`), **re-homes each
+submesh to an identity world matrix**, and bakes `protoLocal · placement` into the
+per-instance buffer — so with the mesh world identity, `finalWorld =
+instanceBuffer` is exactly the placed submesh. The now-empty transform root is
+disposed; the source submeshes *become* the instanced batch. `staticBuffer`
+defaults to `true` (the scatter is fixed once placed).
+
+**Relationship to impostors.** The two layers attack different costs and don't
+compose for free: Babylon resolves LOD per-mesh, but a thin-instance batch shares
+one mesh, so per-instance impostor LOD over a batch is a later concern (E5.4 perf
+budget — the natural shape is distance-bucketed batches: a near full-geometry
+batch and a far billboard batch). This module is the batching primitive on its
+own.
+
+**Measuring the win.** `measureVegetationDrawCalls(forest)` is pure arithmetic
+over the handle (`naiveDrawCalls = submeshes × trees` vs. `instancedDrawCalls =
+submeshes`), so it is deterministic under `NullEngine`. The `?dev=vegetation`
+benchmark scene (`src/scenes/vegetationBench.ts`) plants a 16×16 grid (256 trees)
+as one batch and logs the reduction to the console and
+`window.__korovanyVegetationBench`.
 
 ## HUD wiring
 

@@ -26,6 +26,14 @@ export {
   type TreeImpostorOptions,
   type LODRenderStats,
 } from './treeImpostor'
+export {
+  createInstancedVegetation,
+  measureVegetationDrawCalls,
+  type InstancedVegetation,
+  type InstancedVegetationOptions,
+  type VegetationPlacement,
+  type VegetationDrawCallStats,
+} from './instancedVegetation'
 export type { AssetLoadPhase, AssetMetadata, AssetRecord } from './types'
 
 import type { Scene } from '@babylonjs/core'

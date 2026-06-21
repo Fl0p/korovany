@@ -17,6 +17,7 @@ import { createCaravanPlayground } from './caravanPlayground'
 import { createControllerPlayground } from './controllerPlayground'
 import { createForestScene } from './forestScene'
 import { createImpostorBench } from './impostorBench'
+import { createVegetationBench } from './vegetationBench'
 import { createOrdersPlayground } from './ordersPlayground'
 import { createZoneScene } from './zoneScenes'
 
@@ -30,6 +31,7 @@ import { createZoneScene } from './zoneScenes'
  * - `?dev=caravan`    — caravan ambush playground (E3.3 QA)
  * - `?dev=orders`     — commander/order playground (E4.3 QA)
  * - `?dev=impostor`   — dense-forest tree-impostor benchmark (E5.1 QA)
+ * - `?dev=vegetation` — dense-forest thin-instance benchmark (E5.3 QA)
  * - `phase === menu`  — engine smoke scene (hero preview, streaming HUD)
  * - `phase === playing | paused` — the active zone's scene, keyed by
  *   `playerSlice.zoneId` (E3.1). Fast-travel changes `zoneId`, which remounts
@@ -71,6 +73,8 @@ export function GameCanvas() {
             ? createForestScene(canvas)
           : dev === 'impostor'
             ? createImpostorBench(canvas)
+          : dev === 'vegetation'
+            ? createVegetationBench(canvas)
             : inGame
             ? createZoneScene(zoneId, canvas, {
                 onPlayerDamaged: (amount) => dispatch(damagePlayer(amount)),
