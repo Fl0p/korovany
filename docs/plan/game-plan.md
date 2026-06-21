@@ -297,8 +297,8 @@ Epic: **[FLO-349](/FLO/issues/FLO-349)** — all 5 tasks merged to `main`.
 
 Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 
-- **E5.1 Tree impostors** `[~]` — **FLO-392** (Prospero, in_progress) — billboard sprites for distant trees via `Mesh.addLODLevel`.
-- **E5.2 Impostor→3D promotion** `[~]` — **FLO-393** (Orion, in_progress, blocked by E5.1) — hysteresis (LOD_IN/LOD_OUT thresholds).
+- **E5.1 Tree impostors** `[x]` — **FLO-392** (Prospero, done) — billboard sprites for distant trees via `Mesh.addLODLevel`.
+- **E5.2 Impostor→3D promotion** `[x]` — **FLO-393** (Orion, done) — hysteresis (LOD_IN/LOD_OUT thresholds). **Merged & deployed** (PR #73, `main` @ `lod-manager` branch, 616 tests green). Implements dynamic LOD switching with configurable thresholds and hysteresis to prevent flickering.
 - **E5.3 Instanced vegetation** `[ ]` — thin-instances for dense forest at frame budget.
 - **E5.4 Performance budget & profiling** `[ ]` — keep 60fps target on mid hardware; document budgets.
 
