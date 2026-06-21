@@ -236,7 +236,8 @@ body {
 }
 
 .menu-overlay,
-.pause-overlay {
+.pause-overlay,
+.onboarding-overlay {
   position: absolute;
   inset: 0;
   display: grid;
@@ -315,6 +316,69 @@ body {
 
 .pause-overlay {
   background: rgba(6, 10, 14, 0.38);
+}
+
+/* MPG.2 onboarding intro — reuses menu panel chrome; slightly wider for controls. */
+.onboarding-overlay {
+  background: rgba(6, 10, 14, 0.58);
+}
+
+.onboarding-panel {
+  width: min(28rem, calc(100vw - 2rem));
+}
+
+.onboarding-lead {
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: #d1d9e0;
+}
+
+.onboarding-section {
+  margin-top: 1rem;
+}
+
+.onboarding-section h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #c7d2a2;
+}
+
+.onboarding-section p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #aeb9c4;
+}
+
+.onboarding-controls {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: #d1d9e0;
+}
+
+.onboarding-controls li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.onboarding-controls kbd {
+  min-width: 1.35rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Win/lose screens (MPG.1). Reuse the menu panel; only the backdrop tint and

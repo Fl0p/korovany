@@ -46,6 +46,7 @@ export default defineConfig({
           { text: 'Caravans', link: '/guide/caravans' },
           { text: 'Objective & win/lose loop', link: '/guide/objective-loop' },
           { text: 'Procedural animation', link: '/guide/procedural-animation' },
+          { text: 'Onboarding intro', link: '/guide/onboarding' },
           { text: 'Seeded RNG', link: '/guide/seeded-rng' },
           { text: 'Faction system', link: '/guide/faction-system' },
           { text: 'Character progression', link: '/guide/character-progression' },

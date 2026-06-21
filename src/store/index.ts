@@ -32,6 +32,7 @@ export const useAppSelector = useSelector.withTypes<RootState>()
 
 export {
   continueGame,
+  dismissOnboardingIntro,
   loseGame,
   returnToMenu,
   startNewGame,

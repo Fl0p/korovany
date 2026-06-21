@@ -78,8 +78,9 @@ callbacks that `GameCanvas` adapts into dispatches:
 ## HUD
 
 While playing/paused the HUD shows the objective counter (`Raid caravans — X / 3`)
-and the running `Score`. The win and lose screens reuse the menu/pause overlay
-chrome with win- and lose-tinted accents.
+and the running `Score`. Fresh runs from the faction picker also show the
+[onboarding intro](onboarding.md) overlay before play begins (MPG.2). The win and
+lose screens reuse the menu/pause overlay chrome with win- and lose-tinted accents.
 
 ## Tests
 
