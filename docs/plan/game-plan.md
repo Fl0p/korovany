@@ -326,9 +326,9 @@ one at a time as predecessors land (no speculative spawns).
     crawl (slow) or wheelchair (item); leg prosthetic restores normal gait. Wires
     into the movement controller.
   - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[x]` ✅ — **[FLO-424](/FLO/issues/FLO-424)** (Aldric, done) — buy/fit hand·leg·eye prosthetics through the existing economy/transactions system; fitting clears the injury penalty. Closes the dismemberment counterplay loop and subsumes E6.1.4.
-- **E6.2 Audio** `[x]` ✅ — footsteps + forest ambience (FLO-401), combat SFX via
-  the `damageEvents` bridge (MPG.4/FLO-383), UI click/hover cues + per-zone
-  ambience beds — **[FLO-433](/FLO/issues/FLO-433)** (Soren, done).
+- **E6.2 Audio** `[~ partial]` — footsteps + forest ambience shipped (FLO-401) and
+  combat SFX via the `damageEvents` bridge (MPG.4/FLO-383). Remaining: **E6.2.x UI
+  click cues + ambient music bed** — **[FLO-433](/FLO/issues/FLO-433)** (Soren, backlog).
 - **E6.3 Quests / objectives** `[~]` — **[FLO-429](/FLO/issues/FLO-429)** (Wayland, backlog) — per-faction objective chains (elf raids,
   palace-guard commander orders, villain free-command). Builds on the objective
   machine + commander/order system (E4.3).
@@ -414,6 +414,106 @@ faction/commander systems (Phase 4) — widen, don't re-architect.
 - **E8.2 Mountains zone — villain fort scene** `[~]` — **[FLO-428](/FLO/issues/FLO-428)** (Aldric, todo — just activated).
 - **Asset — ranged-enemy + Empire palace-guard GLBs** `[x]` ✅ — **[FLO-426](/FLO/issues/FLO-426)** (done, `92f652a`) — two textured low-poly v1.2 GLBs: archer archetype + Empire palace-guard; feeds E8 zones + E6.3 quests.
 
+### Phase 9 — World atmosphere & art pass (make it read *finished*) `[ ]`
+
+Epic: **TBD** — to be opened as a child of FLO-273 **after r41 board approval**.
+
+> **Why this phase exists.** Every playability audit so far (FLO-355, FLO-409)
+> reached the same verdict on presentation, not mechanics: "barren, untextured
+> world presence… first impression reads unfinished." The systems work; the world
+> doesn't yet *look* like a world. Phase 8 adds the two missing zones as
+> *playable*; this phase makes all four read as distinct, atmospheric places. It is
+> **Iris-gated** (art direction / visual-truth) and **Pygmalion-fed** (assets),
+> with engineers wiring the systems. It deepens the v1.2 low-poly language — it
+> does not abandon it.
+
+Design thesis: a player crossing from Forest to Empire to Mountains should *feel*
+the change — palette, light, skybox, props, ambient sound — without a loading
+screen telling them. Each zone gets a legible identity; the texture-every-model
+mandate (FLO-330) is enforced across every **live** entity (the grey soldier bug
+must never recur).
+
+- **E9.1 Per-zone biome identity** `[ ]` — palette + fog + ground material + skybox
+  per zone (forest green/overcast, human-lands warm/open, empire stone/gold,
+  mountains cold/slate). Driven from the zone registry, no per-scene hardcoding.
+- **E9.2 Time-of-day & directional lighting moods** `[ ]` — a single configurable
+  sun/ambient rig per zone (not a live day-night clock yet); shadows budgeted for
+  the Pi/browser target. Two-way door toward a full cycle in Phase 10.
+- **E9.3 Ambient particle & weather systems** `[ ]` — dust motes, falling leaves,
+  snow/rain per biome via Babylon's native particle system, instanced and budgeted
+  against the Phase-5 perf budget.
+- **E9.4 Texture-every-live-entity audit** `[ ]` — sweep every entity that renders
+  in a shipped scene (soldiers, archers, caravans, props, player) and confirm a
+  textured v1.2 material; close any grey-mesh gaps. Adds a test/asset-catalog check
+  so a future un-textured mesh fails CI, not the next audit.
+- **E9.5 Skybox / horizon & water** `[ ]` — per-zone skybox + a cheap stylised water
+  material where a biome needs it (human-lands river, mountains tarn). Pygmalion via
+  Iris for any new art.
+
+### Phase 10 — Living world: NPCs, vendors & reputation (the Daggerfall layer) `[ ]`
+
+Epic: **TBD** — to be opened as a child of FLO-273 **after r41 board approval**.
+
+> **Why this phase exists.** The canonical brief promises a "**Daggerfall-like**
+> RPG layer: shops, buying, character progression." Phase 4 shipped the *economy
+> core* and Phase 6 the *prosthetics shop*, but the world is still populated only
+> by things that want to kill you. A Daggerfall-like layer needs **neutral life**:
+> townsfolk, vendors you choose to visit, and consequences for robbing caravans.
+> This is the phase that turns a combat arena into a *world*.
+
+Design thesis: the world should contain people who are not enemies, places worth
+visiting that aren't a fight, and a reaction to the player's signature crime
+(robbing корованы) — so the loot loop has a social cost and the towns have a point.
+
+- **E10.1 Neutral NPCs & civilian AI** `[ ]` — town/road civilians with a
+  wander/idle/flee FSM (reuses the Phase-2 AI scheduler); flee combat, never
+  aggress. Populates human-lands towns and palace courtyards.
+- **E10.2 General vendors & bartering** `[ ]` — shops beyond prosthetics (weapons,
+  armour, consumables/bandages) over the existing economy/transactions system; a
+  reusable shop UI the prosthetics shop folds into.
+- **E10.3 Reputation / notoriety system** `[ ]` — robbing caravans and killing
+  civilians raises a per-faction bounty; guards and patrols react to a wanted
+  player; pays the social cost the loot loop currently lacks. Pure Redux model +
+  AI hook, save-migrated.
+- **E10.4 Simple dialogue / interaction** `[ ]` — talk-to-NPC interaction (greet,
+  shop, rumour) via a minimal branching dialogue data format; no VO, text only.
+  **Iris-gated** for the interaction UI.
+- **E10.5 Day–night cycle (gameplay)** `[ ]` — promote E9.2's static lighting to a
+  running clock that drives NPC schedules (vendors close at night, more patrols);
+  the one place a live cycle earns its perf cost.
+
+### Phase 11 — Progression depth & replayability (horizon) `[ ]`
+
+Epic: **TBD** — **not yet decomposed.** Listed to show the tree's direction; cut
+into epics only when Phases 8–10 are landing and capacity frees. Kept deliberately
+light so the plan shows where we're heading without over-committing detail that will
+drift.
+
+> **Why this phase exists.** Phases 1–10 deliver the *whole canonical vision once
+> through*. This phase is about **reasons to play it again**: build variety,
+> equipment choice, and meta-progression. It is the "and then what?" after a player
+> wins their first faction endgame.
+
+Candidate epics (subject to revision when opened):
+
+- **E11.1 Equipment & loadouts** — weapons with distinct reach/damage/speed, armour
+  that trades mobility for protection; extends the inventory/economy systems.
+- **E11.2 Skills / perks** — a small perk tree layered on the Phase-4 progression
+  XP curve (combat / stealth / barter branches).
+- **E11.3 New Game+ & difficulty modes** — persistent unlocks, scaled enemies,
+  selectable difficulty; replay with carried-over progression.
+- **E11.4 Procedural variety** — randomised caravan routes, patrol comps and loot so
+  runs differ; bounded by the existing spawn/streaming budgets.
+- **E11.5 Stats / achievements screen** — a local (serverless) achievements + run-stats
+  surface; no backend, IndexedDB only.
+
+> **Sequencing note.** Phases 9–11 are **additive and largely parallelizable** once
+> Phase 8 lands the four-zone world: Phase 9 (art/atmosphere) is mostly Iris/Pygmalion
+> and can run alongside Phase 10 (systems/NPCs). Phase 11 is the long-horizon backlog —
+> it activates last and is decomposed just-in-time, per the rule that kept Phase 0 from
+> being built three times. None of these re-architect anything: they widen the world,
+> populate it, and give it replay value on top of the systems Phases 1–8 already prove.
+
 ## 4. Asset roadmap (gated, per-character only)
 
 Models are generated **only** on concrete tickets, via the `tools/meshy-3d`
@@ -454,9 +554,19 @@ speculative batches (FLO-270).
 
 *Revision history*
 
-- **r41** (2026-06-21) — **E6.2 audio polish landed (FLO-433).** UI click/hover cue API
-  (`uiCues.ts`), per-zone looped ambience beds, menu/faction/shop/settings wiring.
-  E6.2 now fully ✅. (Soren, merged by Daedalus)
+- **r41** (2026-06-21) — **Plan extended past world-completion: Phases 9–11 added**
+  (board ask [FLO-451](/FLO/issues/FLO-451): «развей план дальше, создай ещё пару
+  фаз»). With Phases 0–7 complete and Phase 8 (four-zone world) in flight, the tree
+  now needs direction beyond "finish the systems." Added three forward phases toward
+  the full canonical vision: **Phase 9 — World atmosphere & art pass** (per-zone biome
+  identity, lighting moods, particles/weather, texture-every-live-entity audit,
+  skybox/water; Iris-gated / Pygmalion-fed), **Phase 10 — Living world** (neutral NPCs
+  & civilian AI, general vendors/bartering, reputation/notoriety for robbing корованы,
+  simple dialogue, day–night cycle — the canonical "Daggerfall-like" social layer),
+  and **Phase 11 — Progression depth & replayability** (equipment/loadouts, perks, New
+  Game+/difficulty, procedural variety, achievements) kept as a light horizon backlog.
+  No epics/tickets cut — phases are board-gated; epics open just-in-time after approval
+  and as Phase 8 lands. (Daedalus)
 - **r40** (2026-06-21) — **Phase 6 completion wave + Phase 8 activation.** Marked done: E6.1.6 prosthetics shop ([FLO-424](/FLO/issues/FLO-424) Aldric), E6.5 save-slot UI ([FLO-431](/FLO/issues/FLO-431) Soren `a77b6f1`). Activated: [FLO-428](/FLO/issues/FLO-428) (E8.2 Mountains zone → Aldric, Aldric freed from FLO-424). Remaining backlog: FLO-429 (quests, after FLO-427), FLO-430 (leg locomotion, after FLO-424 ✅), FLO-433 (audio, Soren active). (Daedalus)
 - **r39** (2026-06-21) — **FLO-432 ranged archer merged.** Rebased + merged PR #98 (`87cbfd3`): archer FSM, line-of-sight, arrow-volley projectiles, corpse manager, 22 files, 790 tests green. FLO-422 (procedural avatar) and FLO-438 (lock-reap) cleaned up. Phase 8 backlog: FLO-427 (Empire zone), FLO-428 (Mountains), FLO-429 (quests), FLO-430 (leg locomotion), FLO-433 (audio polish) all waiting for activation. (Prospero)
 - **r38** (2026-06-21) — **Phase 6 wave landed; FLO-422 procedural avatar supersedes GLB.** Merged PR #95 (FLO-424 prosthetics shop, `9f4a3a2`), PR #96 (FLO-431 save-slot manager, `a77b6f1`), PR #97 (FLO-422 procedural avatar, `e54b4b7`); each rebased + binary-hash-verified (hero GLB stayed cfd64cf throughout). FLO-422 deliberately retires static GLB hero in favour of `playerAvatar.ts` (boxer-guard flat-shaded procedural avatar). Durable memory: CLEAN PR on busy tree ≠ safe for binary assets. 753 tests. (Prospero)
