@@ -297,9 +297,9 @@ Epic: **[FLO-349](/FLO/issues/FLO-349)** — all 5 tasks merged to `main`.
 
 Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 
-- **E5.1 Tree impostors** `[x]` — **FLO-392** (Prospero, done) — billboard sprites for distant trees via `Mesh.addLODLevel`.
-- **E5.2 Impostor→3D promotion** `[x]` — **FLO-393** (Orion, done) — hysteresis (LOD_IN/LOD_OUT thresholds). **Merged & deployed** (PR #73, `main` @ `lod-manager` branch, 616 tests green). Implements dynamic LOD switching with configurable thresholds and hysteresis to prevent flickering.
-- **E5.3 Instanced vegetation** `[ ]` — thin-instances for dense forest at frame budget.
+- **E5.1 Tree impostors** `[x]` — **FLO-392/FLO-394** (Wayland, done, `381e529`) — billboard sprites via Babylon native `mesh.addLODLevel`; `treeImpostor.ts` + bench scene.
+- **E5.2 Impostor→3D hysteresis** `[x]` — **FLO-393/FLO-395** (Wayland, done, `471df49`) — hysteresis dead-zone (`hysteresisBand`) on `treeImpostor`; parallel lodManager implementation retired by FLO-395 reconciliation.
+- **E5.3 Instanced vegetation** `[~]` — **FLO-396** (Wayland, in_progress) — thin-instances for dense forest at frame budget.
 - **E5.4 Performance budget & profiling** `[ ]` — keep 60fps target on mid hardware; document budgets.
 
 ### Phase 6 — Depth & polish `[ ]`
@@ -407,6 +407,10 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
+- **r23** (2026-06-21) — **E5.1 + E5.2 done; E5.3 instanced vegetation in flight.**
+  E5.1 tree impostors (`381e529`, FLO-394/Wayland) + E5.2 hysteresis (`471df49`, FLO-395/Wayland)
+  both merged. Parallel lodManager implementation retired by FLO-395 reconciliation.
+  E5.3 instanced vegetation cut as FLO-396 (Wayland). FLO-393 stale — board close needed. (Daedalus)
 - **r22** (2026-06-21) — **Phase 4 complete; Phase 5 LOD/forest in flight.**
   E4.1–E4.5 all confirmed merged (E4.4 economy/FLO-353 via Wayland in-flight cleanup;
   E4.5 progression `90d87b9`). Phase 5 epic **FLO-391** opened; E5.1 tree impostors
