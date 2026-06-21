@@ -44,6 +44,7 @@ function renderApp(
     score: 0,
   },
   progression: ProgressionState = createProgression(),
+  showOnboardingIntro = false,
 ) {
   const store = configureStore({
     reducer: {
@@ -58,7 +59,7 @@ function renderApp(
       streaming: streamingReducer,
     },
     preloadedState: {
-      app: { phase: initialPhase },
+      app: { phase: initialPhase, showOnboardingIntro },
       faction: DEFAULT_FACTION_STATE,
       game,
       health: { player: health },
@@ -119,9 +120,41 @@ describe('<App />', () => {
     await user.click(screen.getByRole('button', { name: /Forest Elves/ }))
     await user.click(screen.getByRole('button', { name: 'Begin' }))
 
+    expect(screen.getByRole('heading', { name: 'Raid the caravans' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Choose your faction' })).not.toBeInTheDocument()
     expect(screen.queryByText('Paused')).not.toBeInTheDocument()
     expect(screen.getByTestId('game-canvas')).toBeInTheDocument()
+  })
+
+  it('hides the onboarding intro after Begin raid is clicked', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(screen.getByRole('button', { name: 'New Game' }))
+    await user.click(screen.getByRole('button', { name: /Forest Elves/ }))
+    await user.click(screen.getByRole('button', { name: 'Begin' }))
+    await user.click(screen.getByRole('button', { name: 'Begin raid' }))
+
+    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Objective: raid 3 caravans/)).toBeInTheDocument()
+  })
+
+  it('does not show the onboarding intro after restarting from the win screen', async () => {
+    const user = userEvent.setup()
+    renderApp('playing', {}, DEFAULT_PLAYER_STATE, { current: 80, max: 100 }, createInventory(), createInjuryState(), {
+      kills: 2,
+      caravansRaided: OBJECTIVE_CARAVAN_TARGET,
+      objectiveTarget: OBJECTIVE_CARAVAN_TARGET,
+      score: 41,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Restart' }))
+    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
+  })
+
+  it('does not show the onboarding intro mid-play without the flag', () => {
+    renderApp('playing')
+    expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
   })
 
   it('returns from the faction picker to the main menu via Back', async () => {
@@ -403,6 +436,7 @@ describe('<App /> save/load (fake-indexeddb)', () => {
       await user.click(screen.getByRole('button', { name: 'New Game' }))
       await user.click(screen.getByRole('button', { name: /Villain/ }))
       await user.click(screen.getByRole('button', { name: 'Begin' }))
+      await user.click(screen.getByRole('button', { name: 'Begin raid' }))
       await user.keyboard('{Escape}')
 
       await waitFor(async () => {
@@ -445,6 +479,8 @@ describe('<App /> save/load (fake-indexeddb)', () => {
       await waitFor(() => expect(cont).toBeEnabled())
 
       await user.click(cont)
+
+      expect(screen.queryByRole('heading', { name: 'Raid the caravans' })).not.toBeInTheDocument()
 
       // Resumed into play: the menu is gone and the live player was teleported.
       await waitFor(() =>

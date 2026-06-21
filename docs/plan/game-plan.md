@@ -219,11 +219,12 @@ Pygmalion via Iris.
   objective counter + score; the forest ships a 3-caravan convoy so the goal is
   completable; win/lose overlays both Restart into a fresh run. **Merged & deployed**
   (PR #64, `main` @ 7a49855, 498 tests green).
-- **MPG.2 Onboarding & objective intro** `[ ]` — **[FLO-382](/FLO/issues/FLO-382)** (Iris)
+- **MPG.2 Onboarding & objective intro** `[x]` — **[FLO-382](/FLO/issues/FLO-382)** (Iris) /
+  **[FLO-386](/FLO/issues/FLO-386)** (Soren impl)
   Dismissible controls card (WASD/sprint/jump/F-attack/M-map) + current objective
-  on New Game. **Unblocked** (MPG.1 merged); re-cut as FLO-382 because the original
-  [FLO-364](/FLO/issues/FLO-364) was created parked (free-text blocker → no run ever
-  spawned) — FLO-364 is superseded, to cancel.
+  on New Game. **Delivered:** `OnboardingIntroCard` overlay on fresh faction-picker
+  runs; `appSlice.showOnboardingIntro` flag; skipped on Continue/Restart. Docs:
+  `docs/guide/onboarding.md`.
 - **MPG.3 Combat juice / hit feedback** `[x]` — **[FLO-367](/FLO/issues/FLO-367)** (Aldric)
   Screen shake, hit flash, floating damage numbers, death slow-mo. **Merged to `main`**
   (commit `e153e36`, PR #67). `screenShake` + `HitFlashManager` + `DeathEmphasisManager`

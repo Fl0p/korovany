@@ -4,6 +4,7 @@ import { InventoryPanel } from './InventoryPanel'
 import { DamageNumbers, type DamageNumberEntry } from './DamageNumber'
 import { onDamage } from '../game/combat/damageEvents'
 import { WorldMap } from '../components/WorldMap'
+import { OnboardingIntroCard } from '../components/OnboardingIntroCard'
 import { FactionPicker } from '../components/FactionPicker'
 import { PLAYABLE_FACTIONS, type PlayableFactionId } from '../game/faction'
 import { totalItemCount } from '../game/economy'
@@ -16,6 +17,7 @@ import {
 } from '../game/save/playerRuntime'
 import {
   continueGame,
+  dismissOnboardingIntro,
   loseGame,
   resetInjuries,
   resetInventory,
@@ -64,6 +66,7 @@ const ZONES = listZones()
 export function App() {
   const dispatch = useAppDispatch()
   const phase = useAppSelector((state) => state.app.phase)
+  const showOnboardingIntro = useAppSelector((state) => state.app.showOnboardingIntro)
   const health = useAppSelector((state) => state.health.player)
   const zoneId = useAppSelector((state) => state.player.zoneId)
   const inventory = useAppSelector((state) => state.inventory)
@@ -77,6 +80,7 @@ export function App() {
   const score = useAppSelector(selectScore)
   const lootCount = totalItemCount(inventory)
   const menuPrimaryActionRef = useRef<HTMLButtonElement>(null)
+  const onboardingPrimaryActionRef = useRef<HTMLButtonElement>(null)
   const pausePrimaryActionRef = useRef<HTMLButtonElement>(null)
   const endgamePrimaryActionRef = useRef<HTMLButtonElement>(null)
 
@@ -145,9 +149,10 @@ export function App() {
 
   useEffect(() => {
     if (phase === 'menu') menuPrimaryActionRef.current?.focus()
+    else if (showOnboardingIntro) onboardingPrimaryActionRef.current?.focus()
     else if (phase === 'paused') pausePrimaryActionRef.current?.focus()
     else if (phase === 'won' || phase === 'lost') endgamePrimaryActionRef.current?.focus()
-  }, [phase])
+  }, [phase, showOnboardingIntro])
 
   // Autosave on the transition into `paused`. The transform comes from the live
   // scene via the bridge; health from `healthSlice`, zone from `playerSlice`. No
@@ -168,6 +173,13 @@ export function App() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (showOnboardingIntro) {
+        if (event.code === 'Escape') {
+          event.preventDefault()
+          dispatch(dismissOnboardingIntro())
+        }
+        return
+      }
       // Escape closes the world map first (if open), otherwise toggles pause.
       if (event.code === 'Escape') {
         event.preventDefault()
@@ -187,7 +199,7 @@ export function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [dispatch, phase, worldMapOpen, traveling])
+  }, [dispatch, phase, worldMapOpen, traveling, showOnboardingIntro])
 
   // Fast-travel: validate the destination, stage its spawn on the playerRuntime
   // bridge, then switch zones. Changing `zoneId` remounts the GameCanvas with the
@@ -247,7 +259,7 @@ export function App() {
     (factionId: PlayableFactionId) => {
       resetRunState()
       dispatch(setPlayerFaction(factionId))
-      dispatch(startNewGame())
+      dispatch(startNewGame({ showIntro: true }))
     },
     [resetRunState, dispatch],
   )
@@ -286,6 +298,13 @@ export function App() {
         <div className="injury-vignette" aria-hidden="true" />
       ) : null}
       {isLoadingAssets ? <p className="hud-loading">Loading…</p> : null}
+      {showOnboardingIntro && phase === 'playing' ? (
+        <OnboardingIntroCard
+          objectiveTarget={objectiveTarget}
+          dismissButtonRef={onboardingPrimaryActionRef}
+          onDismiss={() => dispatch(dismissOnboardingIntro())}
+        />
+      ) : null}
       {phase === 'playing' || phase === 'paused' ? (
         <div className="hud">
           <h1>Korovany</h1>
