@@ -300,7 +300,7 @@ Epic: **[FLO-391](/FLO/issues/FLO-391)** — opened 2026-06-21.
 - **E5.1 Tree impostors** `[x]` — **FLO-392/FLO-394** (Wayland, done, `381e529`) — billboard sprites via Babylon native `mesh.addLODLevel`; `treeImpostor.ts` + bench scene.
 - **E5.2 Impostor→3D hysteresis** `[x]` — **FLO-393/FLO-395** (Wayland, done, `471df49`) — hysteresis dead-zone (`hysteresisBand`) on `treeImpostor`; parallel lodManager implementation retired by FLO-395 reconciliation.
 - **E5.3 Instanced vegetation** `[x]` — **FLO-396** (Wayland, done, `1b1b70a`) — `createInstancedVegetation` packs a 256-tree forest into 2 draw calls (1 per submesh); `?dev=vegetation` bench; 620 tests green.
-- **E5.4 Performance budget & profiling** `[~]` — **FLO-398** (Wayland, in_progress) — keep 60fps target on mid hardware; document budgets.
+- **E5.4 Performance budget & profiling** `[x]` — **FLO-398** ✅ (Wayland, done, `8605a19`) — `src/game/perf/` budget+profiler+HUD; `?dev=perf` 576-tree bench; 638 tests green.
 
 ### Phase 6 — Depth & polish `[~]`
 
@@ -313,10 +313,10 @@ E6.1 is broken into oneshot subtasks rather than treated as polish. Tickets are 
 one at a time as predecessors land (no speculative spawns).
 
 - **E6.1 Dismemberment & prosthetics** `[ ]` — the canonical limb system. Subtasks:
-  - **E6.1.1 Injury state model** `[x]` — **FLO-400** ✅ — Redux `injurySlice`:
-    per-limb status (intact / severed / prosthetic) for hand·leg·eye; bleed-out
-    timer for untreated severance; save-migration v5 (guard validates base fields
-    only). Pure reducer + tests, no rendering.
+  - **E6.1.1 Injury state model** `[x]` — **FLO-400** ✅ (Soren, done, `ebe6181`) — Redux
+    `injurySlice`: per-limb status (intact / severed / prosthetic) for hand·leg·eye;
+    bleed-out timer for untreated severance; save-migration v5 (guard validates base
+    fields only). 649 tests green.
   - **E6.1.2 Combat → dismemberment hook** `[ ]` — high-damage/critical melee can
     sever a limb instead of (or before) killing; emits a `dismemberEvent` on the
     existing `damageEvents` bridge. Deterministic via seeded RNG.
@@ -330,9 +330,9 @@ one at a time as predecessors land (no speculative spawns).
   - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[ ]` — buy/fit hand·leg·eye
     prosthetics through the existing economy/transactions system; fitting clears the
     injury penalty. Reuses E4.4 currency.
-- **E6.2 Audio** `[~]` — **FLO-401** (Orion, in_progress) — combat SFX already shipped
-  via the `damageEvents` bridge (MPG.4/FLO-383, Web Audio bus). In flight: procedural
-  footsteps + forest ambience + UI clicks (no binary assets). Independent of Phase 5.
+- **E6.2 Audio** `[~ partial]` — combat SFX already shipped via the `damageEvents`
+  bridge (MPG.4/FLO-383, Web Audio bus). Remaining: footsteps, ambience (streamed),
+  UI clicks. Cut as E6.2.x once Phase 5 lands.
 - **E6.3 Quests / objectives** `[ ]` — per-faction objective chains (elf raids,
   palace-guard commander orders, villain free-command). Builds on the objective
   machine + commander/order system (E4.3).
@@ -438,10 +438,6 @@ speculative batches (FLO-270).
   (board-UI): cancel stale dups FLO-382/FLO-364, close FLO-384 issue (work landed via
   FLO-387). Once MPG.4 lands, the MPG milestone is complete and ready for an end-to-end
   browser verification of the full New-Game→win/lose loop. (Daedalus)
-- **r27** (2026-06-21) — **Second Phase-6 track in parallel.** Cut **E6.2 audio**
-  (FLO-401, footsteps + forest ambience, procedural/no-assets) to idle Orion —
-  independent of Phase 5 and E6.1. Three concurrent engineer tracks now (Wayland
-  E5.4, Soren E6.1.1, Orion E6.2); holding at three to keep review load manageable. (Daedalus)
 - **r26** (2026-06-21) — **Phase 6 kicked off in parallel.** Opened Phase 6 epic
   **FLO-399**; cut **E6.1.1 injury state model** (FLO-400) to idle Soren — a pure
   Redux slice with zero Phase-5 dependency, so Phase 6 starts without waiting on

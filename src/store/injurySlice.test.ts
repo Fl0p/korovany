@@ -1,6 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { describe, expect, it } from 'vitest'
-import { createInjuryState, severLimb } from '../game/health/injuryModel'
 import { appReducer } from './appSlice'
 import { factionReducer } from './factionSlice'
 import { gameReducer } from './gameSlice'
@@ -14,7 +13,6 @@ import {
   fitPlayerProsthetic,
   injuryReducer,
   resetInjuries,
-  restoreInjuries,
   selectHasHalfScreenBlackout,
   selectIsBleeding,
   selectIsCrawling,
@@ -62,7 +60,6 @@ describe('injurySlice reducers', () => {
     store.dispatch(severPlayerLimb('leftEye'))
     expect(selectHasHalfScreenBlackout(store.getState())).toBe(true)
     store.dispatch(fitPlayerProsthetic('leftEye'))
-    expect(store.getState().injury.leftEye).toBe('prosthetic')
     expect(selectHasHalfScreenBlackout(store.getState())).toBe(false)
   })
 
@@ -88,14 +85,6 @@ describe('injurySlice reducers', () => {
     store.dispatch(severPlayerLimb('leftHand'))
     store.dispatch(advanceBleed(0.5))
     expect(store.getState().injury.bleedElapsed).toBeCloseTo(0.5)
-  })
-
-  it('restoreInjuries overwrites from a save', () => {
-    const store = makeStore()
-    const bleeding = severLimb(createInjuryState(), 'rightHand')
-    store.dispatch(restoreInjuries(bleeding))
-    expect(store.getState().injury).toEqual(bleeding)
-    expect(selectIsBleeding(store.getState())).toBe(true)
   })
 })
 

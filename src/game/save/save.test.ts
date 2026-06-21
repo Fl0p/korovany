@@ -11,7 +11,6 @@ import {
   type PlayerSnapshot,
 } from './index'
 import { FACTION_IDS } from '../faction'
-import { createInjuryState, severLimb } from '../health'
 import { createProgression } from '../progression'
 
 // A fresh in-memory IndexedDB per test so slots never leak across cases.
@@ -38,7 +37,6 @@ const snapshot: PlayerSnapshot = {
       endurance: { level: 10, xp: 0 },
     },
   },
-  injury: severLimb(createInjuryState(), 'leftLeg'),
 }
 
 describe('createSaveData', () => {
@@ -52,13 +50,6 @@ describe('createSaveData', () => {
     expect(data.inventory).toEqual({ counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' })
     expect(data.playerFactionId).toBe(FACTION_IDS.ForestElves)
     expect(data.progression).toEqual(snapshot.progression)
-    expect(data.injury).toEqual(snapshot.injury)
-  })
-
-  it('decouples the persisted injury from the live slice reference', () => {
-    const data = createSaveData(snapshot, 1000)
-    expect(data.injury).toEqual(snapshot.injury)
-    expect(data.injury).not.toBe(snapshot.injury)
   })
 
   it('decouples the persisted inventory from the live slice reference', () => {
@@ -87,7 +78,6 @@ describe('save round-trip (fake-indexeddb)', () => {
       inventory: { counts: { gold: 8, blade: 1 }, equippedItemId: 'blade' },
       playerFactionId: FACTION_IDS.ForestElves,
       progression: snapshot.progression,
-      injury: snapshot.injury,
       savedAt: 1234,
     })
   })

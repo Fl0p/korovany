@@ -509,7 +509,6 @@ describe('<App /> save/load (fake-indexeddb)', () => {
           level: 2,
           nextLevelXp: 200,
         },
-        injury: createInjuryState(),
       },
       123,
     )

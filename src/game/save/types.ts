@@ -20,12 +20,10 @@
  * - v3 — added `playerFactionId` (E4.2); pre-v3 saves migrate forward as
  *   `neutral` (the unaffiliated default).
  * - v4 — added `progression` (E4.5); older saves migrate with a fresh baseline.
- * - v5 — added `injury` (E6.1.1); older saves migrate with a fresh baseline.
  */
-export const SAVE_VERSION = 5
+export const SAVE_VERSION = 4
 
 import type { HealthState } from '../health'
-import type { InjuryState } from '../health'
 import type { InventoryState } from '../economy'
 import type { FactionId } from '../faction'
 import type { ProgressionState } from '../progression'
@@ -63,8 +61,6 @@ export interface SaveData {
   readonly playerFactionId: FactionId
   /** Character progression at save time (E4.5), sourced from `progressionSlice`. */
   readonly progression: ProgressionState
-  /** Per-limb injury state at save time (E6.1.1), sourced from `injurySlice`. */
-  readonly injury: InjuryState
   /** Epoch milliseconds when the snapshot was taken; used to pick the latest slot. */
   readonly savedAt: number
 }
@@ -86,6 +82,4 @@ export interface PlayerSnapshot {
   readonly playerFactionId: FactionId
   /** Character progression at snapshot time, sourced from `progressionSlice`. */
   readonly progression: ProgressionState
-  /** Per-limb injury state at snapshot time, sourced from `injurySlice`. */
-  readonly injury: InjuryState
 }

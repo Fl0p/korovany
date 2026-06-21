@@ -17,9 +17,6 @@ const injurySlice = createSlice({
     advanceBleed: (state, action: PayloadAction<number>) =>
       injuryModel.tickBleed(state, action.payload).state,
     resetInjuries: () => injuryModel.createInjuryState(),
-    restoreInjuries(_state, action: PayloadAction<InjuryState>) {
-      return injuryModel.coerceInjuryState(action.payload)
-    },
   },
 })
 
@@ -29,7 +26,6 @@ export const {
   fitPlayerProsthetic,
   advanceBleed,
   resetInjuries,
-  restoreInjuries,
 } = injurySlice.actions
 export const injuryReducer = injurySlice.reducer
 

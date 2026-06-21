@@ -84,7 +84,7 @@ severLimb(injuries, 'leftHand').bleeding     // true — a lost hand opens a wou
 ```
 
 Tracked slots (`Limb`): `leftHand`, `rightHand`, `leftEye`, `rightEye`,
-`leftLeg`, `rightLeg` — each `'intact' | 'severed' | 'prosthetic'`.
+`leftLeg`, `rightLeg` — each `'intact' | 'severed'`.
 
 ### The three outcomes
 
@@ -95,9 +95,8 @@ Tracked slots (`Limb`): `leftHand`, `rightHand`, `leftEye`, `rightEye`,
 | **Crawl** | lose a leg | `isCrawling` / `selectLocomotionSpeedMultiplier` — speed drops to `CRAWL_SPEED_MULTIPLIER` (0.35) |
 
 Bleed drains `BLEED_DAMAGE_PER_INTERVAL` (3) HP every `BLEED_INTERVAL_SECONDS`
-(1). A prosthetic (`fitProsthetic`) marks a severed slot as `prosthetic`, clearing
-derived penalties (blackout / crawl) without restoring the original limb;
-`treatBleeding` stops a bleed without restoring the hand.
+(1). A prosthetic/patch (`fitProsthetic`) restores a slot to intact (clearing
+the half-screen); `treatBleeding` stops a bleed without restoring the hand.
 
 ### Redux actions & selectors
 
@@ -105,8 +104,7 @@ derived penalties (blackout / crawl) without restoring the original limb;
 |---|---|---|
 | `severPlayerLimb(limb)` | `Limb` | Sever a slot; a hand also starts bleeding |
 | `treatPlayerBleeding()` | — | Stop the active bleed |
-| `fitPlayerProsthetic(limb)` | `Limb` | Mark a severed slot as prosthetic |
-| `restoreInjuries(state)` | `InjuryState` | Overwrite from a loaded save (Continue) |
+| `fitPlayerProsthetic(limb)` | `Limb` | Restore a slot to intact |
 | `advanceBleed(dt)` | `number` | Advance the bleed timer (no damage funnelling) |
 | `resetInjuries()` | — | Restore every slot to intact |
 | `tickInjuries(dt)` *(thunk)* | `number` | Advance bleed **and** funnel damage into `health` |
