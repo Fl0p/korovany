@@ -38,14 +38,32 @@ Engine-agnostic. Two exports:
 
 ### Animations
 
-| State      | Bob Hz | Bob amp | Lean | Lunge/Topple |
-|------------|--------|---------|------|--------------|
-| Idle       | 1.1    | 2.5 cm  | —    | —            |
-| Moving     | 2.4    | 5.5 cm  | up to 0.12 rad | — |
-| Windup     | —      | —       | —    | −5 cm pullback |
-| Active     | —      | —       | —    | +18 cm lunge |
-| Recovery   | —      | —       | —    | +7 cm partial |
-| Dead       | —      | —       | —    | topple 0→π/2 (ease-out, ~0.5 s) |
+| State      | Bob Hz | Bob amp | Lean (pitch) | Lunge/Topple |
+|------------|--------|---------|--------------|--------------|
+| Idle       | 1.1    | 2.5 cm  | —            | —            |
+| Moving     | 2.4    | 5.5 cm  | up to +0.12 rad | — |
+| Windup     | —      | +7 cm rise | −0.28 rad (wind back) | −5 cm pullback |
+| Active     | —      | −5 cm dip  | +0.62 rad (forward chop) | +18 cm lunge |
+| Recovery   | —      | —       | +0.20 rad (settling) | +7 cm partial |
+| Dead       | —      | —       | —            | topple 0→π/2 (ease-out, ~0.5 s) |
+
+#### Two visual states: normal vs. attack (FLO-474)
+
+The board asked for a player who looks **clearly different while attacking** —
+ideally a separate raised-arms model swapped in on the swing. The shipped hero is
+a single **rig-less** GLB (`korovany_hero_player-default.glb`) and there is no
+raised-arms variant in `public/models`, so a literal two-GLB swap isn't possible
+today. Instead the attack reads as a committed **full-body chop** driven on the
+visual root: the windup winds back and rises, the active frame pitches sharply
+forward (+0.62 rad — well beyond the ≤0.12 rad movement lean) and drops the
+weight, and recovery settles back. The result is two unmistakably-distinct
+silhouettes (**normal** idle/move ↔ **attack** strike) tied to the melee phase,
+at zero asset cost. A literal raised-arms *second model* (pose-baked or rigged
+GLB) remains a future asset ticket through Iris → Pygmalion (see
+`docs/guide/assets.md`); it would drop in behind the same `attackPhase` contract.
+
+Attack pitch is **added** to the base lean and the rise/dip to the bob, so the
+strike reads even while advancing (chop-on-the-move).
 
 ### Death topple and slow-mo
 

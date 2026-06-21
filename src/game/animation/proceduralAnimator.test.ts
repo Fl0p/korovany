@@ -178,6 +178,108 @@ describe('stepAnimator — attack lunge', () => {
   })
 })
 
+describe('stepAnimator — attack pose / two-state read (FLO-474)', () => {
+  // The board asked for two clearly-distinct visual states: normal and attack.
+  // With the rig-less hero GLB the strike is a committed full-body chop driven on
+  // the visual root (pitch via leanX, rise/dip via bobY), layered on the lunge.
+  const idle = () =>
+    stepAnimator(createAnimatorState(), {
+      dt: 0.016,
+      speed: 0,
+      attackPhase: 'idle',
+      isDead: false,
+    }).output
+
+  it('idle stands neutral — no attack pitch, no lunge', () => {
+    const out = idle()
+    expect(out.leanX).toBe(0)
+    expect(out.lungeZ).toBe(0)
+  })
+
+  it('windup winds back: leans away (negative pitch) and rises', () => {
+    const { output } = stepAnimator(createAnimatorState(), {
+      dt: 0, // freeze the bob so the test reads the pure attack rise
+      speed: 0,
+      attackPhase: 'windup',
+      isDead: false,
+    })
+    expect(output.leanX).toBeLessThan(0) // lean back to telegraph
+    expect(output.bobY).toBeGreaterThan(0) // come up before the blow
+  })
+
+  it('active strike pitches sharply forward — a silhouette clearly unlike idle', () => {
+    const { output } = stepAnimator(createAnimatorState(), {
+      dt: 0,
+      speed: 0,
+      attackPhase: 'active',
+      isDead: false,
+    })
+    // A committed forward chop: strongly positive pitch, far beyond the move lean cap.
+    expect(output.leanX).toBeGreaterThan(0.5)
+    expect(output.bobY).toBeLessThan(0) // drop weight into the strike
+    expect(output.lungeZ).toBeGreaterThan(0)
+  })
+
+  it('windup and active pitch in opposite directions (wind back, then chop)', () => {
+    const wind = stepAnimator(createAnimatorState(), {
+      dt: 0,
+      speed: 0,
+      attackPhase: 'windup',
+      isDead: false,
+    }).output
+    const strike = stepAnimator(createAnimatorState(), {
+      dt: 0,
+      speed: 0,
+      attackPhase: 'active',
+      isDead: false,
+    }).output
+    expect(Math.sign(wind.leanX)).toBe(-Math.sign(strike.leanX))
+  })
+
+  it('recovery settles toward neutral — less forward than the strike', () => {
+    const strike = stepAnimator(createAnimatorState(), {
+      dt: 0,
+      speed: 0,
+      attackPhase: 'active',
+      isDead: false,
+    }).output
+    const recover = stepAnimator(createAnimatorState(), {
+      dt: 0,
+      speed: 0,
+      attackPhase: 'recovery',
+      isDead: false,
+    }).output
+    expect(recover.leanX).toBeGreaterThan(0)
+    expect(recover.leanX).toBeLessThan(strike.leanX)
+  })
+
+  it('attack pitch reads on top of a movement lean (chop while advancing)', () => {
+    const moving = stepAnimator(createAnimatorState(), {
+      dt: 0.016,
+      speed: 4,
+      attackPhase: 'idle',
+      isDead: false,
+    }).output
+    const movingStrike = stepAnimator(createAnimatorState(), {
+      dt: 0.016,
+      speed: 4,
+      attackPhase: 'active',
+      isDead: false,
+    }).output
+    // Striking mid-advance pitches further forward than plain movement lean.
+    expect(movingStrike.leanX).toBeGreaterThan(moving.leanX)
+  })
+
+  it('CharacterAnimator drives the node into the strike pose', () => {
+    const animator = new CharacterAnimator(-0.9, 0)
+    const node: AnimatableNode = { position: { y: -0.9, z: 0 }, rotation: { x: 0, z: 0 } }
+    animator.node = node
+    animator.update({ dt: 0, speed: 0, attackPhase: 'active', isDead: false })
+    expect(node.rotation.x).toBeGreaterThan(0.5) // forward chop applied to the visual root
+    expect(node.position.z).toBeGreaterThan(0) // forward lunge applied
+  })
+})
+
 describe('stepAnimator — death topple', () => {
   it('produces no topple when alive', () => {
     const state = createAnimatorState()

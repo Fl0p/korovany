@@ -80,6 +80,23 @@ const WHEELCHAIR_BOB_SCALE = 0.5
 
 /** Attack lunge: max forward displacement at active window midpoint. */
 const LUNGE_MAX = 0.18      // metres
+
+/**
+ * Attack pose (FLO-474): a committed full-body chop layered on top of the lunge,
+ * giving two clearly-distinct visual states — **normal** (idle/move) and
+ * **attack**. With the rig-less hero GLB the only joint we can drive is the
+ * visual root, so the "raised-arms strike" reads as a whole-body motion: wind
+ * back and rise on the windup, then pitch sharply forward and drop the weight on
+ * the active strike. A literal *second model* (a raised-arms pose-baked or rigged
+ * GLB) is a separate asset ticket; this gives the requested two-state read with
+ * zero asset cost. Pitches are added to `leanX`, rises/dips to `bobY`.
+ */
+const ATTACK_WINDUP_PITCH = 0.28  // rad — lean back to telegraph the swing
+const ATTACK_WINDUP_RISE = 0.07   // m  — come up before the blow
+const ATTACK_STRIKE_PITCH = 0.62  // rad — sharp forward chop (distinct silhouette)
+const ATTACK_STRIKE_DIP = 0.05    // m  — drop weight into the strike
+const ATTACK_RECOVER_PITCH = 0.2  // rad — partial forward lean settles back
+
 /** Speed at which topple completes (fraction of π/2 per second). */
 const TOPPLE_RATE = 3.0     // reaches π/2 in ~0.52 s
 
@@ -138,7 +155,7 @@ export function stepAnimator(
     bobAmp *= WHEELCHAIR_BOB_SCALE
     bobFreq *= 0.85
   }
-  const bobY = bobAmp * Math.sin(2 * Math.PI * bobFreq * time)
+  let bobY = bobAmp * Math.sin(2 * Math.PI * bobFreq * time)
 
   // ── Lean / pose offset ───────────────────────────────────────────────────
   let leanX = isMoving ? MOVE_LEAN_MAX * Math.min(speed / 4, 1) : 0
@@ -150,6 +167,25 @@ export function stepAnimator(
     leanX = WHEELCHAIR_LEAN
     offsetY = WHEELCHAIR_OFFSET_Y
   }
+
+  // ── Attack pose (FLO-474) ──────────────────────────────────────────────────
+  // The two-state read: normal pose vs. a committed strike. Wind back + rise on
+  // the windup, chop forward + dip on the active frame, settle on recovery. The
+  // pitch is added to the base lean (and the rise to the bob) so the attack pose
+  // is unmistakably different from the idle/move silhouette while standing still.
+  let attackPitch = 0
+  let attackRise = 0
+  if (attackPhase === 'windup') {
+    attackPitch = -ATTACK_WINDUP_PITCH
+    attackRise = ATTACK_WINDUP_RISE
+  } else if (attackPhase === 'active') {
+    attackPitch = ATTACK_STRIKE_PITCH
+    attackRise = -ATTACK_STRIKE_DIP
+  } else if (attackPhase === 'recovery') {
+    attackPitch = ATTACK_RECOVER_PITCH
+  }
+  leanX += attackPitch
+  bobY += attackRise
 
   // ── Lunge ────────────────────────────────────────────────────────────────
   // Windup: small pullback; active: full lunge; recovery: fade out
