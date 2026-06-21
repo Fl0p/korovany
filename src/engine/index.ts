@@ -12,6 +12,7 @@ import {
   spawnStreamedInstance,
   type AssetLoadingStateListener,
 } from '../game/streaming'
+import { flatShade } from '../game/util'
 
 /**
  * Korovany rendering engine — the single owner of the Babylon `Engine`/`Scene`
@@ -103,6 +104,10 @@ export function createGameEngine(
   if (streamAssetId) {
     const { loader } = createAssetStreaming(scene, { onLoadingState: onAssetLoadingState })
     void spawnStreamedInstance(loader, scene, streamAssetId).then((instance) => {
+      // Menu / won / lost backdrop hero: facet + matte the streamed GLB so the
+      // "defeat-screen hero" reads in the same v1.2 flat low-poly band as the live
+      // player avatar instead of the smooth, semi-glossy raw GLB (FLO-452).
+      flatShade(instance.root.getChildMeshes())
       streamed.push(instance)
     })
   }

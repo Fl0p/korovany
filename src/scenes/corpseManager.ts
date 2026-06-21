@@ -27,6 +27,7 @@ import {
   type CorpseStore,
   sessionCorpseStore,
 } from '../game/corpses'
+import { facetMeshes } from '../game/util'
 import { DEFAULT_SOLDIER_GLB } from './soldierEnemy'
 
 export interface CorpseManagerOptions {
@@ -114,6 +115,8 @@ export class CorpseManager {
                 model.root.dispose()
                 return
               }
+              // Match the live soldier/player flat-shaded read (FLO-452).
+              facetMeshes(model.meshes)
               model.root.parent = mesh
               model.root.position = new Vector3(0, -0.9, 0)
               for (const m of model.meshes) m.isPickable = false

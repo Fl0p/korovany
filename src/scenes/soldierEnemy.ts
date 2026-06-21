@@ -25,6 +25,7 @@ import {
   type SoldierOrderContext,
 } from '../game/ai'
 import type { System } from '../game/loop'
+import { facetMeshes } from '../game/util'
 
 /** FLO-311 Empire soldier mesh — web-ready GLB shipped in /public/models. */
 export const DEFAULT_SOLDIER_GLB = '/models/empire-soldier.glb'
@@ -139,6 +140,10 @@ export class SoldierEnemy implements System, Damageable {
       void import('./modelLoader')
         .then(({ loadModel }) =>
           loadModel(scene, glbUrl, { targetSize: 1.8, groundIt: true }).then((model) => {
+            // Hard-facet so the soldier reads flat-shaded like the player avatar —
+            // art coherence with the v1.2 low-poly band (FLO-452). The palette
+            // materials applied next are already matte, so faceting is enough here.
+            facetMeshes(model.meshes)
             applyEmpireSoldierTexture(scene, model.meshes)
             model.root.parent = this.mesh
             model.root.position = new Vector3(0, -0.9, 0)

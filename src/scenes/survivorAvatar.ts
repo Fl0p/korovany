@@ -1,13 +1,6 @@
-import {
-  type AbstractMesh,
-  Color3,
-  type Mesh,
-  PBRMaterial,
-  type Scene,
-  StandardMaterial,
-  Vector3,
-} from '@babylonjs/core'
+import { type Mesh, type Scene, Vector3 } from '@babylonjs/core'
 import type { AnimatableNode } from '../game/animation/proceduralAnimator'
+import { facetMeshes, mattenMaterial } from '../game/util'
 import { type LoadedModel, loadModel } from './modelLoader'
 
 /**
@@ -46,34 +39,18 @@ const CAPSULE_FOOT_OFFSET = new Vector3(0, -0.9, 0)
  * under a headless `NullEngine` without a real GLB fetch.
  */
 export function wireSurvivorAvatar(mount: AvatarMount, model: LoadedModel): void {
+  // Hard facets + matte — the silhouette must read flat-shaded, not smooth, or the
+  // FLO-440 low-poly re-author is defeated. Shared with the enemy soldier, corpses
+  // and the menu/defeat backdrop hero so every character reads in one band (FLO-452).
+  facetMeshes(model.meshes)
   for (const mesh of model.meshes) {
-    // Hard facets — the silhouette must read flat-shaded, not smooth, or the
-    // FLO-440 low-poly re-author is defeated. Only geometry meshes have vertices;
-    // the glTF `__root__` pivot has none and must be skipped.
-    if (mesh.getTotalVertices() > 0) (mesh as Mesh).convertToFlatShadedMesh()
     mesh.isPickable = false
-    flattenMaterial(mesh)
+    mattenMaterial(mesh)
   }
   model.root.parent = mount.mesh
   model.root.position = CAPSULE_FOOT_OFFSET.clone()
   mount.mesh.isVisible = false // hide the capsule placeholder once the visual mounts
   mount.animator.node = model.root as unknown as AnimatableNode
-}
-
-/**
- * Tame the imported material to a matte, near-zero-specular read so it stays in
- * the v1.2 flat low-poly band even if the GLB ships a glossier material than the
- * baked flat albedo. Defensive across both material types the glTF loader may emit.
- */
-function flattenMaterial(mesh: AbstractMesh): void {
-  const mat = mesh.material
-  if (mat instanceof StandardMaterial) {
-    mat.specularColor = new Color3(0.03, 0.03, 0.03)
-  } else if (mat instanceof PBRMaterial) {
-    mat.metallic = 0
-    mat.roughness = 1
-    mat.environmentIntensity = 0
-  }
 }
 
 /**

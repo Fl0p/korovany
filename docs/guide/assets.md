@@ -38,6 +38,22 @@ any Community/showcase page.
 > does for the ground) so the faceted hard-edge read lands, and whole-body
 > bob/lean/lunge/topple drive the single `root` via the animator contract.
 
+> **Art coherence — every character is faceted in-engine (FLO-452).**
+> The player is not the only character that gets the flat-shaded treatment. The
+> shipped enemy/hero GLBs are smooth, semi-glossy meshes, so the same in-engine
+> facet+matte conform is applied at GLB-load time to **every** character so they
+> all read in one v1.2 low-poly band: the **enemy soldier** (`soldierEnemy.ts`),
+> the **corpse body** (`corpseManager.ts`), and the **menu / won / lost "defeat
+> screen" backdrop hero** (`engine/index.ts`, streamed via `createGameEngine`).
+> The treatment is single-sourced in `src/game/util/flatShade.ts`
+> (`facetMeshes` / `mattenMaterial` / `flatShade`), which `survivorAvatar.ts` also
+> uses — so all characters share exactly one definition of "flat low-poly." Note
+> this supersedes the interim procedural-box approach once explored for FLO-452:
+> with the player now a faceted GLB (FLO-447), box enemies would *break* coherence,
+> not create it; matching the player's faceted-GLB read is the correct conform.
+> As with the player, the faceting only manifests at runtime, so the visual-truth
+> gate is an in-scene screenshot, never code inspection.
+
 | Asset | File | Tris | Size | Rig | Meshy task id |
 |-------|------|------|------|-----|---------------|
 | **Player hero (survivor)** *(v1.2-compliant; pending engine-wiring — see note above)* | `public/models/korovany_hero_player-default.glb` | 2884 | 298 KiB | static (no skeleton); arms-down idle (FLO-434) + flat-albedo re-author (FLO-440, v13) | `019ee92c-e565-7b9c-b7e5-cad74053e786` (geometry preview) / `019ee94d-b328-7308-a8fa-d5274bcc1a99` (flat retexture) |
