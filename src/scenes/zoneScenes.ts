@@ -6,6 +6,7 @@ import { getZone } from '../game/world'
 import { createForestScene } from './forestScene'
 import { createHumanLandsScene } from './humanLandsScene'
 import { createMountainsScene } from './mountainsScene'
+import { createEmpireScene } from './empireScene'
 
 /**
  * Options common to every zone scene. The scenes layer hands these down from the
@@ -59,6 +60,8 @@ export function createZoneScene(
       return createHumanLandsScene(canvas, options)
     case 'mountains':
       return createMountainsScene(canvas, options)
+    case 'empire':
+      return createEmpireScene(canvas, options)
     case 'forest':
     default:
       return createForestScene(canvas, options)

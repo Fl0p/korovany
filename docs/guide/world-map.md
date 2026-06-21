@@ -15,16 +15,28 @@ states, tokens, and accessibility, see the
 | Id | Display name | Lore name | Owner | Status |
 | -- | ------------ | --------- | ----- | ------ |
 | `human-lands` | Human lands | The Salt Road of Velya | Neutral | available |
-| `empire` | Empire | The Imperial March | The Emperor | locked |
+| `empire` | Empire | The Imperial March | The Emperor | available |
 | `forest` | Forest | The Emerald Thicket of Lysaen | Forest Elves | available |
 | `mountains` | Mountains | Black Crown Pass | The Villain | available |
 
 `available` zones have a scene and can be travelled to. `locked` zones are
 declared in the registry so the world map can list all four, but travel to them
-is disabled until their scene is built. The open zones are **Forest**, **Human
-Lands**, and **Mountains** (Black Crown Pass — the villain's fort, E8.2/FLO-428);
-only **Empire** remains locked. Each populates on entry with caravans and enemy
-patrols so fast-travel never lands the player in an empty combat zone.
+is disabled until their scene is built. All four canonical zones — **Forest**,
+**Human Lands**, **Empire** (the palace, E8.1 / FLO-427) and **Mountains** (Black
+Crown Pass — the villain's fort, E8.2 / FLO-428) — now ship playable scenes, so
+none remain locked. MPG.5 populates each on entry with caravans and enemy patrols
+so fast-travel never lands the player in an empty combat zone.
+
+## Per-zone directive (E8.1)
+
+Each zone surfaces a faction-aware **standing order** in the HUD via
+`getZoneDirective(zoneId, playerFactionId)` (`src/game/world/zoneDirectives.ts`).
+It reuses the faction `resolveStance` matrix, so the same zone reads as **defend**
+to a faction allied with the zone's owner and **raid** to a hostile one — e.g. the
+Empire palace is *defend* for a Palace Guard and *raid* for an Elf or Villain. The
+directive is direction/flavour only; the win condition stays the caravan-raid
+count. See [The Imperial March](./worlds/imperial-palace.md) for the palace's
+attack/defend framing.
 
 ## Zone registry
 

@@ -23,11 +23,20 @@ describe('WorldMap', () => {
     expect(forest).toBeDisabled()
   })
 
-  it('disables locked zones', () => {
+  it('shows no locked zones now that all four ship scenes', () => {
     render(<WorldMap zones={zones} currentZoneId="forest" onTravel={vi.fn()} onClose={vi.fn()} />)
-    expect(screen.getAllByText('Locked')).toHaveLength(1) // Empire (Mountains unlocked in E8.2/FLO-428)
-    const empire = screen.getByRole('button', { name: /Empire.*Locked/s })
-    expect(empire).toBeDisabled()
+    // Empire (E8.1 / FLO-427) and Mountains (E8.2 / FLO-428) both ship playable
+    // scenes, so every zone is travelable — none renders as Locked.
+    expect(screen.queryAllByText('Locked')).toHaveLength(0)
+  })
+
+  it('lets the player travel to the now-available empire (palace) zone (E8.1)', async () => {
+    const onTravel = vi.fn()
+    const user = userEvent.setup()
+    render(<WorldMap zones={zones} currentZoneId="forest" onTravel={onTravel} onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: /Empire/ }))
+    await user.click(screen.getByRole('button', { name: 'Travel' }))
+    expect(onTravel).toHaveBeenCalledWith('empire')
   })
 
   it('requires select then confirm before travelling', async () => {
