@@ -740,6 +740,7 @@ body {
 }
 
 .faction-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -765,6 +766,26 @@ body {
 .faction-card.is-selected {
   border-color: #f7d774;
   background: rgba(247, 215, 116, 0.22);
+  /* Color-independent selection cue (WCAG 1.4.1): inset ring avoids 1px reflow
+     vs. changing border-width, and stacks on top of the gold border/bg. */
+  box-shadow: inset 0 0 0 2px #f7d774;
+}
+
+.faction-card.is-selected::after {
+  content: '\2713'; /* ✓ — glyph signifier independent of color */
+  position: absolute;
+  top: 0.55rem;
+  right: 0.7rem;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #f7d774;
+  color: #1a1206;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .faction-card:disabled {
@@ -848,6 +869,26 @@ body {
 .faction-empty {
   margin: 0;
   color: #d9e3ea;
+}
+
+/* Primary call-to-action — the single emphasised action in any menu/overlay.
+   One shared treatment for every `.primary-action` across the app (New Game,
+   endgame Restart, WorldMap Travel, Onboarding, faction picker Begin).
+   `button.primary-action` (0,1,1) ties the neutral context rules
+   (`.menu-actions button`, `.faction-confirm button`, `.worldmap-confirm
+   button`), so this block sits *after* all of them — source order wins. */
+button.primary-action {
+  border-color: #f7d774;
+  background: #f7d774;
+  color: #1a1206; /* dark ink on gold — ~10:1, passes WCAG AA/AAA */
+}
+
+button.primary-action:hover:not(:disabled),
+button.primary-action:focus-visible:not(:disabled) {
+  border-color: #f9e09a;
+  background: #f9e09a;
+  color: #1a1206;
+  outline: none;
 }
 
 /* Floating damage numbers overlay */

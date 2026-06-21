@@ -91,8 +91,15 @@ The New-Game flow lives in `src/app/App.tsx`: **New Game** opens the
 immediately. The picker is a two-step select→confirm affordance with empty,
 loading, and selected states. Choosing a faction and pressing **Begin**
 dispatches `setPlayerFaction(id)` (alongside the player/health/inventory resets)
-and then `startNewGame()`. Visual polish tracks Iris's wireframes; this is the
-functional first pass.
+and then `startNewGame()`.
+
+Visual polish from Iris's E4.2 review (FLO-370): the selected card carries a
+2px gold inset ring plus a gold ✓ badge — a colour-independent cue (WCAG 1.4.1)
+distinct from hover — and **Begin** uses the shared `button.primary-action`
+treatment (gold fill, dark ink) so the commit action reads as primary against
+the neutral **Clear**/**Back** controls. `.primary-action` is the one app-wide
+primary-CTA primitive (also used by New Game, endgame Restart, WorldMap Travel,
+and the Onboarding CTA); it is defined once in `src/styles/global.css`.
 
 ## Asymmetric objectives (E4.2)
 
