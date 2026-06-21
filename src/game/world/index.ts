@@ -4,6 +4,14 @@ import type { ZoneDefinition, ZoneId } from './types'
 
 export type { Faction, ZoneDefinition, ZoneId, ZoneStatus, ZoneStreaming } from './types'
 export { ZONES, ZONE_ORDER } from './zones'
+export type {
+  EncounterAnchor,
+  EncounterKind,
+  LandmarkColor,
+  ZoneContent,
+  ZoneLandmark,
+} from './zoneContent'
+export { ZONE_CONTENT, getZoneContent } from './zoneContent'
 
 /** All four zones in world-map display order. */
 export function listZones(): ZoneDefinition[] {

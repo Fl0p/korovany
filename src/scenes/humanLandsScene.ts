@@ -30,6 +30,7 @@ import { ScreenShakeManager } from '../game/camera/screenShake'
 import { emitAttack, emitDamage, emitKill, emitShake } from '../game/combat/damageEvents'
 import { SoldierEnemy } from './soldierEnemy'
 import { CaravanEnemy } from './caravanEnemy'
+import { getZoneContent, type EncounterKind } from '../game/world'
 
 /** Zone id used for the human-lands scene's save/corpse persistence. */
 export const HUMAN_LANDS_ZONE_ID = 'human-lands'
@@ -74,28 +75,24 @@ export interface HumanLandsScene {
 }
 
 const DEFAULT_HERO_URL = '/models/korovany_hero_player-default.glb'
-const HUMAN_LANDS_SOLDIER_SPAWNS = [
-  new Vector3(6, 0.9, 8),
-  new Vector3(-10, 0.9, 5),
-  new Vector3(14, 0.9, -10),
-] as const
-const HUMAN_LANDS_CARAVAN_SPAWNS = [
-  new Vector3(-8, 1, -6),
-  new Vector3(12, 1, -12),
-] as const
+
+/** This zone's content (landmarks + encounter anchors), the single source of
+ * truth seeded from `docs/guide/worlds/velya-salt-road.md` (FLO-411, ADR-0004). */
+const ZONE = getZoneContent(HUMAN_LANDS_ZONE_ID)
+
+/** Encounter spawn points of one kind, as Babylon vectors. */
+function spawnsOf(kind: EncounterKind): Vector3[] {
+  return ZONE.encounterAnchors
+    .filter((a) => a.kind === kind)
+    .map((a) => new Vector3(a.position.x, a.position.y, a.position.z))
+}
+
+const HUMAN_LANDS_SOLDIER_SPAWNS = spawnsOf('soldier')
+const HUMAN_LANDS_CARAVAN_SPAWNS = spawnsOf('caravan')
 
 function defaultEngineFactory(canvas: HTMLCanvasElement): Engine {
   return new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true)
 }
-
-/** Marker boxes standing in for the Salt Road's landmarks (toll gate, shrine,
- * watchtower) so the zone reads as visually distinct from the forest. Each is
- * `[x, z, height, r, g, b]`. Replaced by streamed GLBs in a later asset ticket. */
-const LANDMARKS: [number, number, number, number, number, number][] = [
-  [10, 8, 5, 0.55, 0.5, 0.45], // watchtower silhouette
-  [-9, 6, 2, 0.6, 0.55, 0.4], // roadside shrine
-  [-12, -8, 3, 0.45, 0.35, 0.3], // broken toll gate
-]
 
 /**
  * Phase-3 Human-lands ("Salt Road of Velya") stub zone (E3.1). A flat dusty road
@@ -126,11 +123,16 @@ export function createHumanLandsScene(
   // capsule inside the walls each frame (the controller has no wall collision).
   const { clamp: clampToWorld } = createWorldBounds(scene, new Color3(0.62, 0.55, 0.38))
 
-  const landmarkMeshes = LANDMARKS.map(([x, z, h, r, g, b], i) => {
-    const box = MeshBuilder.CreateBox(`landmark-${i}`, { size: 2, height: h }, scene)
-    box.position = new Vector3(x, h / 2, z)
+  // Greybox marker boxes standing in for the Salt Road's landmarks (toll gate,
+  // shrine, watchtower) so the zone reads as visually distinct from the forest.
+  // Geometry/colour come from the zone-content table; a later asset ticket swaps
+  // these for streamed GLBs via each landmark's `assetKey`.
+  const landmarkMeshes = ZONE.landmarks.map((lm, i) => {
+    const box = MeshBuilder.CreateBox(`landmark-${i}`, { size: lm.size, height: lm.height }, scene)
+    box.position = new Vector3(lm.position.x, lm.height / 2, lm.position.z)
     const mat = new StandardMaterial(`landmarkMat-${i}`, scene)
-    mat.diffuseColor = new Color3(r, g, b)
+    const c = lm.color ?? { r: 0.5, g: 0.5, b: 0.5 }
+    mat.diffuseColor = new Color3(c.r, c.g, c.b)
     box.material = mat
     return box
   })

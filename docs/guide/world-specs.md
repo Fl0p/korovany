@@ -5,6 +5,14 @@ implementation tickets yet; each spec gives level designers and engineers a
 shared target for terrain, landmarks, faction pressure, traversal, encounters,
 and asset needs.
 
+> **Where zone content lives in code.** These specs are *content briefs* (prose).
+> Their landmark and encounter data binds to the game through the typed content
+> layer `src/game/world/zoneContent.ts` (`getZoneContent(zoneId)`), keyed by the
+> four-zone `ZoneId` registry. Landmark/encounter data lives in that file; lore
+> and design prose stay here. Scenes read landmarks and encounter-spawn anchors
+> from `zoneContent` rather than hardcoding them. See
+> [ADR-0004](../decisions/0004-world-spec-to-zone-binding.md).
+
 ## Shared assumptions
 
 - The world remains browser-only and serverless; every map must be streamable

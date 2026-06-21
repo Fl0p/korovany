@@ -38,6 +38,7 @@ import { emitAttack, emitDamage, emitKill, emitShake } from '../game/combat/dama
 import { SoldierEnemy } from './soldierEnemy'
 import { CaravanEnemy } from './caravanEnemy'
 import { CorpseManager } from './corpseManager'
+import { getZoneContent, type EncounterKind } from '../game/world'
 
 /** Zone id used for the forest scene's corpse persistence. */
 export const FOREST_ZONE_ID = 'forest'
@@ -152,18 +153,22 @@ export interface ForestScene {
 }
 
 const DEFAULT_HERO_URL = '/models/korovany_hero_player-default.glb'
-const FOREST_SOLDIER_SPAWNS = [
-  new Vector3(6, 0.9, 6),
-  new Vector3(12, 0.9, -8),
-  new Vector3(-12, 0.9, 8),
-  new Vector3(16, 0.9, 12),
-  new Vector3(-16, 0.9, -10),
-] as const
-const FOREST_CARAVAN_SPAWNS = [
-  new Vector3(-8, 1, -6),
-  new Vector3(10, 1, -14),
-  new Vector3(-14, 1, 12),
-] as const
+
+/** This zone's content (landmarks + encounter anchors), the single source of
+ * truth seeded from `docs/guide/worlds/lysaen-emerald-thicket.md` (FLO-411,
+ * ADR-0004). The forest streams its environment props via GLB assets, so only the
+ * encounter anchors are consumed here today; landmarks are data for MPG.5. */
+const ZONE = getZoneContent(FOREST_ZONE_ID)
+
+/** Encounter spawn points of one kind, as Babylon vectors. */
+function spawnsOf(kind: EncounterKind): Vector3[] {
+  return ZONE.encounterAnchors
+    .filter((a) => a.kind === kind)
+    .map((a) => new Vector3(a.position.x, a.position.y, a.position.z))
+}
+
+const FOREST_SOLDIER_SPAWNS = spawnsOf('soldier')
+const FOREST_CARAVAN_SPAWNS = spawnsOf('caravan')
 
 function defaultEngineFactory(canvas: HTMLCanvasElement): Engine {
   return new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, true)
