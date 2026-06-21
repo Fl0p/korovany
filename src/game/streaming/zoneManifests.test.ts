@@ -23,9 +23,11 @@ describe('zone manifests', () => {
 
   it('streams the forest props plus healing chests and leftover decor', () => {
     const forest = getZoneManifest('forest')
+    // Conifers moved off the manifest to a thin-instanced field (FLO-482) — the
+    // streamed placements collapsed onto one shared cached root. No tree streams.
     const trees = forest.placements.filter((p) => p.assetId === FOREST_TREE_ASSET_ID)
     const huts = forest.placements.filter((p) => p.assetId === WOODEN_HUT_ASSET_ID)
-    expect(trees).toHaveLength(12)
+    expect(trees).toHaveLength(0)
     expect(huts).toHaveLength(3)
     const watchtower = forest.placements.find((p) => p.assetId === FOREST_WATCHTOWER_ASSET_ID)
     expect(watchtower?.position).toEqual({ x: 12.5, y: 0, z: -13.5 })

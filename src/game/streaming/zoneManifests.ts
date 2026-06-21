@@ -32,21 +32,14 @@ export const FOREST_STATIC_ELF_ASSET_ID = 'npc.forest-static-elf'
 /** Ruined watchtower placed in the first forest map as a landmark (FLO-476). */
 export const FOREST_WATCHTOWER_ASSET_ID = 'landmark.forest-watchtower'
 
-/** Tree positions: (x, z) pairs in scene units. Keeps a 4-unit clearing. */
-const FOREST_TREE_POSITIONS: readonly [number, number][] = [
-  [8, 2],
-  [-7, 3],
-  [5, -9],
-  [-9, -5],
-  [12, -6],
-  [-11, 7],
-  [3, 11],
-  [-4, -12],
-  [9, 9],
-  [-13, -2],
-  [14, 3],
-  [-6, 13],
-]
+// Forest conifers are no longer streamed via this manifest (FLO-482). The
+// streaming loader ref-counts ONE cached model per asset id, so every
+// `FOREST_TREE_ASSET_ID` placement collapsed onto a single shared root and the
+// forest only ever showed one (white, material-less) tree. The trees are now a
+// greened, thin-instanced ×1–×3 scatter — see `scenes/forestTrees.ts` and
+// `generateForestTreePlacements` — drawn in one call per submesh regardless of
+// count. `FOREST_TREE_ASSET_ID` stays registered in `seedForestAssets` as the
+// canonical asset id (the field loads the same GLB directly).
 
 /** Hut positions: a small settlement at one edge of the clearing. */
 const FOREST_HUT_POSITIONS: readonly [number, number][] = [
@@ -115,7 +108,6 @@ function ground([x, z]: readonly [number, number]): Vec3 {
 const FOREST_MANIFEST: ZoneManifest = {
   id: 'forest',
   placements: [
-    ...FOREST_TREE_POSITIONS.map((p) => ({ assetId: FOREST_TREE_ASSET_ID, position: ground(p) })),
     ...FOREST_HUT_POSITIONS.map((p) => ({ assetId: WOODEN_HUT_ASSET_ID, position: ground(p) })),
     ...FOREST_LEFTOVER_PLACEMENTS,
   ],

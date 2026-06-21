@@ -56,6 +56,8 @@ import { CorpseManager } from './corpseManager'
 import { getZoneContent, type EncounterKind } from '../game/world'
 import { ZONE_MAPS } from '../game/world/mapProps'
 import { renderMapProps } from './mapPropsRenderer'
+import { mountForestTreeField } from './forestTrees'
+import type { LoadedModel } from './modelLoader'
 import {
   createHealingChestStates,
   tickHealingChests,
@@ -320,6 +322,13 @@ export interface ForestSceneOptions {
   onStaminaChange?: (current: number, max: number) => void
   /** Caravan visual GLB. `null` skips it for headless scene tests. */
   caravanVisualUrl?: string | null
+  /**
+   * Forest conifer-field loader seam (FLO-482). Loads the tree GLB that gets
+   * greened + thin-instanced across the deterministic scatter. `null` skips the
+   * field entirely; a function injects a prototype for tests; `undefined`
+   * (default) fetches the real `forest-tree.glb`.
+   */
+  forestTreeLoader?: ((scene: Scene) => Promise<LoadedModel>) | null
 }
 
 export interface ForestScene {
@@ -442,6 +451,7 @@ export function createForestScene(
     onMinimapTick,
     onStaminaChange,
     caravanVisualUrl = heroUrl === null ? null : undefined,
+    forestTreeLoader,
   } = options
 
   const engine = createEngine(canvas)
@@ -466,6 +476,15 @@ export function createForestScene(
   // a thicket, not an empty clearing. Thin-instanced (~1 draw call per symbol),
   // non-pickable so the player passes through; swap to streamed GLBs later.
   const mapProps = renderMapProps(scene, ZONE_MAPS[FOREST_ZONE_ID])
+
+  // Conifer field (FLO-482): the forest tree GLB is greened (it ships white/
+  // material-less) and thin-instanced across a deterministic ×1–×3 scatter — one
+  // draw call per submesh regardless of count. `forestTreeLoader: null` skips it
+  // for headless scene tests that don't exercise the field.
+  const treeField =
+    forestTreeLoader === null
+      ? null
+      : mountForestTreeField(scene, { loadTree: forestTreeLoader ?? undefined })
 
   // ------------------------------------------------------------------
   // Streaming — the zone's environment is streamed via the
@@ -777,6 +796,7 @@ export function createForestScene(
         `[zone] dispose ${FOREST_ZONE_ID} (${zoneManager.residentInstanceCount} streamed instances)`,
       )
       zoneManager.dispose()
+      treeField?.dispose() // dispose the conifer field (or cancel a pending load)
       mapProps.dispose(false, true) // disposes the thin-instanced map + its materials
       for (const s of soldiers) s.dispose()
       for (const a of archers) a.dispose()

@@ -40,6 +40,16 @@ export {
   type VegetationPlacement,
   type VegetationDrawCallStats,
 } from './instancedVegetation'
+export {
+  generateForestTreePlacements,
+  FOREST_TREE_FIELD_COUNT,
+  FOREST_TREE_FIELD_CLEARING_RADIUS,
+  FOREST_TREE_FIELD_OUTER_RADIUS,
+  FOREST_TREE_FIELD_MIN_SCALE,
+  FOREST_TREE_FIELD_MAX_SCALE,
+  FOREST_TREE_FIELD_SEED,
+  type ForestTreeFieldOptions,
+} from './forestTreeField'
 export type { AssetLoadPhase, AssetMetadata, AssetRecord } from './types'
 
 import type { Scene } from '@babylonjs/core'

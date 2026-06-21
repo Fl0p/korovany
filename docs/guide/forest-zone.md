@@ -3,7 +3,7 @@
 The forest zone (E1.3) is the first playable environment in the Phase-1 vertical
 slice. It lives in `src/scenes/forestScene.ts` and wires together the full
 gameplay spine — streaming assets, third-person controller, follow camera — over
-a grassy ground plane with a sparse scatter of low-poly trees, huts, and
+a grassy ground plane with a thin-instanced conifer field, streamed huts, and
 lightweight stump/log/rock/shrub clutter around the spawn clearing.
 
 ## Try it
@@ -61,16 +61,60 @@ conform before placement.
    `seedForestAssets` registers the tree and hut URLs. Each prop calls
    `spawnStreamedInstance` which shows a placeholder box immediately and swaps
    to the GLB on load.
-3. **Props** — 12 streamed trees, 3 streamed huts, 4 healing chests, and the
-   leftover cargo/wagon/elf decor placed at hard-coded (x, z) coordinates, plus
-   cheap procedural stumps, logs, rocks, and shrubs around the spawn clearing.
-   The inner 3.5-unit radius stays clear so the first combat beats have readable
-   movement space.
+3. **Props** — 3 streamed huts, 4 healing chests, and the leftover
+   cargo/wagon/elf decor placed at hard-coded (x, z) coordinates, plus cheap
+   procedural stumps, logs, rocks, and shrubs around the spawn clearing. The
+   inner 3.5-unit radius stays clear so the first combat beats have readable
+   movement space. The conifers themselves are now a thin-instanced field
+   (see **Conifer field** below), not streamed placements.
 4. **Healing chests** — `FOREST_HEALING_CHEST_SPECS` mirrors the streamed chest
    placements. Standing within 2.25 m of a chest restores 5 HP every 0.5 s via
    `onPlayerHealed`; chests are reusable cooldown stations, not consumed pickups.
 5. **Controller + camera** — the same `CharacterController` and `ThirdPersonCamera`
    from E1.1, spawned at `(0, 2, 0)` above the ground.
+
+## Conifer field (FLO-482)
+
+The forest's trees are a **thin-instanced conifer field**, not streamed
+placements. Two reasons drove the change:
+
+- **The streamed trees collapsed to one.** The `AssetStreamLoader` ref-counts a
+  single cached model per asset id, so every `env.forest-tree` placement in the
+  zone manifest shared the same root — the old "12 trees" only ever rendered as
+  one. The tree placements were removed from `FOREST_MANIFEST`; `forest-tree.glb`
+  is now loaded directly by the field.
+- **The GLB ships white.** `forest-tree.glb` is a single mesh with no material
+  and no textures, so it rendered white — which the board flagged as wrong.
+
+`scenes/forestTrees.ts` owns the field:
+
+- `mountForestTreeField(scene, options)` — fire-and-forget (mirrors
+  `survivorAvatar`): loads the GLB once, then builds the field. A failed fetch
+  (headless tests) is swallowed; `forestTreeLoader: null` on `createForestScene`
+  skips it entirely.
+- `applyForestTreeFoliage` — hard-facets the mesh (`convertToFlatShadedMesh`,
+  v1.2 read) and paints it a **flat matte green** (`Color3(0.13, 0.4, 0.16)`,
+  near-zero specular, **no texture**). This is what stops the trees rendering
+  white. The GLB is a single mesh, so there is no separate trunk submesh to
+  colour — the whole conifer is green.
+- `buildForestTreeField` → `createInstancedVegetation` — thin-instances the
+  greened prototype across the scatter. The whole field costs **one draw call per
+  submesh regardless of tree count**, so the higher count carries no perf
+  regression.
+
+The scatter is a pure, seeded generator —
+`generateForestTreePlacements` in `game/streaming/forestTreeField.ts`:
+
+- **Count** — `FOREST_TREE_FIELD_COUNT` (64), comfortably more than the old dozen.
+- **Layout** — a non-grid ring from `FOREST_TREE_FIELD_CLEARING_RADIUS` (7, spawn
+  stays clear) to `FOREST_TREE_FIELD_OUTER_RADIUS` (58), `sqrt`-weighted so
+  density is even across the disc.
+- **Size** — each tree gets a uniform random scale in **×1…×3**
+  (`FOREST_TREE_FIELD_MIN_SCALE`…`FOREST_TREE_FIELD_MAX_SCALE`) of the ×1 authored
+  size (`FOREST_TREE_BASE_SIZE`, 4 units), plus a random yaw.
+- **Deterministic** — seeded by the fixed `FOREST_TREE_FIELD_SEED` (never
+  `Date.now()`), so the forest is reproducible and the Vitest scatter/scale/
+  material assertions never flake.
 
 ## Avatar & ground feel
 
