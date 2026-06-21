@@ -325,10 +325,7 @@ one at a time as predecessors land (no speculative spawns).
   - **E6.1.5 Leg loss → locomotion modes** `[~]` — **[FLO-430](/FLO/issues/FLO-430)** (Wayland, backlog, after E6.1.6) — severed leg degrades movement to
     crawl (slow) or wheelchair (item); leg prosthetic restores normal gait. Wires
     into the movement controller.
-  - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[~]` — **[FLO-424](/FLO/issues/FLO-424)** (Aldric, active) — buy/fit hand·leg·eye
-    prosthetics through the existing economy/transactions system; fitting clears the
-    injury penalty. Reuses E4.4 currency. **This closes the dismemberment counterplay
-    loop and subsumes E6.1.4 (eye prosthetic fitting).**
+  - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[x]` ✅ — **[FLO-424](/FLO/issues/FLO-424)** (Aldric, done) — buy/fit hand·leg·eye prosthetics through the existing economy/transactions system; fitting clears the injury penalty. Closes the dismemberment counterplay loop and subsumes E6.1.4.
 - **E6.2 Audio** `[~ partial]` — footsteps + forest ambience shipped (FLO-401) and
   combat SFX via the `damageEvents` bridge (MPG.4/FLO-383). Remaining: **E6.2.x UI
   click cues + ambient music bed** — **[FLO-433](/FLO/issues/FLO-433)** (Soren, backlog).
@@ -336,8 +333,7 @@ one at a time as predecessors land (no speculative spawns).
   palace-guard commander orders, villain free-command). Builds on the objective
   machine + commander/order system (E4.3).
 - **E6.4 Settings & accessibility** `[x]` ✅ — **[FLO-425](/FLO/issues/FLO-425)** (Soren, done, `363f451`) — settings panel (main-menu + pause overlay): control rebinding UI, master volume/mute, graphics quality toggle; versioned `localStorage` persistence.
-- **E6.5 Menu, save management, polish pass** `[~]` — **[FLO-431](/FLO/issues/FLO-431)** (Soren, backlog, after E6.4) — save-slot management UI,
-  main-menu polish, final cross-zone playthrough verification.
+- **E6.5 Menu, save management, polish pass** `[x]` ✅ — **[FLO-431](/FLO/issues/FLO-431)** (Soren, done, `a77b6f1`) — multi-slot save manager + main-menu Continue hint.
 - **Combat depth — ranged enemy archetype** `[x]` ✅ — **[FLO-432](/FLO/issues/FLO-432)** (Wayland, done, `87cbfd3`) — ranged archer FSM (keep-distance AI), line-of-sight, arrow-volley projectiles, corpse manager; 790 tests green.
 
 ### Phase 7 — Playability hardening & first-session experience `[x]` ✅ COMPLETE
@@ -415,7 +411,7 @@ zone-content data layer (`zoneContent.ts`, ADR-0004), streaming/LOD (Phase 5), a
 faction/commander systems (Phase 4) — widen, don't re-architect.
 
 - **E8.1 Empire zone — palace scene (attack/defend)** `[ ]` — **[FLO-427](/FLO/issues/FLO-427)** (Wayland, backlog).
-- **E8.2 Mountains zone — villain fort scene** `[ ]` — **[FLO-428](/FLO/issues/FLO-428)** (Aldric, backlog).
+- **E8.2 Mountains zone — villain fort scene** `[~]` — **[FLO-428](/FLO/issues/FLO-428)** (Aldric, todo — just activated).
 - **Asset — ranged-enemy + Empire palace-guard GLBs** `[x]` ✅ — **[FLO-426](/FLO/issues/FLO-426)** (done, `92f652a`) — two textured low-poly v1.2 GLBs: archer archetype + Empire palace-guard; feeds E8 zones + E6.3 quests.
 
 ## 4. Asset roadmap (gated, per-character only)
@@ -458,6 +454,7 @@ speculative batches (FLO-270).
 
 *Revision history*
 
+- **r40** (2026-06-21) — **Phase 6 completion wave + Phase 8 activation.** Marked done: E6.1.6 prosthetics shop ([FLO-424](/FLO/issues/FLO-424) Aldric), E6.5 save-slot UI ([FLO-431](/FLO/issues/FLO-431) Soren `a77b6f1`). Activated: [FLO-428](/FLO/issues/FLO-428) (E8.2 Mountains zone → Aldric, Aldric freed from FLO-424). Remaining backlog: FLO-429 (quests, after FLO-427), FLO-430 (leg locomotion, after FLO-424 ✅), FLO-433 (audio, Soren active). (Daedalus)
 - **r39** (2026-06-21) — **FLO-432 ranged archer merged.** Rebased + merged PR #98 (`87cbfd3`): archer FSM, line-of-sight, arrow-volley projectiles, corpse manager, 22 files, 790 tests green. FLO-422 (procedural avatar) and FLO-438 (lock-reap) cleaned up. Phase 8 backlog: FLO-427 (Empire zone), FLO-428 (Mountains), FLO-429 (quests), FLO-430 (leg locomotion), FLO-433 (audio polish) all waiting for activation. (Prospero)
 - **r38** (2026-06-21) — **Phase 6 wave landed; FLO-422 procedural avatar supersedes GLB.** Merged PR #95 (FLO-424 prosthetics shop, `9f4a3a2`), PR #96 (FLO-431 save-slot manager, `a77b6f1`), PR #97 (FLO-422 procedural avatar, `e54b4b7`); each rebased + binary-hash-verified (hero GLB stayed cfd64cf throughout). FLO-422 deliberately retires static GLB hero in favour of `playerAvatar.ts` (boxer-guard flat-shaded procedural avatar). Durable memory: CLEAN PR on busy tree ≠ safe for binary assets. 753 tests. (Prospero)
 - **r37** (2026-06-21) — **Phase 7 COMPLETE. E6.4 + FLO-426 landed.** P7.4 avatar/ground feel (`371b715`) and E6.4 settings panel (`363f451`) merged; archer + palace-guard GLBs (`92f652a`) on main. All five P7.x tickets ✅. Phase 7 header updated to `[x]`. FLO-409 (epic) already closed done. Next: re-audit the deployed build end-to-end to confirm first session is survivable; then activate Phase 8 + remaining Phase 6 backlog. (Daedalus)
