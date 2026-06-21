@@ -387,6 +387,136 @@ body {
   text-align: center;
 }
 
+.menu-action-with-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.menu-action-label {
+  font-weight: 700;
+}
+
+.menu-action-detail {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #c7d2a2;
+  line-height: 1.2;
+}
+
+.save-slots-panel {
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: min(90vh, 44rem);
+  overflow: auto;
+}
+
+.save-slots-intro,
+.save-slots-empty {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: #aeb9c4;
+}
+
+.save-slots-list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.save-slot {
+  padding: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.save-slot--empty {
+  opacity: 0.85;
+}
+
+.save-slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.save-slot-label {
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.save-slot-badge {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1a1408;
+  background: #f7d774;
+}
+
+.save-slot-time {
+  font-size: 0.75rem;
+  color: #aeb9c4;
+}
+
+.save-slot-time--empty {
+  font-style: italic;
+}
+
+.save-slot-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #d8dee6;
+  line-height: 1.35;
+}
+
+.save-slot-summary--empty {
+  color: #8a96a3;
+  font-style: italic;
+}
+
+.save-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.save-slot-actions button {
+  flex: 1 1 auto;
+  min-height: 2.25rem;
+  min-width: 5.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 6px;
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-slot-actions button.primary-action {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.18);
+}
+
+.save-slot-actions button:hover,
+.save-slot-actions button:focus-visible {
+  border-color: #f7d774;
+  background: rgba(247, 215, 116, 0.18);
+  outline: none;
+}
+
 .pause-overlay {
   background: rgba(6, 10, 14, 0.38);
 }

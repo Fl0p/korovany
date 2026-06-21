@@ -39,10 +39,11 @@ of E2.1.)
 ## Where it is stored
 
 In the browser's **IndexedDB**, database `korovany-save`, object store `slots`
-keyed by a numeric slot id. There is currently **one slot** — slot `0`, the
-autosave slot. The slot model is built to grow: `saveGame`/`loadLatest` already
-take a `slot` option and `latest()` selects by `savedAt`, so additional slots are
-a UI concern, not a format change.
+keyed by a numeric slot id. The game exposes **three slots** (ids `0`, `1`, `2`).
+Slot `0` is the default autosave target; all slots share the same on-disk
+format. The slot model is built to grow: `saveGame`/`loadLatest` already take a
+`slot` option and `latest()` selects by `savedAt`, so the UI can manage multiple
+campaigns without a format change.
 
 The data lives only on the user's device. It is not uploaded anywhere and is not
 shared between browsers or machines.
@@ -70,12 +71,20 @@ so the slice cannot regress to saving nothing.
 ## When it saves and loads
 
 - **Autosave on pause.** Entering the paused state (Escape from play, the E1.0
-  pause transition) writes the current player snapshot to the autosave slot.
-- **Continue.** The main-menu **Continue** button loads the most recent slot,
-  restores health + zone into the store, and teleports the player to the saved
-  transform. It is **disabled with an empty-state hint when no save exists**.
-- **New Game** resets the player to defaults; it does not erase the autosave, so
-  a later Continue still resumes the last paused session until it is overwritten.
+  pause transition) writes the current player snapshot to the **active slot**
+  (defaults to slot `0`; switches to whichever slot you last loaded or started).
+- **Continue.** The main-menu **Continue** button loads the most recent slot
+  (highest `savedAt` across all slots), restores health + zone into the store,
+  and teleports the player to the saved transform. It shows a one-line hint
+  (zone · level · date) and is **disabled with an empty-state hint when no save
+  exists**.
+- **Manage Saves (E6.5).** A dedicated panel lists every slot with timestamp,
+  zone, faction, level, and HP summary. From there you can **Load**, **Delete**,
+  or **New Game (overwrite)** into a slot. New Game from the manager clears the
+  chosen slot and routes through the faction picker before play begins.
+- **New Game** (main menu) resets the player to defaults; it does not erase
+  existing slots, so a later Continue still resumes the latest paused session
+  until that slot is overwritten.
 
 ## Retention and clearing
 

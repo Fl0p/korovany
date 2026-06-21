@@ -1,4 +1,4 @@
-import { openSaveStore } from './db'
+import { openSaveStore, type SlotRecord } from './db'
 import { DEFAULT_SLOT, SAVE_VERSION, type PlayerSnapshot, type SaveData, type SlotId } from './types'
 
 /**
@@ -16,6 +16,8 @@ import { DEFAULT_SLOT, SAVE_VERSION, type PlayerSnapshot, type SaveData, type Sl
 export {
   SAVE_VERSION,
   DEFAULT_SLOT,
+  MAX_SLOTS,
+  ALL_SLOT_IDS,
   type SaveData,
   type SlotId,
   type PlayerSnapshot,
@@ -24,6 +26,12 @@ export {
 } from './types'
 export { openSaveStore, type SaveStore, type SlotRecord } from './db'
 export { parseSaveData, isSaveData, migrate } from './schema'
+export {
+  buildSlotSummaries,
+  formatContinueHint,
+  formatSaveSummary,
+  type SaveSlotSummary,
+} from './slotSummary'
 
 /** Common options for the convenience helpers. */
 export interface SaveOptions {
@@ -80,10 +88,40 @@ export async function saveGame(
 
 /** Load the most recently saved slot, or `null` if no save exists. */
 export async function loadLatest(options: Pick<SaveOptions, 'factory'> = {}): Promise<SaveData | null> {
+  const record = await loadLatestRecord(options)
+  return record?.data ?? null
+}
+
+/** Load the most recently saved slot record (id + payload), or `null`. */
+export async function loadLatestRecord(
+  options: Pick<SaveOptions, 'factory'> = {},
+): Promise<SlotRecord | null> {
   const store = await openSaveStore(options.factory)
   try {
-    const record = await store.latest()
-    return record?.data ?? null
+    return await store.latest()
+  } finally {
+    store.close()
+  }
+}
+
+/** Load one slot by id, or `null` when empty / corrupt. */
+export async function loadSlot(
+  slot: SlotId,
+  options: Pick<SaveOptions, 'factory'> = {},
+): Promise<SaveData | null> {
+  const store = await openSaveStore(options.factory)
+  try {
+    return await store.get(slot)
+  } finally {
+    store.close()
+  }
+}
+
+/** List every occupied slot (ascending by slot id). */
+export async function listSlots(options: Pick<SaveOptions, 'factory'> = {}): Promise<SlotRecord[]> {
+  const store = await openSaveStore(options.factory)
+  try {
+    return await store.list()
   } finally {
     store.close()
   }
