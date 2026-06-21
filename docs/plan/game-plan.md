@@ -312,7 +312,20 @@ Decomposed 2026-06-21 (r25) from the canonical description (issue #2): dismember
 E6.1 is broken into oneshot subtasks rather than treated as polish. Tickets are cut
 one at a time as predecessors land (no speculative spawns).
 
-- **E6.1 Dismemberment & prosthetics** `[ ]` — the canonical limb system. Subtasks:
+> **STATUS — PARKED (board directive, 2026-06-21).** The limb-loss / dismemberment
+> family is **complex and not a current priority**: it requires careful planning and
+> is **not taken into active work without a direct board instruction.** This is a
+> deliberate priority call that overrides the "core canonical mechanic" framing
+> above for sequencing purposes — the design intent stays canon, but no *new*
+> limb-loss work is scheduled until the board re-prioritises it.
+>
+> What already shipped to `main` before the park (kept, green, isolated — only
+> activates once a limb is actually lost): **E6.1.1** injury model, **E6.1.2**
+> combat→dismemberment hook, **E6.1.5** leg-loss locomotion (FLO-430, `6ce8648` —
+> see note below), **E6.1.6** prosthetics shop. Remaining unbuilt work below
+> (**E6.1.3** hand-loss attack-disable, deeper polish) is **on hold**, not cancelled.
+
+- **E6.1 Dismemberment & prosthetics** `[ ]` — the canonical limb system. **PARKED — see status note above.** Subtasks:
   - **E6.1.1 Injury state model** `[x]` — **FLO-400** ✅ (Soren, done, `ebe6181`) — Redux
     `injurySlice`: per-limb status (intact / severed / prosthetic) for hand·leg·eye;
     bleed-out timer for untreated severance; save-migration v5 (guard validates base
@@ -322,9 +335,14 @@ one at a time as predecessors land (no speculative spawns).
     not treated before the timer, player dies. Treatment item (bandage) stops it.
   - **E6.1.4 Eye loss → half-screen overlay** `[ ]` — non-lethal; a post-process /
     DOM vignette blacks out half the viewport until an eye prosthetic is fitted.
-  - **E6.1.5 Leg loss → locomotion modes** `[~]` — **[FLO-430](/FLO/issues/FLO-430)** (Wayland, backlog, after E6.1.6) — severed leg degrades movement to
-    crawl (slow) or wheelchair (item); leg prosthetic restores normal gait. Wires
-    into the movement controller.
+  - **E6.1.5 Leg loss → locomotion modes** `[x]` ✅ **shipped** — **[FLO-430](/FLO/issues/FLO-430)** (Soren, `6ce8648`) — severed leg degrades movement to
+    crawl (`0.35×`) or wheelchair (`0.6×`, equippable item); leg prosthetic restores
+    normal gait. Resolution in `src/game/health/locomotion.ts`, wired through the
+    existing `selectLocomotionSpeedMultiplier` / `CharacterController.getSpeedMultiplier`
+    seam; animator reads `selectLocomotionMode`. Docs in `health-system.md`. *(PR #100
+    reads CLOSED because the commit landed via the FF agent-identity merge, not because
+    the work was dropped. Covered by the E6.1 park: no further leg-loss work without
+    board instruction.)*
   - **E6.1.6 Prosthetics shop (Daggerfall-style)** `[x]` ✅ — **[FLO-424](/FLO/issues/FLO-424)** (Aldric, done) — buy/fit hand·leg·eye prosthetics through the existing economy/transactions system; fitting clears the injury penalty. Closes the dismemberment counterplay loop and subsumes E6.1.4.
 - **E6.2 Audio** `[~ partial]` — footsteps + forest ambience shipped (FLO-401) and
   combat SFX via the `damageEvents` bridge (MPG.4/FLO-383). Remaining: **E6.2.x UI
@@ -554,6 +572,14 @@ speculative batches (FLO-270).
 
 *Revision history*
 
+- **r42** (2026-06-21) — **Limb-loss epic (E6.1) PARKED per board.** Board directive on
+  [FLO-430](/FLO/issues/FLO-430): dismemberment/limb-loss is complex and not a priority —
+  document the intent but take no further work without a direct instruction. Recorded the
+  park as a status note on the E6.1 epic. Also corrected the record: E6.1.5 leg-loss
+  locomotion (FLO-430) did **not** die with PR #100 — it shipped to `main` (`6ce8648`,
+  code + `health-system.md` docs + tests); the PR reads CLOSED only because of the FF
+  agent-identity merge. Already-shipped E6.1.1/E6.1.2/E6.1.5/E6.1.6 kept as-is (green,
+  isolated); keep-vs-revert surfaced to the board on FLO-430. (Daedalus)
 - **r41** (2026-06-21) — **Plan extended past world-completion: Phases 9–11 added**
   (board ask [FLO-451](/FLO/issues/FLO-451): «развей план дальше, создай ещё пару
   фаз»). With Phases 0–7 complete and Phase 8 (four-zone world) in flight, the tree
